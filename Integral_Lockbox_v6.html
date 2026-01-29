@@ -1,0 +1,3822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Integral Lockbox v6 — Pattern Quest (45 Problems)</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@400;600;800&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<!-- Using Unicode math symbols for reliable display -->
+
+<style>
+  :root{
+    --bg0:#0b0b14;
+    --bg1:#0f0f23;
+    --panel: rgba(255,255,255,0.04);
+    --panel2: rgba(0,0,0,0.28);
+    --border: rgba(255,255,255,0.12);
+    --border2: rgba(255,255,255,0.08);
+    --text: #e9e9ff;
+    --muted: rgba(233,233,255,0.65);
+    --good: #4ade80;
+    --warn: #fbbf24;
+    --bad:  #fb7185;
+    --blue: #60a5fa;
+    --pink: #f093fb;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --serif: "Playfair Display", Georgia, serif;
+    --sans: "Outfit", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    min-height:100vh;
+    font-family: var(--sans);
+    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 50% -120px, rgba(240,147,251,0.22), transparent 60%),
+      radial-gradient(900px 500px at 80% 20%, rgba(96,165,250,0.18), transparent 55%),
+      radial-gradient(900px 500px at 20% 25%, rgba(74,222,128,0.12), transparent 50%),
+      linear-gradient(145deg, var(--bg0), var(--bg1));
+    overflow-x:hidden;
+  }
+
+  .wrap{
+    width: min(980px, 96vw);
+    margin: 0 auto;
+    padding: 22px 16px 40px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  h1{
+    font-family: var(--serif);
+    font-size: clamp(2.1rem, 4vw, 3.0rem);
+    letter-spacing: 0.3px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--pink), #f5576c);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color: transparent;
+    text-align:center;
+  }
+  .subtitle{
+    color: var(--muted);
+    font-size: 0.98rem;
+    text-align:center;
+    margin-bottom: 16px;
+  }
+
+  /* Pills */
+  .pill-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin: 8px 0 18px;
+  }
+  .pill{
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.25);
+    border-radius: 999px;
+    color: var(--muted);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    user-select:none;
+  }
+  .pill strong{ color: var(--text); font-weight:800; }
+  .pill.clickable{ cursor:pointer; }
+  .pill.clickable:hover{ border-color: rgba(240,147,251,0.6); color: rgba(233,233,255,0.9); }
+
+  /* Home screen */
+  #home{ width: 100%; display:block; }
+  .panel{
+    width: 100%;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 12px 45px rgba(0,0,0,0.35);
+  }
+  .panel + .panel{ margin-top: 14px; }
+
+  .panel-title{
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: rgba(240,147,251,0.9);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom: 10px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .btn-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-top: 10px;
+  }
+  .btn{
+    border: none;
+    cursor:pointer;
+    font-weight: 800;
+    padding: 12px 18px;
+    border-radius: 12px;
+    transition: transform .12s, opacity .12s;
+    font-family: var(--sans);
+    letter-spacing: 0.2px;
+  }
+  .btn:active{ transform: scale(0.98); }
+  .btn.primary{
+    background: linear-gradient(135deg, #93c5fd, #60a5fa);
+    color:#050510;
+  }
+  .btn.pink{
+    background: linear-gradient(135deg, var(--pink), #f5576c);
+    color:#fff;
+  }
+  .btn.gold{
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color:#1a1200;
+  }
+  .btn.ghost{
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn:hover{ opacity: 0.94; }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap:10px;
+  }
+  .card{
+    border: 1px solid var(--border2);
+    background: rgba(0,0,0,0.18);
+    border-radius: 14px;
+    padding: 12px;
+  }
+  .card h3{
+    font-family: var(--mono);
+    font-size: 0.92rem;
+    color: rgba(233,233,255,0.92);
+    margin-bottom: 6px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card p{
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height:1.4;
+    margin-bottom: 10px;
+  }
+  .small{
+    font-size: 0.78rem;
+    color: rgba(233,233,255,0.55);
+    font-family: var(--mono);
+  }
+
+  /* Game screen */
+  #game{ width:100%; display:none; }
+  .game-top{
+    width: min(920px, 96vw);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin: 6px auto 10px;
+  }
+  .back{
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 7px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.22);
+    color: var(--muted);
+    cursor:pointer;
+  }
+  .back:hover{ border-color: rgba(240,147,251,0.55); color: rgba(233,233,255,0.9); }
+
+  .mode-line{
+    font-family: var(--mono);
+    color: rgba(233,233,255,0.75);
+    font-size: 0.82rem;
+  }
+  .mode-line span{ color: rgba(240,147,251,0.95); }
+
+  .progress{
+    width: min(920px, 96vw);
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.10);
+    overflow:hidden;
+    margin: 0 auto 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .progress > div{
+    height:100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--pink), #f5576c);
+    transition: width .35s ease;
+  }
+
+  /* Big integral display (KaTeX) */
+  .integral-card{
+    width: min(920px, 96vw);
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.25);
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin: 0 auto 10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .integral-label{
+    font-family: var(--mono);
+    color: rgba(233,233,255,0.55);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .integral-render{
+    flex: 1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height: 44px;
+    font-family: 'Cambria Math', 'STIX Two Math', 'Latin Modern Math', Georgia, serif;
+    font-size: 1.5rem;
+    color: rgba(255,255,255,0.98);
+    letter-spacing: 0.5px;
+  }
+
+  #scene-wrap{
+    width: min(920px, 96vw);
+    display:flex;
+    justify-content:center;
+    margin: 0 auto 8px;
+  }
+  #scene{
+    width: min(560px, 92vw);
+    height: min(360px, 46vh);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: radial-gradient(700px 300px at 50% 0%, rgba(255,255,255,0.06), transparent 60%);
+    position: relative;
+    overflow:hidden;
+  }
+
+  .layer-indicator{
+    width: min(920px, 96vw);
+    margin: 0 auto 6px;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    color: rgba(251,191,36,0.95);
+    text-align:center;
+    display:none;
+  }
+
+  .row-center{
+    width: min(920px, 96vw);
+    margin: 6px auto 0;
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap: 10px;
+  }
+
+  .guide-btn{
+    border: 1px solid rgba(147,197,253,0.55);
+    background: rgba(147,197,253,0.12);
+    color: rgba(147,197,253,0.95);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor:pointer;
+  }
+  .guide-btn:hover{ background: rgba(147,197,253,0.18); }
+
+  /* Technique buttons (challenge mode) */
+  .controls{
+    width: min(920px, 96vw);
+    margin: 10px auto 0;
+    display:flex;
+    gap: 8px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .tech-wrap{ display:flex; align-items:stretch; border-radius: 10px; overflow:hidden; }
+  .tech{
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-right: none;
+    background: rgba(0,0,0,0.22);
+    color: rgba(233,233,255,0.9);
+    cursor:pointer;
+    min-width: 112px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    transition: transform .12s, border-color .12s, background .12s;
+  }
+  .tech:hover{ border-color: rgba(240,147,251,0.55); background: rgba(240,147,251,0.08); }
+  .tech:active{ transform: scale(0.99); }
+  .tech.disabled{ opacity:0.45; cursor:not-allowed; }
+  .tech.correct{
+    border-color: rgba(74,222,128,0.7);
+    background: rgba(74,222,128,0.12);
+  }
+  .tech.wrong{
+    border-color: rgba(251,113,133,0.7);
+    background: rgba(251,113,133,0.08);
+    animation: shake .4s ease;
+  }
+  .help{
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05);
+    color: rgba(233,233,255,0.65);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 10px 10px;
+    cursor:pointer;
+    min-width: 34px;
+  }
+  .help:hover{ color: rgba(240,147,251,0.95); }
+
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-5px); }
+    75%{ transform:translateX(5px); }
+  }
+
+  /* Hint panel */
+  .hint{
+    width: min(920px, 96vw);
+    margin: 12px auto 0;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.22);
+    border-radius: 14px;
+    padding: 12px 14px;
+    text-align:center;
+  }
+  .hint[role="status"]{ outline: none; }
+  .hint-title{
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: rgba(74,222,128,0.9);
+  }
+  .hint-title.warn{ color: rgba(251,191,36,0.95); }
+  .hint-title.bad{ color: rgba(251,113,133,0.95); }
+  .hint-text{
+    font-size: 0.95rem;
+    color: rgba(233,233,255,0.86);
+    line-height: 1.45;
+  }
+  .hint-text strong{ color: rgba(240,147,251,0.95); }
+
+  .next{
+    display:none;
+    margin: 12px auto 0;
+  }
+  .next.visible{ display:block; }
+
+  /* Step check card (in-game) */
+  #checkCard{
+    width: min(920px, 96vw);
+    margin: 12px auto 0;
+    border: 1px solid rgba(147,197,253,0.28);
+    background: rgba(96,165,250,0.10);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display:none;
+    text-align:left;
+  }
+  #checkCard.visible{ display:block; }
+  #checkTop{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom: 10px;
+  }
+  #checkTitle{
+    font-family: var(--mono);
+    color: rgba(147,197,253,0.95);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  #checkPrompt{
+    margin-top: 4px;
+    font-size: 0.98rem;
+    color: rgba(233,233,255,0.92);
+    line-height:1.4;
+  }
+  #checkMeta{
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: rgba(233,233,255,0.6);
+    text-align:right;
+  }
+  .choiceGrid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .choiceBtn{
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.22);
+    border-radius: 10px;
+    padding: 12px 12px;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    color: rgba(233,233,255,0.92);
+    cursor:pointer;
+    transition: transform .12s, border-color .12s, background .12s;
+    text-align:left;
+  }
+  .choiceBtn:hover{
+    border-color: rgba(147,197,253,0.7);
+    background: rgba(147,197,253,0.10);
+  }
+  .choiceBtn:active{ transform: scale(0.99); }
+  .choiceBtn.correct{
+    border-color: rgba(74,222,128,0.8);
+    background: rgba(74,222,128,0.18);
+    color: rgba(74,222,128,1);
+  }
+  .choiceBtn.wrong{
+    border-color: rgba(251,113,133,0.85);
+    background: rgba(251,113,133,0.16);
+    color: rgba(251,113,133,1);
+    animation: shake .4s ease;
+  }
+  .choiceBtn:disabled{ opacity:0.8; cursor:not-allowed; }
+
+  #checkFeedback{
+    margin-top: 10px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    display:none;
+  }
+  #checkFeedback.good{
+    display:block;
+    border: 1px solid rgba(74,222,128,0.6);
+    background: rgba(74,222,128,0.10);
+    color: rgba(74,222,128,0.95);
+  }
+  #checkFeedback.bad{
+    display:block;
+    border: 1px solid rgba(251,113,133,0.6);
+    background: rgba(251,113,133,0.10);
+    color: rgba(251,113,133,0.95);
+  }
+
+  /* Pattern match overlay — moved UP so it doesn't cover the box */
+  .pattern-overlay{
+    position: fixed;
+    top: 76px;  /* moved up */
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(640px, calc(100vw - 22px));
+    max-height: 220px;
+    overflow:auto;
+    z-index: 900;
+    border-radius: 16px;
+    border: 2px solid rgba(74,222,128,0.75);
+    background: linear-gradient(145deg, rgba(20,60,35,0.92), rgba(12,32,20,0.92));
+    box-shadow: 0 12px 55px rgba(0,0,0,0.55);
+    padding: 12px 14px;
+    display:none;
+  }
+  .pattern-overlay.visible{ display:block; }
+  .pattern-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom: 8px;
+  }
+  .pattern-title{
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    color: rgba(74,222,128,0.95);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    letter-spacing:0.4px;
+    text-transform: uppercase;
+  }
+  .pattern-close{
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(0,0,0,0.25);
+    color: rgba(233,233,255,0.75);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: var(--mono);
+    cursor:pointer;
+    font-size: 0.75rem;
+  }
+  .pattern-close:hover{ border-color: rgba(240,147,251,0.55); color: rgba(233,233,255,0.95); }
+
+  .pattern-body{
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    color: rgba(233,233,255,0.88);
+    line-height:1.45;
+  }
+  .pattern-body code{
+    background: rgba(0,0,0,0.28);
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+  .pattern-grid{
+    margin-top: 8px;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .kv{
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(0,0,0,0.22);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .kv .k{ color: rgba(147,197,253,0.95); font-size:0.75rem; }
+  .kv .v{ margin-top: 3px; color: rgba(233,233,255,0.92); }
+
+  /* Overlays */
+  .overlay{
+    position: fixed;
+    inset:0;
+    background: rgba(10,10,18,0.86);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index: 950;
+    padding: 20px;
+    backdrop-filter: blur(6px);
+  }
+  .overlay.visible{ display:flex; }
+  .modal{
+    width: min(560px, 95vw);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: linear-gradient(145deg, rgba(42,42,74,0.95), rgba(20,20,40,0.95));
+    padding: 18px;
+    box-shadow: 0 18px 65px rgba(0,0,0,0.6);
+  }
+  .modal-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom: 10px;
+  }
+  .modal h2{
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    color: rgba(74,222,128,0.95);
+  }
+  .x{
+    border: 1px solid rgba(255,255,255,0.20);
+    background: rgba(0,0,0,0.25);
+    color: rgba(233,233,255,0.75);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: var(--mono);
+    cursor:pointer;
+    font-size: 0.8rem;
+  }
+  .x:hover{ border-color: rgba(240,147,251,0.55); color: rgba(233,233,255,0.95); }
+  .modal p{
+    color: rgba(233,233,255,0.82);
+    line-height: 1.5;
+    margin-top: 6px;
+  }
+
+  /* Wizard confidence bar */
+  .conf-wrap{
+    margin-top: 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.22);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align:left;
+  }
+  .conf-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: rgba(233,233,255,0.75);
+    margin-bottom: 6px;
+  }
+  .bar{
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.10);
+    overflow:hidden;
+  }
+  .bar > div{
+    height:100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(251,191,36,0.9), rgba(74,222,128,0.95));
+    transition: width .35s ease;
+  }
+  .conf-note{
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: rgba(233,233,255,0.72);
+  }
+  .conf-note strong{ color: rgba(251,191,36,0.95); }
+
+  /* Arena / Dojo quiz screen */
+  #arena{ width:100%; display:none; }
+  .arena-wrap{
+    width: min(920px, 96vw);
+    margin: 0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 14px;
+  }
+  .arena-top{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .timer-row{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+  .dojo{
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 22px;
+    user-select:none;
+  }
+  .timer-bar{
+    flex:1;
+    height: 10px;
+    border-radius: 999px;
+    overflow:hidden;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .timer-fill{
+    height:100%;
+    width: 100%;
+    background: rgba(96,165,250,0.95);
+    transition: width .08s linear;
+  }
+  .timer-fill.warn{ background: rgba(251,191,36,0.95); }
+  .timer-fill.bad{ background: rgba(251,113,133,0.95); }
+
+  .arena-card{
+    width:100%;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.26);
+    padding: 18px;
+    text-align:center;
+  }
+  .arena-label{
+    font-family: var(--mono);
+    color: rgba(233,233,255,0.6);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .arena-math{
+    min-height: 58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family: 'Cambria Math', 'STIX Two Math', 'Latin Modern Math', Georgia, serif;
+    font-size: 1.55rem;
+    color: rgba(255,255,255,0.98);
+    letter-spacing: 0.5px;
+  }
+  .arena-question{
+    margin-top: 10px;
+    font-size: 1.05rem;
+    color: rgba(233,233,255,0.92);
+  }
+
+  .arena-choices{
+    width:100%;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .arena-choice{
+    border: 2px solid rgba(255,255,255,0.10);
+    background: rgba(0,0,0,0.22);
+    border-radius: 12px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    color: rgba(233,233,255,0.92);
+    cursor:pointer;
+    transition: transform .12s, border-color .12s, background .12s;
+    text-align:left;
+  }
+  .arena-choice:hover{
+    border-color: rgba(96,165,250,0.85);
+    background: rgba(96,165,250,0.10);
+  }
+  .arena-choice:active{ transform: scale(0.99); }
+  .arena-choice.correct{
+    border-color: rgba(74,222,128,0.9);
+    background: rgba(74,222,128,0.18);
+    color: rgba(74,222,128,1);
+  }
+  .arena-choice.wrong{
+    border-color: rgba(251,113,133,0.9);
+    background: rgba(251,113,133,0.16);
+    color: rgba(251,113,133,1);
+    animation: shake .4s ease;
+  }
+  .arena-choice:disabled{ cursor:not-allowed; opacity:0.85; }
+
+  .streak-dots{
+    display:flex;
+    gap: 6px;
+    justify-content:center;
+    margin-top: 8px;
+  }
+  .dot{
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .dot.on{
+    background: rgba(240,147,251,0.9);
+    box-shadow: 0 0 10px rgba(240,147,251,0.55);
+  }
+
+  .arena-feedback{
+    width:100%;
+    min-height: 54px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.22);
+    padding: 12px 14px;
+    text-align:center;
+  }
+  .arena-feedback .t{
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+  }
+  .arena-feedback .t.good{ color: rgba(74,222,128,0.95); }
+  .arena-feedback .t.bad{ color: rgba(251,113,133,0.95); }
+  .arena-feedback .d{
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    color: rgba(233,233,255,0.75);
+    line-height:1.4;
+  }
+
+  .combo{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: rgba(240,147,251,0.95);
+    pointer-events:none;
+    z-index: 1200;
+    text-shadow: 0 0 32px rgba(240,147,251,0.55);
+    opacity:0;
+  }
+  .combo.show{
+    animation: comboPop 1.0s ease-out forwards;
+  }
+  @keyframes comboPop{
+    0%{ transform: translate(-50%, -50%) scale(0.1); opacity:0; }
+    30%{ transform: translate(-50%, -50%) scale(1.15); opacity:1; }
+    80%{ transform: translate(-50%, -50%) scale(1.0); opacity:1; }
+    100%{ transform: translate(-50%, -50%) scale(0.2); opacity:0; }
+  }
+
+  @media (max-width: 650px){
+    .choiceGrid, .arena-choices{ grid-template-columns: 1fr; }
+    .tech{ min-width: 128px; }
+    .integral-render{ font-size: 1.25rem; }
+    .arena-math{ font-size: 1.25rem; }
+    .pattern-overlay{ 
+      top: auto;
+      bottom: 10px;
+      max-height: min(180px, 30vh);
+      font-size: 0.82rem;
+    }
+    .pattern-grid{ grid-template-columns: 1fr; }
+  }
+  
+  /* Floating XP animation */
+  .xp-float{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -25px;
+    color: rgba(74,222,128,0.95);
+    font-weight: 800;
+    font-size: 1.1rem;
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  @keyframes floatUp{
+    0% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -30px); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Integral Lockbox v6</h1>
+  <div class="subtitle">45 problems across 5 techniques. Make the pattern <em>click</em>.</div>
+
+  <div class="pill-row">
+    <div class="pill"><span>⭐</span> XP <strong id="xpPill">0</strong></div>
+    <div class="pill"><span>🔥</span> Streak <strong id="streakPill">0</strong></div>
+    <div class="pill"><span>🏅</span> Best <strong id="bestPill">0</strong></div>
+    <div class="pill"><span>🏆</span> Badges <strong id="badgePill">0</strong></div>
+    <div class="pill clickable" id="soundPill" title="Toggle sound">
+      <span id="soundIcon">🔊</span> Sound <strong id="soundText">ON</strong>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="home">
+    <div class="panel">
+      <div class="panel-title">🎓 Lessons</div>
+      <div class="grid" id="lessonGrid"></div>
+      <div class="small" style="margin-top:10px;">
+        Lessons are <strong>not</strong> “guess the technique.” The technique is revealed — you must choose the correct <em>next step</em>.
+      </div>
+    </div>
+
+    
+    <div class="panel">
+      <div class="panel-title">🎯 Challenges</div>
+      <div class="grid">
+        <div class="card">
+          <h3>🔀 Mixed Vault</h3>
+          <p>Technique is hidden. Pick the technique, then answer a quick step-check to unlock.</p>
+          <button class="btn gold" id="btnMixed">Start Mixed</button>
+          <div class="small">Best for “do I recognize it?” practice.</div>
+        </div>
+
+        <div class="card">
+          <h3>👑 Vault Dive Boss</h3>
+          <p>Three layers deep. Streak multiplier + a badge if you clear it clean.</p>
+          <button class="btn gold" id="btnBoss">Start Boss Run</button>
+          <div class="small">A mini “final exam” for pattern recognition.</div>
+        </div>
+
+        <div class="card">
+          <h3>🥋 Dojo Quiz (Timed)</h3>
+          <p>Derivative Dojo style: timer bar + streak dots + two-step questions.</p>
+          <button class="btn primary" id="btnDojo">Enter Dojo</button>
+          <div class="small">Fast reps, fast feedback.</div>
+        </div>
+
+        <div class="card">
+          <h3>📝 Skill Check (Untimed)</h3>
+          <p>A normal quiz: technique + next step, no timer. See your score at the end.</p>
+          <button class="btn pink" id="btnTest">Start Test</button>
+          <div class="small">Use for class exit tickets.</div>
+        </div>
+      </div>
+    </div>
+</div>
+
+  <!-- GAME -->
+  <div id="game">
+    <div class="game-top">
+      <button class="back" id="btnBack">← Back</button>
+      <div class="mode-line"><span id="modeName">Mode</span> · Q <span id="qNum">1</span>/<span id="qTotal">1</span></div>
+    </div>
+
+    <div class="progress"><div id="progressFill"></div></div>
+
+    <div class="integral-card">
+      <div>
+        <div class="integral-label">Current lock</div>
+        <div class="small" id="modeHintLine"></div>
+      </div>
+      <div class="integral-render" id="integralRender"></div>
+    </div>
+
+    <div id="scene-wrap">
+      <div id="scene"></div>
+    </div>
+
+    <div class="layer-indicator" id="layerIndicator">Layer <span id="layerNow">1</span>/<span id="layerTotal">1</span></div>
+
+    <div class="row-center">
+      <button class="guide-btn" id="btnGuide">🧙 Guide Me</button>
+      <button class="guide-btn" id="btnPeek" style="display:none;">👀 Reveal Technique</button>
+    </div>
+
+    <div class="controls" id="techControls"></div>
+
+    <div id="checkCard">
+      <div id="checkTop">
+        <div>
+          <div id="checkTitle">Step Check</div>
+          <div id="checkPrompt"></div>
+        </div>
+        <div id="checkMeta"></div>
+      </div>
+      <div class="choiceGrid" id="checkChoices"></div>
+      <div id="checkFeedback"></div>
+    </div>
+
+    <div class="hint" id="hintPanel" role="status" aria-live="polite">
+      <div class="hint-title" id="hintTitle">🔒 Locked</div>
+      <div class="hint-text" id="hintText">In challenges, pick the technique. In lessons, prove the next step.</div>
+    </div>
+
+    <button class="btn pink next" id="btnNext">Next →</button>
+  </div>
+
+  <!-- ARENA -->
+  <div id="arena">
+    <div class="arena-wrap">
+      <div class="arena-top">
+        <button class="back" id="btnArenaBack">← Back</button>
+        <div class="mode-line"><span id="arenaMode">Dojo</span> · Q <span id="arenaQ">1</span>/<span id="arenaTotal">10</span> · Score <span id="arenaScore">0</span></div>
+      </div>
+
+      <div class="timer-row" id="timerRow" style="display:none;">
+        <div class="dojo" id="dojoFace">🥋</div>
+        <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+        <div class="pill" style="margin:0;"><span>⏱️</span><strong id="timerText">15s</strong></div>
+      </div>
+
+      <div class="arena-card">
+        <div class="arena-label" id="arenaLabel">Question</div>
+        <div class="arena-math" id="arenaMath"></div>
+        <div class="arena-question" id="arenaQuestion">Pick the technique</div>
+        <div class="streak-dots" id="arenaDots"></div>
+      </div>
+
+      <div class="arena-choices" id="arenaChoices"></div>
+
+      <div class="arena-feedback" id="arenaFeedback">
+        <div class="t" id="arenaFeedT">Ready?</div>
+        <div class="d" id="arenaFeedD">Answer fast, but don’t guess blindly.</div>
+      </div>
+
+      <button class="btn ghost" id="arenaNext" style="display:none;">Next →</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="combo" id="comboPop">🔥 COMBO!</div>
+
+<!-- Pattern overlay -->
+<div class="pattern-overlay" id="patternOverlay">
+  <div class="pattern-top">
+    <div class="pattern-title" id="patternTitle">✅ Pattern Matched</div>
+    <button class="pattern-close" id="patternClose">Close ✕</button>
+  </div>
+  <div class="pattern-body" id="patternBody"></div>
+</div>
+
+<!-- Wizard overlay -->
+<div class="overlay" id="wizardOverlay">
+  <div class="modal">
+    <div class="modal-top">
+      <h2>🧙 Pattern Guide</h2>
+      <button class="x" id="wizardClose">Close ✕</button>
+    </div>
+    <div id="wizardIntegral" class="small"></div>
+    <p id="wizardText">Answer two quick questions — then I’ll suggest a starting move.</p>
+    <div class="conf-wrap" id="confWrap" style="display:none;">
+      <div class="conf-line">
+        <div>Suggestion: <strong id="confSuggestion">U-Sub</strong></div>
+        <div><span id="confLabel">MED</span> · <strong id="confPct">55%</strong></div>
+      </div>
+      <div class="bar"><div id="confBar"></div></div>
+      <div class="conf-note"><strong>Reminder:</strong> confidence is a hint, not a guarantee — always check the pattern.</div>
+    </div>
+    <div class="btn-row" style="margin-top: 14px;">
+      <button class="btn primary" id="wizardSuggestBtn">Suggest for this lock</button>
+      <button class="btn ghost" id="wizardExplainBtn">Why this suggestion?</button>
+    </div>
+    <p class="small" id="wizardExplain" style="display:none; margin-top:10px;"></p>
+  </div>
+</div>
+
+<!-- Help overlay -->
+<div class="overlay" id="helpOverlay">
+  <div class="modal">
+    <div class="modal-top">
+      <h2 id="helpTitle">📘 Technique</h2>
+      <button class="x" id="helpClose">Close ✕</button>
+    </div>
+    <div id="helpMath" style="margin-top:6px;"></div>
+    <p id="helpBody"></p>
+  </div>
+</div>
+
+<!-- Intro modal (first-time users) -->
+<div class="overlay" id="introOverlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-top">
+      <h2>👋 Welcome to Pattern Quest!</h2>
+      <button class="x" id="introClose">Got it ✕</button>
+    </div>
+    <div style="font-size:0.95rem; line-height:1.6;">
+      <p style="margin-bottom:12px;"><strong>Goal:</strong> Learn to <em>recognize</em> which integration technique fits each integral.</p>
+      
+      <div style="background:rgba(147,197,253,0.15); padding:12px; border-radius:10px; margin-bottom:12px;">
+        <strong>🎓 Lessons</strong> (Start here!)<br>
+        <span style="font-size:0.88rem;">The technique is <em>revealed</em>. Your job: prove you understand the <strong>next step</strong> by passing a quiz.</span>
+      </div>
+      
+      <div style="background:rgba(251,191,36,0.15); padding:12px; border-radius:10px; margin-bottom:12px;">
+        <strong>🎯 Challenges</strong><br>
+        <span style="font-size:0.88rem;">The technique is <em>hidden</em>. Pick the right one, then pass the step check to unlock the box.</span>
+      </div>
+      
+      <div style="background:rgba(236,72,153,0.15); padding:12px; border-radius:10px; margin-bottom:12px;">
+        <strong>🥋 Dojo / 📝 Test</strong><br>
+        <span style="font-size:0.88rem;">Fast-paced quiz mode. Dojo is timed (14s), Test is untimed. Great for practice!</span>
+      </div>
+      
+      <p style="font-size:0.85rem; opacity:0.8; margin-top:14px;">💡 <strong>Tip:</strong> Use keyboard shortcuts 1-5 to quickly pick techniques. Press G for the Pattern Guide wizard.</p>
+    </div>
+    <button class="btn primary" id="introStart" style="width:100%; margin-top:14px;">Start with U-Sub Lesson →</button>
+    <button class="btn ghost" id="introSkip" style="width:100%; margin-top:8px;">Skip to Home</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* =========================================================
+   Integral Lockbox — Dojo Upgrade
+   - Pattern overlay moved up (doesn't cover box)
+   - Box text 50% bigger (higher-res texture + larger font)
+   - Lessons are step-based (no trivial “click the known technique”)
+   - Challenges + Dojo/Test modes borrow Derivative Dojo rhythm
+========================================================= */
+
+/* ------------------------------
+   Tiny utilities
+--------------------------------*/
+const $ = (sel) => document.querySelector(sel);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+/* ------------------------------
+   Sound (simple beeps, toggle)
+--------------------------------*/
+let soundEnabled = true;
+try{
+  const saved = localStorage.getItem('ilpq_sound');
+  if(saved === '0') soundEnabled = false;
+}catch(e){}
+
+// Reuse single AudioContext for mobile compatibility
+let audioCtx = null;
+
+function sfx(type){
+  if(!soundEnabled) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Resume if suspended (mobile browsers require user interaction)
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    const now = audioCtx.currentTime;
+    const f = (type==='good') ? 880 : (type==='bad' ? 220 : 660);
+    o.frequency.setValueAtTime(f, now);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(now); o.stop(now + 0.2);
+  }catch(e){}
+}
+
+function setSoundUI(){
+  const icon = $('#soundIcon');
+  const text = $('#soundText');
+  if(icon) icon.textContent = soundEnabled ? '🔊' : '🔇';
+  if(text) text.textContent = soundEnabled ? 'ON' : 'OFF';
+}
+// Defer to init()
+
+/* ------------------------------
+   Persistence
+--------------------------------*/
+const defaultState = {
+  xp: 0,
+  streak: 0,
+  best: 0,
+  mastery: { usub:0, parts:0, partial:0, trig:0, algebra:0 },
+  badges: { bossClear: false }
+};
+let state = {...defaultState};
+try{
+  const raw = localStorage.getItem('ilpq_state_v2');
+  if(raw) state = {...defaultState, ...JSON.parse(raw)};
+}catch(e){}
+
+function saveState(){
+  try{ localStorage.setItem('ilpq_state_v2', JSON.stringify(state)); }catch(e){}
+}
+function updatePills(){
+  const xp = $('#xpPill');
+  const streak = $('#streakPill');
+  const best = $('#bestPill');
+  const badge = $('#badgePill');
+  if(xp) xp.textContent = state.xp;
+  if(streak) streak.textContent = state.streak;
+  if(best) best.textContent = state.best;
+  if(badge){
+    const b = state.badges ? Object.values(state.badges).filter(Boolean).length : 0;
+    badge.textContent = b;
+  }
+  
+  // Update mastery displays on lesson cards
+  Object.keys(state.mastery || {}).forEach(tech => {
+    const el = document.getElementById(`m-${tech}`);
+    if(el) el.textContent = state.mastery[tech] || 0;
+  });
+}
+// Defer to init()
+
+/* ------------------------------
+   Techniques
+--------------------------------*/
+const TECH = {
+  usub:   { key:'1', icon:'🔄', name:'U‑Sub', full:'U‑Substitution', color:'var(--good)',
+            when:'Composite inside + its derivative outside (f(g(x))·g\'(x)).',
+            pattern:'∫ f(g(x)) g\'(x) dx',
+            tip:'Circle the “inside” g(x), then hunt for g\'(x) nearby.' },
+  parts:  { key:'2', icon:'✂️', name:'By Parts', full:'Integration by Parts', color:'var(--pink)',
+            when:'Product where differentiating one part simplifies (x^n, ln x) and the other integrates nicely (e^x, sin, cos).',
+            pattern:'∫ u dv = uv − ∫ v du',
+            tip:'Try LIATE for choosing u (Log, Inverse trig, Algebraic, Trig, Exp).' },
+  partial:{ key:'3', icon:'🧩', name:'Partials', full:'Partial Fractions', color:'var(--warn)',
+            when:'A rational function with factorable denominator.',
+            pattern:'P(x)/Q(x) with Q factorable',
+            tip:'Factor first. Proper? If not, long divide.' },
+  trig:   { key:'4', icon:'📐', name:'Trig Sub', full:'Trigonometric Substitution', color:'var(--blue)',
+            when:'Square root of a quadratic: √(a²−x²), √(a²+x²), √(x²−a²).',
+            pattern:'x = a sinθ, a tanθ, a secθ',
+            tip:'Match the radical form to the substitution — it’s a “keyhole” pattern.' },
+  algebra:{ key:'5', icon:'🔢', name:'Simplify', full:'Simplify First', color:'rgba(147,197,253,0.95)',
+            when:'You can rewrite first: trig identities, expand, split, cancel.',
+            pattern:'Algebra/trig identity then integrate',
+            tip:'If it looks messy, ask: “Is there an identity hiding here?”' }
+};
+
+/* ------------------------------
+   Problem bank
+   Each problem includes a STEP CHECK (MCQ) so learning can't be bypassed.
+--------------------------------*/
+const PROBLEMS = {
+  usub: [
+    {
+      id:'u1', diff:'easy',
+      text:'∫ 2x·cos(x^2) dx',
+      latex:'\int 2x\,\cos(x^{2})\,dx',
+      technique:'usub',
+      hint:'Look for an inner function whose derivative is sitting outside.',
+      mapping:[
+        ['Template','∫ f(g(x)) g\'(x) dx'],
+        ['Inner g(x)','x^2'],
+        ['Outside g\'(x)','2x'],
+        ['Substitute','u = x^2, du = 2x dx']
+      ],
+      check:{
+        prompt:'What substitution u makes this integral a one-step integral?',
+        choices:['u = x^2','u = cos(x^2)','u = 2x','u = sin(x)'],
+        correct:0,
+        explain:'Because d/dx(x^2)=2x matches the outside factor.'
+      },
+      solution:'u=x^2 → du=2x dx → ∫cos(u) du = sin(u)+C = sin(x^2)+C'
+    },
+    {
+      id:'u2', diff:'easy',
+      text:'∫ cos(x)·sin^3(x) dx',
+      latex:'\int \cos(x)\,\sin^{3}(x)\,dx',
+      technique:'usub',
+      hint:'See sin^3(x) with a cos(x) dx — that’s derivative of sin(x).',
+      mapping:[
+        ['Inner g(x)','sin(x)'],
+        ['Outside g\'(x)','cos(x)'],
+        ['Substitute','u = sin(x), du = cos(x) dx']
+      ],
+      check:{
+        prompt:'Pick the best u-substitution:',
+        choices:['u = sin(x)','u = cos(x)','u = x','u = sin^3(x)'],
+        correct:0,
+        explain:'du = cos(x) dx is exactly present.'
+      },
+      solution:'u=sin x → du=cos x dx → ∫u^3 du = u^4/4 + C = sin^4(x)/4 + C'
+    },
+    {
+      id:'u3', diff:'medium',
+      text:'∫ (3x^2)/(1+x^3) dx',
+      latex:'\int \frac{3x^{2}}{1+x^{3}}\,dx',
+      technique:'usub',
+      hint:'Derivative of the denominator is on top.',
+      mapping:[
+        ['Inner g(x)','1+x^3'],
+        ['Outside g\'(x)','3x^2'],
+        ['Substitute','u = 1+x^3, du = 3x^2 dx']
+      ],
+      check:{
+        prompt:'After u = 1+x^3, what does the integral become?',
+        choices:['∫ (1/u) du','∫ u du','∫ u^2 du','∫ ln(u) du'],
+        correct:0,
+        explain:'3x^2 dx becomes du, leaving 1/u.'
+      },
+      solution:'u=1+x^3 → ∫1/u du = ln|u|+C = ln|1+x^3|+C'
+    },
+    {
+      id:'u4', diff:'medium',
+      text:'∫ x/√(1+x^2) dx',
+      latex:'\int \frac{x}{\sqrt{1+x^{2}}}\,dx',
+      technique:'usub',
+      hint:'Inside the root is 1+x^2; its derivative is 2x.',
+      mapping:[
+        ['Inner g(x)','1+x^2'],
+        ['Outside g\'(x)','2x (up to constant)'],
+        ['Substitute','u = 1+x^2, du = 2x dx']
+      ],
+      check:{
+        prompt:'Choose u so du matches the numerator (up to a constant):',
+        choices:['u = 1+x^2','u = √(1+x^2)','u = x','u = 1/x'],
+        correct:0,
+        explain:'du = 2x dx, so x dx = (1/2)du.'
+      },
+      solution:'u=1+x^2 → (1/2)∫u^{-1/2} du = √(u)+C = √(1+x^2)+C'
+    },
+    {
+      id:'u5', diff:'hard',
+      text:'∫ e^{x}/(1+e^{x}) dx',
+      latex:'\int \frac{e^{x}}{1+e^{x}}\,dx',
+      technique:'usub',
+      hint:'The denominator is 1+e^x and its derivative is e^x.',
+      mapping:[
+        ['Inner g(x)','1+e^x'],
+        ['Outside g\'(x)','e^x'],
+        ['Substitute','u = 1+e^x, du = e^x dx']
+      ],
+      check:{
+        prompt:'After u = 1+e^x, the integral becomes:',
+        choices:['∫ (1/u) du','∫ u du','∫ (1/(u-1)) du','∫ ln(u) du'],
+        correct:0,
+        explain:'e^x dx = du so you get ∫1/u du.'
+      },
+      solution:'u=1+e^x → ln|u| + C = ln(1+e^x)+C'
+    },
+    {
+      id:'u6', diff:'easy',
+      text:'∫ sin(x)·cos(x) dx',
+      latex:'\\int \\sin(x)\\cos(x)\\,dx',
+      technique:'usub',
+      hint:'Either sin or cos works as u — pick your favorite!',
+      mapping:[
+        ['Inner g(x)','sin(x)'],
+        ['Outside g\'(x)','cos(x)'],
+        ['Substitute','u = sin(x), du = cos(x) dx']
+      ],
+      check:{
+        prompt:'Which substitution works here?',
+        choices:['u = sin(x)','u = sin(x)cos(x)','u = x','u = tan(x)'],
+        correct:0,
+        explain:'du = cos(x) dx is right there.'
+      },
+      solution:'u=sin(x) → ∫u du = u²/2 + C = sin²(x)/2 + C'
+    },
+    {
+      id:'u7', diff:'medium',
+      text:'∫ x·e^{x²} dx',
+      latex:'\\int x e^{x^{2}}\\,dx',
+      technique:'usub',
+      hint:'The exponent x² has derivative 2x — close to what\'s outside.',
+      mapping:[
+        ['Inner g(x)','x²'],
+        ['Outside g\'(x)','2x (need factor of 1/2)'],
+        ['Substitute','u = x², du = 2x dx']
+      ],
+      check:{
+        prompt:'After u = x², what\'s the integral?',
+        choices:['(1/2)∫ eᵘ du','∫ eᵘ du','∫ u·eᵘ du','2∫ eᵘ du'],
+        correct:0,
+        explain:'x dx = (1/2) du, so factor of 1/2 comes out.'
+      },
+      solution:'u=x² → (1/2)∫eᵘ du = (1/2)eᵘ + C = (1/2)e^{x²} + C'
+    },
+    {
+      id:'u8', diff:'medium',
+      text:'∫ ln(x)/x dx',
+      latex:'\\int \\frac{\\ln(x)}{x}\\,dx',
+      technique:'usub',
+      hint:'The derivative of ln(x) is 1/x — it\'s sitting right there!',
+      mapping:[
+        ['Inner g(x)','ln(x)'],
+        ['Outside g\'(x)','1/x'],
+        ['Substitute','u = ln(x), du = (1/x) dx']
+      ],
+      check:{
+        prompt:'What is u for this integral?',
+        choices:['u = ln(x)','u = 1/x','u = x','u = x·ln(x)'],
+        correct:0,
+        explain:'du = (1/x) dx matches the denominator.'
+      },
+      solution:'u=ln(x) → ∫u du = u²/2 + C = (ln(x))²/2 + C'
+    },
+    {
+      id:'u9', diff:'hard',
+      text:'∫ sec²(x)·tan(x) dx',
+      latex:'\\int \\sec^{2}(x)\\tan(x)\\,dx',
+      technique:'usub',
+      hint:'Derivative of tan(x) is sec²(x) — perfect match!',
+      mapping:[
+        ['Inner g(x)','tan(x)'],
+        ['Outside g\'(x)','sec²(x)'],
+        ['Substitute','u = tan(x), du = sec²(x) dx']
+      ],
+      check:{
+        prompt:'Best substitution here:',
+        choices:['u = tan(x)','u = sec(x)','u = sec²(x)','u = sin(x)/cos(x)'],
+        correct:0,
+        explain:'d/dx[tan(x)] = sec²(x) exactly.'
+      },
+      solution:'u=tan(x) → ∫u du = u²/2 + C = tan²(x)/2 + C'
+    },
+  ],
+
+  parts: [
+    {
+      id:'p1', diff:'easy',
+      text:'∫ x·e^x dx',
+      latex:'\int x e^{x}\,dx',
+      technique:'parts',
+      hint:'Product of algebraic and exponential — classic parts.',
+      mapping:[
+        ['Formula','∫ u dv = uv − ∫ v du'],
+        ['Choose','u=x, dv=e^x dx'],
+        ['Then','du=dx, v=e^x']
+      ],
+      check:{
+        prompt:'Best choice of u and dv?',
+        choices:[
+          'u = x,   dv = e^x dx',
+          'u = e^x, dv = x dx',
+          'u = x e^x, dv = dx',
+          'u = 1, dv = x e^x dx'
+        ],
+        correct:0,
+        explain:'Differentiating x simplifies; integrating e^x is easy.'
+      },
+      solution:'u=x, dv=e^x dx → uv − ∫vdu = x e^x − ∫ e^x dx = x e^x − e^x + C'
+    },
+    {
+      id:'p2', diff:'easy',
+      text:'∫ x·sin(x) dx',
+      latex:'\int x\sin(x)\,dx',
+      technique:'parts',
+      hint:'Product of x and sin(x). Parts turns sin into -cos.',
+      mapping:[
+        ['Choose','u=x, dv=sin(x) dx'],
+        ['Then','du=dx, v=−cos(x)']
+      ],
+      check:{
+        prompt:'If u=x and dv=sin(x)dx, then v equals:',
+        choices:['v = −cos(x)','v = cos(x)','v = −sin(x)','v = x cos(x)'],
+        correct:0,
+        explain:'∫sin(x) dx = −cos(x).'
+      },
+      solution:'= -x cos x + ∫cos x dx = -x cos x + sin x + C'
+    },
+    {
+      id:'p3', diff:'medium',
+      text:'∫ ln(x) dx',
+      latex:'\int \ln(x)\,dx',
+      technique:'parts',
+      hint:'Treat ln(x) as a product ln(x)·1.',
+      mapping:[
+        ['Choose','u=ln(x), dv=1 dx'],
+        ['Then','du=1/x dx, v=x']
+      ],
+      check:{
+        prompt:'Write ln(x) as a product for parts:',
+        choices:['ln(x)·1','ln(x)·x','(1/x)·ln(x)','ln(x)·e^x'],
+        correct:0,
+        explain:'Use dv=1 dx so v=x.'
+      },
+      solution:'= x ln x − ∫ x·(1/x) dx = x ln x − ∫1 dx = x ln x − x + C'
+    },
+    {
+      id:'p4', diff:'medium',
+      text:'∫ x^2·e^x dx',
+      latex:'\int x^{2} e^{x}\,dx',
+      technique:'parts',
+      hint:'You’ll use parts more than once (reduce power).',
+      mapping:[
+        ['Choose','u=x^2, dv=e^x dx'],
+        ['Then','du=2x dx, v=e^x']
+      ],
+      check:{
+        prompt:'If u=x^2 and dv=e^x dx, then du is:',
+        choices:['du = 2x dx','du = x dx','du = 2 dx','du = e^x dx'],
+        correct:0,
+        explain:'d/dx(x^2)=2x.'
+      },
+      solution:'x^2 e^x − ∫2x e^x dx (then parts again) = e^x(x^2 − 2x + 2)+C'
+    },
+    {
+      id:'p5', diff:'hard',
+      text:'∫ e^x·cos(x) dx',
+      latex:'\int e^{x}\cos(x)\,dx',
+      technique:'parts',
+      hint:'Parts twice creates a loop; solve algebraically.',
+      mapping:[
+        ['Idea','Let I = ∫ e^x cos x dx, do parts twice'],
+        ['Result','I = e^x(sin x + cos x)/2 + C']
+      ],
+      check:{
+        prompt:'What happens after doing parts twice on ∫ e^x cos x dx?',
+        choices:[
+          'The original integral I reappears (a loop)',
+          'It becomes a u-sub integral',
+          'It becomes a partial fractions problem',
+          'It becomes an improper integral'
+        ],
+        correct:0,
+        explain:'You get I on both sides, then solve for I.'
+      },
+      solution:'I = (e^x(sin x + cos x))/2 + C'
+    },
+    {
+      id:'p6', diff:'easy',
+      text:'∫ x·sin(x) dx',
+      latex:'\\int x\\sin(x)\\,dx',
+      technique:'parts',
+      hint:'Algebraic times trig — let u = x (the algebraic part).',
+      mapping:[
+        ['Formula','∫ u dv = uv − ∫ v du'],
+        ['Choose','u = x, dv = sin(x) dx'],
+        ['Then','du = dx, v = −cos(x)']
+      ],
+      check:{
+        prompt:'For ∫ x·sin(x) dx, which choice of u works best?',
+        choices:['u = x','u = sin(x)','u = x·sin(x)','u = cos(x)'],
+        correct:0,
+        explain:'u = x simplifies when differentiated.'
+      },
+      solution:'−x·cos(x) + ∫cos(x)dx = −x·cos(x) + sin(x) + C'
+    },
+    {
+      id:'p7', diff:'medium',
+      text:'∫ x²·e^x dx',
+      latex:'\\int x^{2}e^{x}\\,dx',
+      technique:'parts',
+      hint:'You\'ll need to apply parts twice since x² → 2x → 2.',
+      mapping:[
+        ['First round','u = x², dv = e^x dx'],
+        ['Second round','u = 2x, dv = e^x dx'],
+        ['Pattern','Each round reduces the power']
+      ],
+      check:{
+        prompt:'How many times do you apply parts for ∫ x²·eˣ dx?',
+        choices:['Twice','Once','Three times','It loops forever'],
+        correct:0,
+        explain:'x² → 2x → 2 → 0, so two rounds.'
+      },
+      solution:'x²eˣ − 2xeˣ + 2eˣ + C = eˣ(x² − 2x + 2) + C'
+    },
+    {
+      id:'p8', diff:'medium',
+      text:'∫ arctan(x) dx',
+      latex:'\\int \\arctan(x)\\,dx',
+      technique:'parts',
+      hint:'Write as arctan(x)·1 and let u = arctan(x), dv = dx.',
+      mapping:[
+        ['Trick','Rewrite as ∫ arctan(x)·1 dx'],
+        ['Choose','u = arctan(x), dv = dx'],
+        ['Then','du = 1/(1+x²) dx, v = x']
+      ],
+      check:{
+        prompt:'For ∫ arctan(x) dx, what is dv?',
+        choices:['dv = dx','dv = arctan(x) dx','dv = 1/(1+x²) dx','dv = x dx'],
+        correct:0,
+        explain:'The "invisible 1" trick: dv = 1·dx = dx.'
+      },
+      solution:'x·arctan(x) − ∫ x/(1+x²) dx = x·arctan(x) − (1/2)ln(1+x²) + C'
+    },
+    {
+      id:'p9', diff:'hard',
+      text:'∫ e^x·sin(x) dx',
+      latex:'\\int e^{x}\\sin(x)\\,dx',
+      technique:'parts',
+      hint:'Like e^x·cos(x), this loops — apply parts twice and solve for I.',
+      mapping:[
+        ['Setup','Let I = ∫ eˣ sin(x) dx'],
+        ['Parts twice','I appears on both sides'],
+        ['Solve','2I = eˣ(sin x − cos x), so I = ...']
+      ],
+      check:{
+        prompt:'After parts twice on ∫ eˣ sin(x) dx, you get:',
+        choices:['I = −I + eˣ(sin x − cos x)','I = 0','I = eˣ','I diverges'],
+        correct:0,
+        explain:'The loop lets you solve: 2I = eˣ(sin x − cos x).'
+      },
+      solution:'I = (eˣ(sin x − cos x))/2 + C'
+    }
+  ],
+
+  partial: [
+    {
+      id:'f1', diff:'easy',
+      text:'∫ 1/(x^2−1) dx',
+      latex:'\int \frac{1}{x^{2}-1}\,dx',
+      technique:'partial',
+      hint:'Factor the denominator: x^2−1 = (x−1)(x+1).',
+      mapping:[
+        ['Factor','x^2−1=(x−1)(x+1)'],
+        ['Split','A/(x−1)+B/(x+1)']
+      ],
+      check:{
+        prompt:'First step for partial fractions is:',
+        choices:['Factor the denominator','Trig identity','u = x^2−1','x = a sinθ'],
+        correct:0,
+        explain:'Partials starts with factoring Q(x).'
+      },
+      solution:'1/(x^2−1)=1/2·(1/(x−1) − 1/(x+1)) → (1/2)ln|(x−1)/(x+1)|+C'
+    },
+    {
+      id:'f2', diff:'easy',
+      text:'∫ 3/(x+2) dx',
+      latex:'\int \frac{3}{x+2}\,dx',
+      technique:'partial',
+      alts:[
+  {
+    technique:'usub',
+    hint:'Alternate: treat (x+2) as the inner expression and use u = x+2.',
+    mapping:[
+      ['Set','u = x+2, du = dx'],
+      ['Rewrite','∫ 3/u du'],
+      ['Integrate','3 ln|u| + C']
+    ],
+    check:{
+      prompt:'Pick the best u-substitution:',
+      choices:['u = x+2','u = 3/(x+2)','u = ln(x+2)','u = 3x+2'],
+      correct:0,
+      explain:'u = x+2 turns it into ∫ 3/u du.'
+    },
+    solution:'u=x+2 → ∫ 3/u du = 3 ln|x+2| + C'
+  }
+],
+
+      hint:'This is already a single partial fraction form.',
+      mapping:[
+        ['Form','∫ 1/(x+a) dx = ln|x+a| + C'],
+        ['Here','3 ln|x+2| + C']
+      ],
+      check:{
+        prompt:'Which antiderivative matches ∫ 3/(x+2) dx ?',
+        choices:['3 ln|x+2| + C','ln|3x+2| + C','(3/(x+2)) + C','(x+2)^3 + C'],
+        correct:0,
+        explain:'Constant multiple rule + log form.'
+      },
+      solution:'3 ln|x+2| + C'
+    },
+    {
+      id:'f3', diff:'medium',
+      text:'∫ (2x+1)/(x^2+1) dx',
+      latex:'\int \frac{2x+1}{x^{2}+1}\,dx',
+      technique:'partial',
+      alts:[
+  {
+    technique:'algebra',
+    hint:'Alternate: classify as “Simplify First” — split it, then integrate the pieces.'
+  }
+],
+
+      hint:'This one has two valid paths; we’ll treat it as “decompose” or “split then u-sub.”',
+      mapping:[
+        ['Split','(2x)/(x^2+1) + 1/(x^2+1)'],
+        ['Then','ln(x^2+1) + arctan(x) + C']
+      ],
+      check:{
+        prompt:'A smart first move is to rewrite it as:',
+        choices:[
+          '(2x)/(x^2+1) + 1/(x^2+1)',
+          '(2x+1)/(x+1)(x-1)',
+          '1/(2x+1) · 1/(x^2+1)',
+          'cos(x)/(sin(x))'
+        ],
+        correct:0,
+        explain:'Splitting reveals a u-sub piece plus an arctan piece.'
+      },
+      solution:'ln(x^2+1) + arctan(x) + C'
+    },
+    {
+      id:'f4', diff:'medium',
+      text:'∫ (5x+3)/(x^2+3x+2) dx',
+      latex:'\int \frac{5x+3}{x^{2}+3x+2}\,dx',
+      technique:'partial',
+      hint:'Factor denominator, then decompose.',
+      mapping:[
+        ['Factor','x^2+3x+2=(x+1)(x+2)'],
+        ['Split','A/(x+1)+B/(x+2)']
+      ],
+      check:{
+        prompt:'Factor x^2+3x+2:',
+        choices:['(x+1)(x+2)','(x-1)(x-2)','(x+3)(x+? )','It is prime'],
+        correct:0,
+        explain:'Find two numbers that multiply to 2 and add to 3.'
+      },
+      solution:'Decompose → A=-2, B=7 → -2 ln|x+1| + 7 ln|x+2| + C'
+    },
+    {
+      id:'f5', diff:'hard',
+      text:'∫ 1/(x(x−1)) dx',
+      latex:'\int \frac{1}{x(x-1)}\,dx',
+      technique:'partial',
+      hint:'Two linear factors → A/x + B/(x−1).',
+      mapping:[
+        ['Decompose','1/(x(x−1)) = A/x + B/(x−1)'],
+        ['Solve','A = −1, B = 1']
+      ],
+      check:{
+        prompt:'Correct decomposition form is:',
+        choices:['A/x + B/(x−1)','A/(x^2) + B/(x−1)','A/(x+1) + B/(x+2)','A/(x−1)^2 + B'],
+        correct:0,
+        explain:'Two distinct linear factors get simple terms.'
+      },
+      solution:'= −ln|x| + ln|x−1| + C = ln|(x−1)/x| + C'
+    },
+    {
+      id:'f6', diff:'easy',
+      text:'∫ 1/(x²−4) dx',
+      latex:'\\int \\frac{1}{x^{2}-4}\\,dx',
+      technique:'partial',
+      hint:'Factor: x²−4 = (x−2)(x+2), then split.',
+      mapping:[
+        ['Factor','x²−4 = (x−2)(x+2)'],
+        ['Split','A/(x−2) + B/(x+2)'],
+        ['Solve','A = 1/4, B = −1/4']
+      ],
+      check:{
+        prompt:'x² − 4 factors as:',
+        choices:['(x−2)(x+2)','(x−4)(x+1)','(x−1)(x+4)','x(x−4)'],
+        correct:0,
+        explain:'Difference of squares: a²−b² = (a−b)(a+b).'
+      },
+      solution:'(1/4)ln|x−2| − (1/4)ln|x+2| + C = (1/4)ln|(x−2)/(x+2)| + C'
+    },
+    {
+      id:'f7', diff:'medium',
+      text:'∫ x/(x²−1) dx',
+      latex:'\\int \\frac{x}{x^{2}-1}\\,dx',
+      technique:'partial',
+      alts:[{
+        technique:'usub',
+        hint:'Alternate: u = x²−1 works directly since du = 2x dx.',
+        mapping:[['Set','u = x²−1, du = 2x dx']],
+        check:{prompt:'For u-sub, u = ?',choices:['x²−1','x','x−1','1/(x²−1)'],correct:0,explain:'du = 2x dx.'},
+        solution:'(1/2)ln|x²−1| + C'
+      }],
+      hint:'Can use partials OR u-sub. Partials: factor denominator first.',
+      mapping:[
+        ['Factor','x²−1 = (x−1)(x+1)'],
+        ['Split','A/(x−1) + B/(x+1)'],
+        ['Or','u-sub with u = x²−1']
+      ],
+      check:{
+        prompt:'Which approach is faster here?',
+        choices:['u-sub (u = x²−1)','Long division','Trig substitution','Complete the square'],
+        correct:0,
+        explain:'The numerator x is (almost) the derivative of x²−1.'
+      },
+      solution:'(1/2)ln|x²−1| + C'
+    },
+    {
+      id:'f8', diff:'medium',
+      text:'∫ 1/(x(x+1)) dx',
+      latex:'\\int \\frac{1}{x(x+1)}\\,dx',
+      technique:'partial',
+      hint:'Already factored! Set up A/x + B/(x+1).',
+      mapping:[
+        ['Form','A/x + B/(x+1)'],
+        ['Cover-up','A = 1 (set x=0), B = −1 (set x=−1)'],
+        ['Integrate','ln|x| − ln|x+1|']
+      ],
+      check:{
+        prompt:'Using cover-up: when x = 0, we get A = ?',
+        choices:['1','0','−1','1/2'],
+        correct:0,
+        explain:'1/(0+1) = 1, so A = 1.'
+      },
+      solution:'ln|x| − ln|x+1| + C = ln|x/(x+1)| + C'
+    },
+    {
+      id:'f9', diff:'hard',
+      text:'∫ (x+1)/(x²+x) dx',
+      latex:'\\int \\frac{x+1}{x^{2}+x}\\,dx',
+      technique:'partial',
+      alts:[{
+        technique:'usub',
+        hint:'Notice: x²+x has derivative 2x+1. The numerator x+1 is close!',
+        mapping:[['Rewrite','Adjust for the derivative']],
+        check:{prompt:'Is the numerator the derivative of denominator?',choices:['Almost — off by factor of 2','Exactly','Not at all','Need to add x'],correct:0,explain:'d/dx(x²+x) = 2x+1, numerator is x+1.'},
+        solution:'Needs adjustment or split approach'
+      }],
+      hint:'Factor denominator: x²+x = x(x+1). Notice numerator = x+1.',
+      mapping:[
+        ['Factor','x²+x = x(x+1)'],
+        ['Simplify','(x+1)/(x(x+1)) = 1/x'],
+        ['Integrate','ln|x|']
+      ],
+      check:{
+        prompt:'After factoring, this integral simplifies to:',
+        choices:['∫ 1/x dx','∫ 1/(x+1) dx','∫ x dx','∫ (x+1) dx'],
+        correct:0,
+        explain:'The (x+1) cancels!'
+      },
+      solution:'= ∫ 1/x dx = ln|x| + C'
+    },
+  ],
+
+  trig: [
+    {
+      id:'t1', diff:'easy',
+      text:'∫ 1/√(9−x^2) dx',
+      latex:'\int \frac{1}{\sqrt{9-x^{2}}}\,dx',
+      technique:'trig',
+      hint:'This is √(a²−x²) with a=3 → x=3 sinθ.',
+      mapping:[
+        ['Form','√(a²−x²)'],
+        ['Substitute','x = a sinθ'],
+        ['Here','x = 3 sinθ']
+      ],
+      check:{
+        prompt:'Which substitution matches √(a²−x²)?',
+        choices:['x = a sinθ','x = a tanθ','x = a secθ','u = 9−x^2'],
+        correct:0,
+        explain:'a²−x² pairs with sin.'
+      },
+      solution:'= arcsin(x/3) + C'
+    },
+    {
+      id:'t2', diff:'easy',
+      text:'∫ 1/(x^2+4) dx',
+      latex:'\int \frac{1}{x^{2}+4}\,dx',
+      technique:'trig',
+      hint:'x^2+a^2 form leads to arctan, but trig-sub uses x=2 tanθ.',
+      mapping:[
+        ['Form','x^2 + a^2'],
+        ['Substitute','x = a tanθ'],
+        ['Here','x = 2 tanθ']
+      ],
+      check:{
+        prompt:'This resembles x^2 + a^2 with a =',
+        choices:['2','4','1','3'],
+        correct:0,
+        explain:'a^2=4 ⇒ a=2.'
+      },
+      solution:'= (1/2) arctan(x/2) + C'
+    },
+    {
+      id:'t3', diff:'medium',
+      text:'∫ √(16−x^2) dx',
+      latex:'\int \sqrt{16-x^{2}}\,dx',
+      technique:'trig',
+      hint:'Use x=4 sinθ then use trig identity; area-of-circle style result.',
+      mapping:[
+        ['Substitute','x=4 sinθ'],
+        ['Identity','√(16−16 sin^2θ)=4 cosθ']
+      ],
+      check:{
+        prompt:'If x=4 sinθ, then √(16−x^2) becomes:',
+        choices:['4 cosθ','4 sinθ','16 cosθ','√(16)'],
+        correct:0,
+        explain:'√(16(1−sin^2θ))=4|cosθ| (take cosθ on interval).'
+      },
+      solution:'= (x/2)√(16−x^2) + 8 arcsin(x/4) + C'
+    },
+    {
+      id:'t4', diff:'medium',
+      text:'∫ 1/√(x^2−9) dx',
+      latex:'\int \frac{1}{\sqrt{x^{2}-9}}\,dx',
+      technique:'trig',
+      hint:'√(x²−a²) → x=a secθ. Antiderivative is ln|x+√(x²−a²)|.',
+      mapping:[
+        ['Form','√(x²−a²)'],
+        ['Substitute','x = a secθ'],
+        ['Here','x = 3 secθ']
+      ],
+      check:{
+        prompt:'Which substitution matches √(x²−a²)?',
+        choices:['x = a secθ','x = a sinθ','x = a tanθ','u = x^2−9'],
+        correct:0,
+        explain:'x²−a² pairs with sec.'
+      },
+      solution:'= ln|x + √(x²−9)| + C'
+    },
+    {
+      id:'t5', diff:'hard',
+      text:'∫ x^2/√(x^2+1) dx',
+      latex:'\int \frac{x^{2}}{\sqrt{x^{2}+1}}\,dx',
+      technique:'trig',
+      hint:'x=tanθ simplifies √(x²+1).',
+      mapping:[
+        ['Substitute','x = tanθ'],
+        ['Then','√(x²+1)=secθ']
+      ],
+      check:{
+        prompt:'If x=tanθ, then √(x²+1) becomes:',
+        choices:['secθ','cscθ','tanθ','cosθ'],
+        correct:0,
+        explain:'1+tan²θ = sec²θ.'
+      },
+      solution:'(1/2)(x√(x²+1) − ln|x+√(x²+1)|) + C'
+    },
+    {
+      id:'t6', diff:'easy',
+      text:'∫ 1/√(4−x²) dx',
+      latex:'\\int \\frac{1}{\\sqrt{4-x^{2}}}\\,dx',
+      technique:'trig',
+      hint:'√(a²−x²) form with a = 2 → use x = 2sinθ.',
+      mapping:[
+        ['Form','√(a²−x²) where a = 2'],
+        ['Substitute','x = 2sinθ, dx = 2cosθ dθ'],
+        ['Simplify','√(4−4sin²θ) = 2cosθ']
+      ],
+      check:{
+        prompt:'For √(4−x²), the correct substitution is:',
+        choices:['x = 2sinθ','x = 2tanθ','x = 2secθ','x = 4sinθ'],
+        correct:0,
+        explain:'√(a²−x²) uses x = a·sinθ.'
+      },
+      solution:'arcsin(x/2) + C'
+    },
+    {
+      id:'t7', diff:'medium',
+      text:'∫ 1/(x²+9) dx',
+      latex:'\\int \\frac{1}{x^{2}+9}\\,dx',
+      technique:'trig',
+      hint:'x²+a² form with a = 3 → use x = 3tanθ or recognize arctan.',
+      mapping:[
+        ['Form','x² + a² where a = 3'],
+        ['Substitute','x = 3tanθ'],
+        ['Or','Recognize as (1/a)arctan(x/a)']
+      ],
+      check:{
+        prompt:'∫ 1/(x²+a²) dx equals:',
+        choices:['(1/a)arctan(x/a) + C','arcsin(x/a) + C','ln|x²+a²| + C','(1/2a)ln|x+a| + C'],
+        correct:0,
+        explain:'Standard form: 1/(x²+a²) → (1/a)arctan(x/a).'
+      },
+      solution:'(1/3)arctan(x/3) + C'
+    },
+    {
+      id:'t8', diff:'medium',
+      text:'∫ x²/√(1−x²) dx',
+      latex:'\\int \\frac{x^{2}}{\\sqrt{1-x^{2}}}\\,dx',
+      technique:'trig',
+      hint:'√(1−x²) means x = sinθ. Then x² = sin²θ.',
+      mapping:[
+        ['Substitute','x = sinθ, dx = cosθ dθ'],
+        ['Simplify','√(1−sin²θ) = cosθ'],
+        ['Result','∫ sin²θ dθ']
+      ],
+      check:{
+        prompt:'After x = sinθ, the integral becomes:',
+        choices:['∫ sin²θ dθ','∫ cos²θ dθ','∫ tanθ dθ','∫ θ dθ'],
+        correct:0,
+        explain:'x² = sin²θ, and √(1−x²) = cosθ cancels with dx.'
+      },
+      solution:'(1/2)arcsin(x) − (x/2)√(1−x²) + C'
+    },
+    {
+      id:'t9', diff:'hard',
+      text:'∫ √(x²−9)/x dx',
+      latex:'\\int \\frac{\\sqrt{x^{2}-9}}{x}\\,dx',
+      technique:'trig',
+      hint:'√(x²−a²) form with a = 3 → use x = 3secθ.',
+      mapping:[
+        ['Form','√(x²−a²) where a = 3'],
+        ['Substitute','x = 3secθ, dx = 3secθtanθ dθ'],
+        ['Simplify','√(9sec²θ−9) = 3tanθ']
+      ],
+      check:{
+        prompt:'For √(x²−9), which substitution?',
+        choices:['x = 3secθ','x = 3sinθ','x = 3tanθ','x = 9secθ'],
+        correct:0,
+        explain:'√(x²−a²) uses x = a·secθ.'
+      },
+      solution:'√(x²−9) − 3·arcsec(x/3) + C'
+    },
+  ],
+
+  algebra: [
+    {
+      id:'a1', diff:'easy',
+      text:'∫ sin^2(x) dx',
+      latex:'\int \sin^{2}(x)\,dx',
+      technique:'algebra',
+      hint:'Use the half-angle identity: sin²x = (1−cos2x)/2.',
+      mapping:[
+        ['Identity','sin²x = (1−cos2x)/2'],
+        ['Then','Split integral into two easy parts']
+      ],
+      check:{
+        prompt:'Which identity is most helpful?',
+        choices:[
+          'sin²x = (1−cos2x)/2',
+          'sin²x = 1−sin x',
+          'sin²x = cos x',
+          'sin²x = (1+cos x)/2'
+        ],
+        correct:0,
+        explain:'Half-angle turns sin² into constant + cos.'
+      },
+      solution:'= x/2 − (sin2x)/4 + C'
+    },
+    {
+      id:'a2', diff:'easy',
+      text:'∫ (x+1)^2 dx',
+      latex:'\int (x+1)^{2}\,dx',
+      technique:'algebra',
+      hint:'Expand (x+1)^2 then integrate term-by-term.',
+      mapping:[
+        ['Expand','(x+1)^2 = x^2 + 2x + 1'],
+        ['Then','Integrate each term']
+      ],
+      check:{
+        prompt:'Expand (x+1)^2:',
+        choices:['x^2+2x+1','x^2+1','x^2+2','x^2+x+1'],
+        correct:0,
+        explain:'(a+b)^2=a^2+2ab+b^2.'
+      },
+      solution:'= x^3/3 + x^2 + x + C'
+    },
+    {
+      id:'a3', diff:'medium',
+      text:'∫ (x^2−1)/x dx',
+      latex:'\int \frac{x^{2}-1}{x}\,dx',
+      technique:'algebra',
+      hint:'Simplify first: (x^2−1)/x = x − 1/x.',
+      mapping:[
+        ['Simplify','(x^2−1)/x = x − 1/x'],
+        ['Then','Integrate: ∫x dx − ∫1/x dx']
+      ],
+      check:{
+        prompt:'Rewrite (x^2−1)/x as:',
+        choices:['x − 1/x','x + 1/x','(x−1)^2','1 − x'],
+        correct:0,
+        explain:'Divide each term by x.'
+      },
+      solution:'= x^2/2 − ln|x| + C'
+    },
+    {
+      id:'a4', diff:'medium',
+      text:'∫ sin(x)·cos(x) dx',
+      latex:'\int \sin(x)\cos(x)\,dx',
+      technique:'algebra',
+      alts:[
+  {
+    technique:'usub',
+    hint:'Alternate: u-sub works too (either u=sin x or u=cos x).',
+    mapping:[
+      ['Choose','u = sin x (or u = cos x)'],
+      ['Then','du = cos x dx (or du = -sin x dx)'],
+      ['Integrate','∫ u du = u^2/2 + C']
+    ],
+    check:{
+      prompt:'Pick a valid u-substitution:',
+      choices:['u = sin(x)','u = cos(x)','u = tan(x)','u = x'],
+      correct:[0,1],
+      explain:'Both u=sin x and u=cos x work (each gives a simple ∫u du).'
+    },
+    solution:'u=sin x → du=cos x dx → ∫u du = (1/2)sin^2(x)+C (also works with u=cos x)'
+  }
+],
+
+      hint:'Rewrite using sin(2x)=2sinx cosx or do u-sub. Here we treat as simplify identity.',
+      mapping:[
+        ['Identity','sin(2x)=2 sin x cos x'],
+        ['So','sin x cos x = (1/2) sin(2x)']
+      ],
+      check:{
+        prompt:'sin(x)cos(x) equals:',
+        choices:['(1/2)sin(2x)','sin(2x)','(1/2)cos(2x)','cos(x^2)'],
+        correct:0,
+        explain:'Double-angle identity.'
+      },
+      solution:'= −(1/4)cos(2x)+C'
+    },
+    {
+      id:'a5', diff:'hard',
+      text:'∫ 1/(1+sin x) dx',
+      latex:'\int \frac{1}{1+\sin x}\,dx',
+      technique:'algebra',
+      hint:'Multiply by conjugate (1−sin x)/(1−sin x) to simplify.',
+      mapping:[
+        ['Trick','Multiply by (1−sin x)/(1−sin x)'],
+        ['Then','Get (1−sin x)/cos²x = sec²x − sec x tan x']
+      ],
+      check:{
+        prompt:'The conjugate trick uses:',
+        choices:[
+          '(1−sin x)/(1−sin x)',
+          '(1+sin x)/(1+sin x)',
+          '(1−cos x)/(1−cos x)',
+          '(1+cos x)/(1+cos x)'
+        ],
+        correct:0,
+        explain:'Conjugate makes denominator 1−sin²x = cos²x.'
+      },
+      solution:'= tan x − sec x + C'
+    },
+    {
+      id:'a6', diff:'easy',
+      text:'∫ (x²+1)/x dx',
+      latex:'\\int \\frac{x^{2}+1}{x}\\,dx',
+      technique:'algebra',
+      hint:'Split the fraction: (x²+1)/x = x + 1/x.',
+      mapping:[
+        ['Split','(x²+1)/x = x²/x + 1/x = x + 1/x'],
+        ['Integrate','x²/2 + ln|x|']
+      ],
+      check:{
+        prompt:'First step is to rewrite as:',
+        choices:['x + 1/x','x² + 1/x','1 + 1/x²','x/(x²+1)'],
+        correct:0,
+        explain:'Divide each term by x.'
+      },
+      solution:'x²/2 + ln|x| + C'
+    },
+    {
+      id:'a7', diff:'easy',
+      text:'∫ tan²(x) dx',
+      latex:'\\int \\tan^{2}(x)\\,dx',
+      technique:'algebra',
+      hint:'Use identity: tan²x = sec²x − 1.',
+      mapping:[
+        ['Identity','tan²x = sec²x − 1'],
+        ['Split','∫ sec²x dx − ∫ 1 dx'],
+        ['Integrate','tan x − x']
+      ],
+      check:{
+        prompt:'tan²x equals:',
+        choices:['sec²x − 1','1 − sec²x','csc²x − 1','1 + sec²x'],
+        correct:0,
+        explain:'From 1 + tan²x = sec²x.'
+      },
+      solution:'tan(x) − x + C'
+    },
+    {
+      id:'a8', diff:'medium',
+      text:'∫ (e^x − 1)/e^x dx',
+      latex:'\\int \\frac{e^{x}-1}{e^{x}}\\,dx',
+      technique:'algebra',
+      hint:'Split: (eˣ−1)/eˣ = 1 − e^(−x).',
+      mapping:[
+        ['Split','eˣ/eˣ − 1/eˣ = 1 − e^(−x)'],
+        ['Integrate','x + e^(−x)']
+      ],
+      check:{
+        prompt:'(eˣ − 1)/eˣ simplifies to:',
+        choices:['1 − e^(−x)','eˣ − 1','1 − eˣ','e^(−x) − 1'],
+        correct:0,
+        explain:'eˣ/eˣ = 1 and 1/eˣ = e^(−x).'
+      },
+      solution:'x + e^(−x) + C'
+    },
+    {
+      id:'a9', diff:'medium',
+      text:'∫ cos²(x) dx',
+      latex:'\\int \\cos^{2}(x)\\,dx',
+      technique:'algebra',
+      hint:'Use half-angle: cos²x = (1+cos2x)/2.',
+      mapping:[
+        ['Identity','cos²x = (1+cos2x)/2'],
+        ['Split','(1/2)∫ 1 dx + (1/2)∫ cos2x dx'],
+        ['Integrate','x/2 + sin2x/4']
+      ],
+      check:{
+        prompt:'The half-angle identity for cos²x is:',
+        choices:['(1+cos2x)/2','(1−cos2x)/2','(1+sin2x)/2','2cos²x−1'],
+        correct:0,
+        explain:'Comes from cos2x = 2cos²x − 1, solved for cos²x.'
+      },
+      solution:'x/2 + (sin2x)/4 + C'
+    }
+  ]
+};
+
+/* Create lesson and quiz banks */
+const LESSONS = [
+  { id:'L_usub', title:'🔄 U‑Sub Lesson', desc:'Learn the “inside + derivative” move.', technique:'usub', count:5, diff:'mix' },
+  { id:'L_parts', title:'✂️ By Parts Lesson', desc:'Choose u and dv like a pro.', technique:'parts', count:5, diff:'mix' },
+  { id:'L_partial', title:'🧩 Partials Lesson', desc:'Factor, split, and log it.', technique:'partial', count:5, diff:'mix' },
+  { id:'L_trig', title:'📐 Trig‑Sub Lesson', desc:'Match the radical to sin/tan/sec.', technique:'trig', count:5, diff:'mix' },
+  { id:'L_alg', title:'🔢 Simplify Lesson', desc:'Rewrite first, then integrate.', technique:'algebra', count:5, diff:'mix' },
+];
+
+/* ------------------------------
+   Screen routing
+--------------------------------*/
+const homeEl = $('#home');
+const gameEl = $('#game');
+const arenaEl = $('#arena');
+
+function showHome(){
+  homeEl.style.display = 'block';
+  gameEl.style.display = 'none';
+  arenaEl.style.display = 'none';
+  hidePattern();
+}
+function showGame(){
+  homeEl.style.display = 'none';
+  gameEl.style.display = 'block';
+  arenaEl.style.display = 'none';
+  hidePattern();
+}
+function showArena(){
+  homeEl.style.display = 'none';
+  gameEl.style.display = 'none';
+  arenaEl.style.display = 'block';
+  hidePattern();
+}
+
+// Event listeners moved to initEventListeners()
+
+/* ------------------------------
+   Build Lesson grid
+--------------------------------*/
+function buildLessonGrid(){
+  const grid = $('#lessonGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  LESSONS.forEach(lesson=>{
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <h3>${escapeHtml(lesson.title)}</h3>
+      <p>${escapeHtml(lesson.desc)}</p>
+      <button class="btn primary" data-lesson="${lesson.id}">Start Lesson</button>
+      <div class="small">
+        5 quick step checks · Technique revealed<br>
+        <span style="color:var(--good);">Mastery: <strong id="m-${lesson.technique}">0</strong></span>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+
+  grid.querySelectorAll('button[data-lesson]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-lesson');
+      const lesson = LESSONS.find(l=>l.id===id);
+      startLesson(lesson);
+    });
+  });
+  
+  // Update mastery displays with current values
+  updatePills();
+}
+// Defer to init()
+
+/* ------------------------------
+   Build technique buttons (challenge mode)
+--------------------------------*/
+function buildTechControls(){
+  const wrap = $('#techControls');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  Object.keys(TECH).forEach((k)=>{
+    const t = TECH[k];
+    const el = document.createElement('div');
+    el.className = 'tech-wrap';
+    el.innerHTML = `
+      <button class="tech" data-tech="${k}">
+        ${t.icon} ${t.name}<span style="opacity:0.55;font-size:0.72rem;">${t.key}</span>
+      </button>
+      <button class="help" data-help="${k}" title="Help">?</button>
+    `;
+    wrap.appendChild(el);
+  });
+
+  wrap.querySelectorAll('.tech').forEach(btn=>{
+    btn.addEventListener('click', ()=> onPickTechnique(btn.getAttribute('data-tech')));
+  });
+
+  wrap.querySelectorAll('.help').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      showHelp(btn.getAttribute('data-help'));
+    });
+  });
+}
+// Defer to init()
+
+/* Keyboard shortcuts 1–5 */
+window.addEventListener('keydown', (e)=>{
+  if(gameEl.style.display !== 'none'){
+    if(['1','2','3','4','5'].includes(e.key)){
+      const techKey = Object.keys(TECH).find(k=>TECH[k].key===e.key);
+      if(techKey) onPickTechnique(techKey);
+    }
+    if(e.key.toLowerCase()==='g') $('#btnGuide').click();
+  }
+  if(arenaEl.style.display !== 'none'){
+    if(['1','2','3','4','5'].includes(e.key)){
+      // allow technique quick-pick in arena stage 1
+      arenaPickByNumber(e.key);
+    }
+  }
+});
+
+/* ------------------------------
+   KaTeX rendering helpers
+--------------------------------*/
+function setIntegralDisplay(problem){
+  const host = $('#integralRender');
+  if(!host || !problem) return;
+  // Just use the Unicode text - much more reliable than KaTeX
+  host.textContent = problem.text;
+}
+
+/* ------------------------------
+   Three.js: lockbox scene
+--------------------------------*/
+let scene, camera, renderer, animId;
+let boxGroup = null;
+let currentBox = null;
+let innerBoxes = [];
+let boxReady = false;
+
+const BOX_TEXT_SCALE = 1.5; // 50% bigger text
+
+function initScene(){
+  const container = $('#scene');
+  if(!container) return;
+  
+  // Prevent double initialization
+  if(renderer && scene && boxReady) return;
+  
+  container.innerHTML = '';
+
+  scene = new THREE.Scene();
+  scene.background = null;
+
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+
+  camera = new THREE.PerspectiveCamera(50, w/h, 0.1, 100);
+  camera.position.set(0, 0.15, 4.6);
+
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setSize(w,h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  container.appendChild(renderer.domElement);
+
+  const amb = new THREE.AmbientLight(0xffffff, 0.75);
+  scene.add(amb);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.55);
+  dir.position.set(2,3,4);
+  scene.add(dir);
+
+  boxGroup = new THREE.Group();
+  scene.add(boxGroup);
+
+  boxReady = true;
+
+  function animate(){
+    animId = requestAnimationFrame(animate);
+    if(currentBox){
+      currentBox.rotation.y += 0.006;
+      currentBox.rotation.x += 0.003;
+    }
+    innerBoxes.forEach((b, i)=>{
+      b.rotation.y -= 0.004 + i*0.001;
+      b.rotation.x += 0.002;
+    });
+    renderer.render(scene, camera);
+  }
+  animate();
+}
+
+function disposeScene(){
+  if(animId) cancelAnimationFrame(animId);
+  animId = null;
+
+  if(scene){
+    // dispose textures/materials
+    scene.traverse((obj)=>{
+      if(obj.isMesh){
+        obj.geometry?.dispose?.();
+        if(Array.isArray(obj.material)){
+          obj.material.forEach(m=>{
+            if(m.map) m.map.dispose?.();
+            m.dispose?.();
+          });
+        }else if(obj.material){
+          if(obj.material.map) obj.material.map.dispose?.();
+          obj.material.dispose?.();
+        }
+      }
+    });
+  }
+
+  renderer?.dispose?.();
+  renderer = null;
+  scene = null;
+  camera = null;
+  boxGroup = null;
+  currentBox = null;
+  innerBoxes = [];
+  boxReady = false;
+  const container = $('#scene');
+  container.innerHTML = '';
+}
+
+function wrapLines(ctx, text, maxWidth){
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for(const w of words){
+    const test = line ? (line + ' ' + w) : w;
+    const m = ctx.measureText(test);
+    if(m.width <= maxWidth){
+      line = test;
+    }else{
+      if(line) lines.push(line);
+      // if word itself too long, break it
+      if(ctx.measureText(w).width > maxWidth){
+        let chunk = '';
+        for(const ch of w){
+          const t2 = chunk + ch;
+          if(ctx.measureText(t2).width <= maxWidth){
+            chunk = t2;
+          }else{
+            if(chunk) lines.push(chunk);
+            chunk = ch;
+          }
+        }
+        line = chunk;
+      }else{
+        line = w;
+      }
+    }
+  }
+  if(line) lines.push(line);
+  return lines.slice(0, 6); // cap lines
+}
+
+function createTextTexture(text, scheme='default'){
+  const size = 1024; // higher res for readability
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  const g = ctx.createLinearGradient(0,0,size,size);
+  if(scheme==='outer'){
+    g.addColorStop(0, 'rgba(240,147,251,0.18)');
+    g.addColorStop(1, 'rgba(10,10,18,0.95)');
+  }else if(scheme==='inner'){
+    g.addColorStop(0, 'rgba(96,165,250,0.18)');
+    g.addColorStop(1, 'rgba(10,10,18,0.95)');
+  }else{
+    g.addColorStop(0, 'rgba(74,222,128,0.14)');
+    g.addColorStop(1, 'rgba(10,10,18,0.95)');
+  }
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,size,size);
+
+  // Border
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(18,18,size-36,size-36);
+
+  // Text
+  const fontSize = Math.round(42 * BOX_TEXT_SCALE); // 50% bigger
+  ctx.font = `800 ${fontSize}px "JetBrains Mono", monospace`;
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const maxWidth = size * 0.86;
+  const lines = wrapLines(ctx, text.replace(/\s+/g,' ').trim(), maxWidth);
+
+  const lineHeight = fontSize * 1.28;
+  const total = lines.length * lineHeight;
+  let y = (size - total)/2 + lineHeight/2;
+
+  for(const ln of lines){
+    // subtle shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 14;
+    ctx.fillText(ln, size/2, y);
+    ctx.shadowBlur = 0;
+    y += lineHeight;
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  return tex;
+}
+
+function makeBox(text, size=1.35, scheme='default'){
+  const geo = new THREE.BoxGeometry(size,size,size);
+  const tex = createTextTexture(text, scheme);
+  const mats = [];
+  for(let i=0;i<6;i++){
+    mats.push(new THREE.MeshStandardMaterial({
+      map: tex,
+      metalness: 0.25,
+      roughness: 0.55,
+      emissive: new THREE.Color(0x000000),
+      emissiveIntensity: 0.0
+    }));
+  }
+  const mesh = new THREE.Mesh(geo, mats);
+  return mesh;
+}
+
+function setBoxGlow(mesh, on){
+  if(!mesh) return;
+  const e = on ? 0.18 : 0.0;
+  mesh.material.forEach(m=>{
+    m.emissive = new THREE.Color(on ? 0x2ee88a : 0x000000);
+    m.emissiveIntensity = e;
+  });
+}
+
+function loadLockboxes(layers){
+  if(!boxReady) initScene();
+  
+  // Guard against invalid layers
+  if(!layers || !Array.isArray(layers) || layers.length === 0){
+    console.error('Invalid layers in loadLockboxes', layers);
+    return;
+  }
+  
+  // clear previous
+  while(boxGroup.children.length) boxGroup.remove(boxGroup.children[0]);
+  innerBoxes = [];
+  currentBox = null;
+
+  // build nested set: outer biggest, then inner smaller
+  const base = 1.45;
+  const gap = 0.30;
+  layers.forEach((layer, idx)=>{
+    // Skip invalid layers
+    if(!layer || !layer.text){
+      console.error('Invalid layer at index', idx, layer);
+      layer = { text: '∫ ? dx', technique: 'usub' }; // fallback
+    }
+    const s = base - idx*gap;
+    const scheme = (idx===0) ? 'outer' : (idx===layers.length-1 ? 'default' : 'inner');
+    const b = makeBox(layer.text, s, scheme);
+    b.visible = (idx===0);
+    boxGroup.add(b);
+    if(idx===0) currentBox = b;
+    else innerBoxes.push(b);
+  });
+}
+
+function revealNextInner(){
+  if(innerBoxes.length === 0) return;
+  const b = innerBoxes.shift();
+  b.visible = true;
+  currentBox = b;
+}
+
+function explodeBox(mesh, onDone){
+  if(!mesh){ onDone?.(); return; }
+  // simple explode: scale + fade, then remove
+  const start = performance.now();
+  const dur = 420;
+  const startScale = mesh.scale.x;
+  const startRotY = mesh.rotation.y;
+  function tick(now){
+    const t = clamp((now-start)/dur, 0, 1);
+    const ease = 1 - Math.pow(1-t, 3);
+    mesh.scale.setScalar(startScale * (1 + 0.35*ease));
+    mesh.rotation.y = startRotY + 0.6*ease;
+    mesh.material.forEach(m=>{
+      m.opacity = 1 - ease;
+      m.transparent = true;
+    });
+    if(t<1){
+      requestAnimationFrame(tick);
+    }else{
+      boxGroup.remove(mesh);
+      // dispose
+      mesh.geometry.dispose();
+      mesh.material.forEach(m=>{
+        m.map?.dispose?.();
+        m.dispose();
+      });
+      onDone?.();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+window.addEventListener('resize', ()=>{
+  if(!renderer || !camera) return;
+  const container = $('#scene');
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  renderer.setSize(w,h);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+});
+
+/* ------------------------------
+   Game logic (lesson + mixed challenge)
+--------------------------------*/
+let gameMode = null; // {type:'lesson'|'mixed', technique?:string}
+let gameQueue = [];  // array of problems or layered problems
+let gameIndex = 0;
+let gameLayerIndex = 0;
+let gameLayers = [];
+let pendingTechnique = null;
+
+let bossPerfect = true;
+
+let attemptsTech = 0;
+let attemptsStep = 0;
+
+function pickProblemsForTechnique(technique, count=5){
+  const bank = PROBLEMS[technique] || [];
+  // shuffle
+  const arr = [...bank].sort(()=>Math.random()-0.5);
+  return arr.slice(0, Math.min(count, arr.length));
+}
+
+function randomProblem(){
+  const all = Object.values(PROBLEMS).flat();
+  return all[Math.floor(Math.random()*all.length)];
+}
+
+function buildMixedQueue(count=8){
+  const q = [];
+  for(let i=0;i<count;i++){
+    // sometimes make a nested 2-layer vault
+    if(Math.random()<0.28){
+      const p1 = randomProblem();
+      const p2 = randomProblem();
+      q.push({ layers:[p1,p2], title:'Nested Vault' });
+    }else{
+      q.push(randomProblem());
+    }
+  }
+  return q;
+}
+
+function setModeUI(){
+  const modeName = $('#modeName');
+  const modeHintLine = $('#modeHintLine');
+  if(modeName) modeName.textContent = gameMode?.label || 'Mode';
+  if(modeHintLine) modeHintLine.textContent = gameMode?.type==='lesson'
+    ? 'Technique revealed · You must pass the Step Check to unlock.'
+    : 'Technique hidden · Pick the technique, then pass a Step Check.';
+}
+
+function startLesson(lesson){
+  bossPerfect = true;
+  gameMode = { type:'lesson', label: lesson.title, technique: lesson.technique };
+  gameQueue = pickProblemsForTechnique(lesson.technique, lesson.count);
+  
+  // Guard against empty queue
+  if(!gameQueue || gameQueue.length === 0){
+    console.error('No problems found for technique: ' + lesson.technique);
+    alert('No problems available for this lesson yet!');
+    showHome();
+    return;
+  }
+  
+  gameIndex = 0;
+  showGame();
+  initScene();
+  const techControls = $('#techControls');
+  const btnPeek = $('#btnPeek');
+  if(techControls) techControls.style.display = 'none'; // no technique buttons in lessons
+  if(btnPeek) btnPeek.style.display = 'none';
+  loadQuestion();
+}
+
+function startMixed(){
+  bossPerfect = true;
+  gameMode = { type:'mixed', label:'🔀 Mixed Vault', technique:null };
+  gameQueue = buildMixedQueue(10);
+  gameIndex = 0;
+  showGame();
+  initScene();
+  const techControls = $('#techControls');
+  const btnPeek = $('#btnPeek');
+  if(techControls) techControls.style.display = '';
+  if(btnPeek) btnPeek.style.display = 'none';
+  loadQuestion();
+}
+
+// btnMixed listener moved to initEventListeners()
+
+function startBoss(){
+  // One epic 3-layer vault
+  const p1 = randomProblem();
+  const p2 = randomProblem();
+  const p3 = randomProblem();
+  gameMode = { type:'boss', label:'👑 Vault Dive Boss', technique:null };
+  gameQueue = [{ layers:[p1,p2,p3], title:'Boss Vault' }];
+  gameIndex = 0;
+  showGame();
+  initScene();
+  const techControls = $('#techControls');
+  const btnPeek = $('#btnPeek');
+  if(techControls) techControls.style.display = '';
+  if(btnPeek) btnPeek.style.display = 'none';
+  bossPerfect = true;
+  loadQuestion();
+}
+// btnBoss listener moved to initEventListeners()
+
+
+function stopGame(){
+  hidePattern();
+  hideHelp();
+  const checkCard = $('#checkCard');
+  const btnNext = $('#btnNext');
+  if(checkCard) checkCard.classList.remove('visible');
+  if(btnNext) btnNext.classList.remove('visible');
+  disposeScene();
+}
+
+function currentEntry(){
+  return gameQueue[gameIndex];
+}
+
+function currentLayer(){
+  return gameLayers[gameLayerIndex];
+}
+
+function normalizeEntry(entry){
+  if(entry && entry.layers){
+    return entry.layers;
+  }
+  return [entry];
+}
+
+function loadQuestion(){
+  hidePattern();
+  const btnNext = $('#btnNext');
+  if(btnNext) btnNext.classList.remove('visible');
+
+  const entry = currentEntry();
+  
+  // Guard against undefined entry
+  if(!entry){
+    console.error('No entry for question ' + gameIndex);
+    showHome();
+    return;
+  }
+  
+  gameLayers = normalizeEntry(entry);
+  
+  // Guard against empty layers
+  if(!gameLayers || gameLayers.length === 0){
+    console.error('No layers for entry', entry);
+    showHome();
+    return;
+  }
+  
+  gameLayerIndex = 0;
+
+  const qNum = $('#qNum');
+  const qTotal = $('#qTotal');
+  const progressFill = $('#progressFill');
+  const layerIndicator = $('#layerIndicator');
+  const layerTotal = $('#layerTotal');
+  
+  if(qNum) qNum.textContent = String(gameIndex+1);
+  if(qTotal) qTotal.textContent = String(gameQueue.length);
+  if(progressFill) progressFill.style.width = ((gameIndex)/Math.max(1,gameQueue.length))*100 + '%';
+  if(layerIndicator) layerIndicator.style.display = (gameLayers.length>1) ? 'block' : 'none';
+  if(layerTotal) layerTotal.textContent = String(gameLayers.length);
+
+  attemptsTech = 0;
+  attemptsStep = 0;
+  pendingTechnique = null;
+
+  // load boxes
+  loadLockboxes(gameLayers);
+
+  loadLayer();
+}
+
+function loadLayer(){
+  hidePattern();
+  const btnNext = $('#btnNext');
+  if(btnNext) btnNext.classList.remove('visible');
+
+  const layer = currentLayer();
+  if(!layer) {
+    console.error('loadLayer: no layer at index', gameLayerIndex);
+    return;
+  }
+  
+  const layerNow = $('#layerNow');
+  if(layerNow) layerNow.textContent = String(gameLayerIndex+1);
+
+  setIntegralDisplay(layer);
+  setModeUI();
+
+  // reset hint
+  const hintTitle = $('#hintTitle');
+  const hintText = $('#hintText');
+  if(hintTitle) {
+    hintTitle.textContent = '🔒 Locked';
+    hintTitle.className = 'hint-title';
+  }
+  if(hintText) {
+    hintText.innerHTML = (gameMode.type==='lesson')
+      ? `Technique: <strong>${escapeHtml(TECH[layer.technique].full)}</strong>. Now pass the Step Check to unlock.`
+      : 'Pick the technique that matches the pattern.';
+  }
+
+  // reset buttons
+  document.querySelectorAll('.tech').forEach(b=>{
+    b.classList.remove('wrong','correct','disabled');
+    b.disabled = false;
+  });
+
+  // step check hidden initially unless lesson mode
+  const checkCard = $('#checkCard');
+  const checkFeedback = $('#checkFeedback');
+  if(checkCard) checkCard.classList.remove('visible');
+  if(checkFeedback) {
+    checkFeedback.className = '';
+    checkFeedback.style.display = 'none';
+    checkFeedback.textContent = '';
+  }
+
+  if(gameMode.type === 'lesson'){
+    // In lessons, we skip technique selection and go straight to Step Check
+    showStepCheck(layer, {auto:true});
+  }else{
+    // Mixed: wait for technique pick
+  }
+
+  // unglow
+  setBoxGlow(currentBox, false);
+}
+
+function awardXP(base, technique){
+  state.xp += base;
+  state.streak += 1;
+  state.best = Math.max(state.best, state.streak);
+  if(technique && state.mastery[technique] != null){
+    // scale mastery by difficulty
+    state.mastery[technique] += (base >= 20 ? 3 : (base >= 14 ? 2 : 1));
+  }
+  saveState();
+  updatePills();
+  
+  // Floating XP animation
+  const pill = $('#xpPill');
+  if(pill && pill.parentElement){
+    const pop = document.createElement('div');
+    pop.textContent = `+${base}`;
+    pop.className = 'xp-float';
+    pill.parentElement.style.position = 'relative';
+    pill.parentElement.appendChild(pop);
+    setTimeout(() => pop.remove(), 1000);
+  }
+}
+
+function penalize(){
+  state.streak = 0;
+  if(gameMode && gameMode.type==='boss') bossPerfect = false;
+  saveState();
+  updatePills();
+}
+
+function showPattern(layer){
+  const overlay = $('#patternOverlay');
+  const title = $('#patternTitle');
+  const body = $('#patternBody');
+
+  const v = getVariant(layer, (pendingTechnique || layer.activeTechnique || layer.technique));
+
+  title.textContent = `✅ Pattern: ${TECH[v.activeTechnique].full}`;
+
+  let html = `<div>Template: <code>${escapeHtml(TECH[v.activeTechnique].pattern)}</code></div>`;
+  html += `<div style="margin-top:6px;">Your lock: <code>${escapeHtml(layer.text)}</code></div>`;
+
+  if(v.mapping && Array.isArray(v.mapping)){
+    html += `<div class="pattern-grid">`;
+    for(const [k,val] of v.mapping){
+      html += `<div class="kv"><div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(val)}</div></div>`;
+    }
+    html += `</div>`;
+  }
+  body.innerHTML = html;
+  overlay.classList.add('visible');
+}
+
+function hidePattern(){
+  const patternOverlay = $('#patternOverlay');
+  if(patternOverlay) patternOverlay.classList.remove('visible');
+}
+// patternClose listener moved to initEventListeners()
+
+function showHelp(techKey){
+  const t = TECH[techKey];
+  if(!t) return;
+  const overlay = $('#helpOverlay');
+  if(!overlay) return;
+  const helpTitle = $('#helpTitle');
+  if(helpTitle) helpTitle.textContent = `📘 ${t.full}`;
+  const layer = (gameEl && gameEl.style.display !== 'none') ? currentLayer() : null;
+
+  const mathHost = $('#helpMath');
+  if(!mathHost) return;
+  mathHost.innerHTML = '';
+  if(layer && layer.text){
+    // Just use Unicode text directly
+    mathHost.innerHTML = `<div style="font-family:'Cambria Math',Georgia,serif;font-size:1.3rem;color:rgba(255,255,255,0.95);text-align:center;padding:8px 0;">${escapeHtml(layer.text)}</div>`;
+  }
+
+  $('#helpBody').innerHTML = `
+    <p><strong>When to use:</strong> ${escapeHtml(t.when)}</p>
+    <p><strong>Pattern:</strong> <span style="font-family:var(--mono);">${escapeHtml(t.pattern)}</span></p>
+    <p><strong>Pro tip:</strong> ${escapeHtml(t.tip)}</p>
+  `;
+  overlay.classList.add('visible');
+}
+function hideHelp(){ 
+  const helpOverlay = $('#helpOverlay');
+  if(helpOverlay) helpOverlay.classList.remove('visible'); 
+}
+// helpClose and helpOverlay listeners moved to initEventListeners()
+
+
+// --- Added (hybrid): allow vetted alternate techniques on specific locks ---
+function techniqueAccepts(layer, techKey){
+  if(!layer) return { ok:false, alt:false };
+  if(layer.technique === techKey) return { ok:true, alt:false };
+  const alts = Array.isArray(layer.alts) ? layer.alts : [];
+  if(alts.some(a => a && a.technique === techKey)) return { ok:true, alt:true };
+  return { ok:false, alt:false };
+}
+function getVariant(layer, techKey){
+  if(!layer) return null;
+  const key = techKey || layer.activeTechnique || layer.technique;
+  if(key === layer.technique) return { ...layer, _variant:'main', activeTechnique:key };
+  const alts = Array.isArray(layer.alts) ? layer.alts : [];
+  const alt = alts.find(a => a && a.technique === key);
+  if(!alt) return { ...layer, _variant:'main', activeTechnique: layer.technique };
+  // alt can override: hint, mapping, check, solution
+  return { ...layer, ...alt, _variant:'alt', baseTechnique: layer.technique, activeTechnique: key };
+}
+/* Technique pick (mixed mode) */
+function onPickTechnique(techKey){
+  if(gameMode?.type !== 'mixed') return;
+  const layer = currentLayer();
+  if(!layer) return;
+  const verdict = techniqueAccepts(layer, techKey);
+  const correct = verdict.ok;
+
+  // ignore if already in step check
+  if($('#checkCard').classList.contains('visible')) return;
+
+  attemptsTech += 1;
+
+  const btn = document.querySelector(`.tech[data-tech="${techKey}"]`);
+  if(!btn) return;
+
+  if(!correct){
+    sfx('bad');
+    btn.classList.add('wrong');
+    $('#hintTitle').textContent = '❌ Not that one';
+    $('#hintTitle').className = 'hint-title bad';
+    $('#hintText').innerHTML = `${escapeHtml(TECH[techKey].full)} doesn’t fit here. ${escapeHtml(layer.hint)}`;
+    penalize();
+    return;
+  }
+
+  sfx('good');
+  btn.classList.add('correct');
+  // If this is an allowed alternate technique, label it as such
+  if(verdict && verdict.alt){
+    const ht = $('#hintTitle');
+    const hx = $('#hintText');
+    if(ht){ ht.textContent = '✅ Valid alternate'; ht.className = 'hint-title'; }
+    if(hx){
+      hx.innerHTML = `${escapeHtml(TECH[techKey].full)} works here too. <span style="color:rgba(148,163,184,0.95)">Preferred for this lock:</span> ${escapeHtml(TECH[layer.technique].full)}.`;
+    }
+  }
+  // soft lock other buttons
+  document.querySelectorAll('.tech').forEach(b=>{
+    if(b!==btn){ b.classList.add('disabled'); b.disabled = true; }
+  });
+
+  pendingTechnique = techKey;
+  layer.activeTechnique = techKey;
+  setBoxGlow(currentBox, true);
+
+  showPattern(layer);
+
+  // now require step check to actually unlock
+  showStepCheck(layer, {auto:false});
+}
+
+function showStepCheck(layer, opts={auto:false}){
+  if(!layer) return;
+  const v = getVariant(layer, (pendingTechnique || layer.activeTechnique || layer.technique));
+  
+  const checkCard = $('#checkCard');
+  const checkTitle = $('#checkTitle');
+  const checkPrompt = $('#checkPrompt');
+  const checkMeta = $('#checkMeta');
+  const grid = $('#checkChoices');
+  
+  if(checkCard) checkCard.classList.add('visible');
+  if(checkTitle) checkTitle.textContent = opts.auto ? 'Step Check (Lesson)' : 'Step Check (Unlock)';
+  if(checkPrompt) checkPrompt.textContent = v.check?.prompt || 'Choose the best next step.';
+  if(checkMeta) checkMeta.innerHTML = `<div>Attempts: <strong id="stepAttempts">${attemptsStep}</strong></div>`;
+
+  if(!grid) return;
+  grid.innerHTML = '';
+  const choicesRaw = v.check?.choices || [];
+  const techKey = v.activeTechnique || layer.technique;
+  layer._checkOrder = layer._checkOrder || {};
+  let order = layer._checkOrder[techKey];
+  if(!order || order.length !== choicesRaw.length){
+    order = choicesRaw.map((_,i)=>i);
+    for(let i=order.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    layer._checkOrder[techKey] = order;
+  }
+  const choices = order.map(i => choicesRaw[i]);
+
+  const correctRaw = v.check?.correct ?? 0;
+  const correctOldSet = new Set(Array.isArray(correctRaw) ? correctRaw : [correctRaw]);
+  const correctSet = new Set();
+  order.forEach((oldIdx, newIdx) => { if(correctOldSet.has(oldIdx)) correctSet.add(newIdx); });
+
+  choices.forEach((c, idx)=>{
+    const b = document.createElement('button');
+    b.className = 'choiceBtn';
+    b.textContent = c;
+    b.addEventListener('click', ()=> gradeStep(idx));
+    grid.appendChild(b);
+  });
+
+  function gradeStep(idx){
+    attemptsStep += 1;
+    const stepAttemptsEl = $('#stepAttempts');
+    if(stepAttemptsEl) stepAttemptsEl.textContent = String(attemptsStep);
+
+    const buttons = [...grid.querySelectorAll('button')];
+    const checkFeedback = $('#checkFeedback');
+
+    if(correctSet.has(idx)){
+      sfx('good');
+      buttons.forEach(bb=>bb.disabled = true);
+      buttons[idx].classList.add('correct');
+      if(checkFeedback) {
+        checkFeedback.className = 'good';
+        checkFeedback.style.display = 'block';
+        checkFeedback.textContent = '✅ ' + (v.check?.explain || 'Nice. That is the right next move.');
+      }
+
+      // unlock the box now
+      finishLayer(layer);
+    }else{
+      sfx('bad');
+      buttons[idx].classList.add('wrong');
+      if(checkFeedback) {
+        checkFeedback.className = 'bad';
+        checkFeedback.style.display = 'block';
+        checkFeedback.textContent = '❌ ' + (v.check?.explainWrong || 'Try again. Look for the key pattern.');
+      }
+
+      penalize();
+    }
+  }
+}
+
+/* After passing step check */
+function finishLayer(layer){
+  if(!layer) return;
+  const v = getVariant(layer, (pendingTechnique || layer.activeTechnique || layer.technique));
+  
+  // award xp based on difficulty and first-try bonuses
+  const diffBonus = (layer.diff==='hard') ? 14 : (layer.diff==='medium' ? 10 : 7);
+  const firstTryBonus = (attemptsTech<=1 && attemptsStep<=1) ? 6 : 0;
+  const base = 6 + diffBonus + firstTryBonus;
+  const mult = (gameMode && gameMode.type==='boss') ? (1 + (state.streak * 0.20)) : 1;
+  const gained = Math.round(base * mult);
+
+  awardXP(gained, v.activeTechnique);
+
+  const hintTitle = $('#hintTitle');
+  const hintText = $('#hintText');
+  if(hintTitle) {
+    hintTitle.textContent = '🔓 Unlocked';
+    hintTitle.className = 'hint-title';
+  }
+  const bossLine = (gameMode && gameMode.type==='boss') ? `<div style="margin-top:6px;font-family:var(--mono);color:rgba(251,191,36,0.95);">Boss multiplier applied.</div>` : '';
+  const altLine = (v._variant==='alt') ? `<div style="margin-top:6px;color:rgba(148,163,184,0.95)">Alternate method accepted. Preferred for this lock: ${escapeHtml(TECH[v.baseTechnique].full)}.</div>` : '';
+  if(hintText) hintText.innerHTML = `<strong>Why it works:</strong> ${escapeHtml(v.hint)}<div style="margin-top:8px;font-family:var(--mono);color:rgba(74,222,128,0.95);">${escapeHtml(v.solution || '')}</div>${altLine}${bossLine}`;
+
+  // explode current box, then reveal next layer (if any)
+  const toRemove = currentBox;
+  explodeBox(toRemove, ()=>{
+    if(gameLayerIndex < gameLayers.length - 1){
+      gameLayerIndex += 1;
+      revealNextInner();
+      // load next layer
+      attemptsTech = 0;
+      attemptsStep = 0;
+      pendingTechnique = null;
+      // hide step card until next layer load
+      const checkCard = $('#checkCard');
+      if(checkCard) checkCard.classList.remove('visible');
+      loadLayer();
+    }else{
+      // done with this question
+      const progressFill = $('#progressFill');
+      const btnNext = $('#btnNext');
+      if(progressFill) progressFill.style.width = ((gameIndex+1)/Math.max(1,gameQueue.length))*100 + '%';
+      if(btnNext) btnNext.classList.add('visible');
+    }
+  });
+}
+
+// REMOVED: $('#btnNext').addEventListener('click', ()=>{
+// REMOVED:   hidePattern();
+// REMOVED:   $('#btnNext').classList.remove('visible');
+// REMOVED:   $('#checkCard').classList.remove('visible');
+// REMOVED: 
+// REMOVED:   gameIndex += 1;
+// REMOVED:   if(gameIndex >= gameQueue.length){
+// REMOVED:     // boss badge
+// REMOVED:     if(gameMode && gameMode.type==='boss'){
+// REMOVED:       if(bossPerfect){
+// REMOVED:         state.badges = state.badges || {};
+// REMOVED:         state.badges.bossClear = true;
+// REMOVED:         saveState();
+// REMOVED:         updatePills();
+// REMOVED:       }
+// REMOVED:     }
+// REMOVED:     stopGame();
+// REMOVED:     showHome();
+// REMOVED:     sfx('good');
+// REMOVED:     return;
+// REMOVED:   }
+// REMOVED:   loadQuestion();
+// REMOVED: });
+
+/* ------------------------------
+   Wizard: suggestion + confidence
+--------------------------------*/
+// REMOVED: $('#btnGuide').addEventListener('click', ()=>{
+// REMOVED:   const layer = (gameEl.style.display !== 'none') ? currentLayer() : null;
+// REMOVED:   if(!layer){ return; }
+// REMOVED:   $('#wizardIntegral').textContent = 'Current lock: ' + layer.text;
+// REMOVED:   $('#wizardText').textContent = 'Click “Suggest for this lock” to get a starting technique and confidence.';
+// REMOVED:   $('#wizardExplain').style.display = 'none';
+// REMOVED:   $('#confWrap').style.display = 'none';
+// REMOVED:   $('#wizardOverlay').classList.add('visible');
+// REMOVED: });
+// REMOVED: $('#wizardClose').addEventListener('click', ()=> $('#wizardOverlay').classList.remove('visible'));
+// REMOVED: $('#wizardOverlay').addEventListener('click', (e)=>{ if(e.target.id==='wizardOverlay') $('#wizardOverlay').classList.remove('visible'); });
+
+function analyzeIntegral(text){
+  const s = (text || '').replace(/\s+/g,'');
+  const features = {
+    hasSqrt: /√|sqrt\(/i.test(text),
+    hasTrig: /(sin|cos|tan|sec|csc|cot)/i.test(text),
+    hasExp: /(?:e\^|exp\()/i.test(s),
+    hasLn: /(ln\(|log\()/i.test(text) || /ln\b/i.test(text),
+    hasFraction: /\//.test(text) || /\bfrac\b/i.test(text),
+    hasProduct: /·|\*/.test(text),
+    hasXPower: /x\^\d+|x²|x³/i.test(text),
+    likelyRational: false,
+    sqrtQuadratic: false,
+    derivativePresent: false
+  };
+
+  // heuristic: pure rational (no trig/exp/ln/sqrt)
+  features.likelyRational = features.hasFraction && !features.hasTrig && !features.hasExp && !features.hasLn && !features.hasSqrt;
+
+  // sqrt quadratic patterns
+  const t = (text || '').replace(/\s+/g,'').replace(/x²/g,'x^2');
+  features.sqrtQuadratic = /(√\(\d+-x\^2\)|sqrt\(\d+-x\^2\))/i.test(t) ||
+                           /(√\(x\^2\+\d+\)|sqrt\(x\^2\+\d+\))/i.test(t) ||
+                           /(√\(x\^2-\d+\)|sqrt\(x\^2-\d+\))/i.test(t) ||
+                           /(√\(\d+-x²\)|√\(x²\+\d+\)|√\(x²-\d+\))/i.test(text);
+
+  // derivative present hints for u-sub
+  if(/\b2x\b.*\(x\^2\)|\(x\^2\).*\b2x\b/i.test(t)) features.derivativePresent = true;
+  if(/cos\(x\^2\).*2x|2x.*cos\(x\^2\)/i.test(t)) features.derivativePresent = true;
+  if(/sin\(x\^2\).*2x|2x.*sin\(x\^2\)/i.test(t)) features.derivativePresent = true;
+  if(/\bcos\(x\)\s*·\s*sin\^?\d*\(x\)|sin\^?\d*\(x\)\s*·\s*cos\(x\)/i.test(text)) features.derivativePresent = true;
+  if(/e\^x\/(1\+e\^x)|e\^\{x\}\/(1\+e\^\{x\})/i.test(text.replace(/\s+/g,''))) features.derivativePresent = true;
+  if(/\(\d*x\^2\)\/\(1\+x\^3\)|\(3x\^2\)\/\(1\+x\^3\)/i.test(t)) features.derivativePresent = true;
+
+  return features;
+}
+
+function suggestTechnique(text){
+  const f = analyzeIntegral(text);
+
+  // Priority rules
+  if(f.sqrtQuadratic && !f.derivativePresent) return {tech:'trig', conf:78, why:'Square root of a quadratic suggests trig substitution.'};
+  if(f.derivativePresent && (f.hasTrig || f.hasExp || f.hasLn || f.hasSqrt || f.hasXPower)) return {tech:'usub', conf:72, why:'Looks like an inner function with its derivative present.'};
+  if(f.likelyRational) return {tech:'partial', conf:66, why:'Looks like a pure rational fraction with factorable denominator.'};
+  if(f.hasProduct && (f.hasExp || f.hasLn || f.hasTrig) && /x/.test(text)) return {tech:'parts', conf:58, why:'Product where one factor simplifies when differentiated.'};
+  if(/sin\^2|cos\^2|\(x\+1\)\^2|\(x\^2-1\)\/x|sin\(x\)cos\(x\)/i.test(text)) return {tech:'algebra', conf:54, why:'A rewrite/identity likely makes this easier.'};
+
+  return {tech:'start', conf:40, why:'Not sure — try simplifying or look for an inner/derivative pair.'};
+}
+
+// REMOVED: $('#wizardSuggestBtn').addEventListener('click', ()=>{
+// REMOVED:   const layer = currentLayer();
+// REMOVED:   const sug = suggestTechnique(layer.text);
+// REMOVED:   const confWrap = $('#confWrap');
+// REMOVED:   confWrap.style.display = 'block';
+// REMOVED: 
+// REMOVED:   const techKey = sug.tech === 'start' ? 'algebra' : sug.tech;
+// REMOVED:   $('#confSuggestion').textContent = TECH[techKey]?.full || 'Start';
+// REMOVED:   $('#confPct').textContent = sug.conf + '%';
+// REMOVED:   $('#confBar').style.width = sug.conf + '%';
+// REMOVED:   $('#confLabel').textContent = (sug.conf>=70) ? 'HIGH' : (sug.conf>=55 ? 'MED' : 'LOW');
+// REMOVED: 
+// REMOVED:   // store explanation for button
+// REMOVED:   $('#wizardExplain').textContent = sug.why;
+// REMOVED: });
+
+// REMOVED: $('#wizardExplainBtn').addEventListener('click', ()=>{
+// REMOVED:   const p = $('#wizardExplain');
+// REMOVED:   p.style.display = (p.style.display==='none' || !p.style.display) ? 'block' : 'none';
+// REMOVED: });
+
+/* Reveal technique helper (optional in future) */
+// REMOVED: $('#btnPeek').addEventListener('click', ()=>{
+// REMOVED:   const layer = currentLayer();
+// REMOVED:   $('#hintTitle').textContent = '👀 Technique revealed';
+// REMOVED:   $('#hintTitle').className = 'hint-title warn';
+// REMOVED:   $('#hintText').innerHTML = `This lock uses <strong>${escapeHtml(TECH[layer.technique].full)}</strong>. Now do the step check.`;
+// REMOVED: });
+
+/* ------------------------------
+   Arena (Dojo/Test) mode
+   - Two-stage question: technique then step
+--------------------------------*/
+let arena = null; // {timed:boolean, idx:int, score:int, streak:int, stage:'tech'|'step', qList:[], timeLeft:number, timerId}
+const ARENA_COUNT = 10;
+
+function buildArenaQuestions(n=10){
+  const all = Object.values(PROBLEMS).flat();
+  const arr = [...all].sort(()=>Math.random()-0.5);
+  return arr.slice(0, Math.min(n, arr.length));
+}
+
+function startArena({timed}){
+  const qList = buildArenaQuestions(ARENA_COUNT);
+  
+  // Guard against empty question list
+  if(!qList || qList.length === 0){
+    console.error('No questions for arena');
+    alert('No problems available for arena!');
+    showHome();
+    return;
+  }
+  
+  arena = {
+    timed: !!timed,
+    idx: 0,
+    score: 0,
+    streak: 0,
+    stage: 'tech',
+    qList: qList,
+    timeLeft: 15,
+    timerId: null,
+    lastWasPerfect: true
+  };
+
+  $('#arenaMode').textContent = timed ? '🥋 Dojo' : '📝 Test';
+  $('#timerRow').style.display = timed ? 'flex' : 'none';
+  $('#arenaNext').style.display = 'none';
+  $('#arenaScore').textContent = '0';
+  $('#arenaTotal').textContent = String(arena.qList.length);
+
+  buildDots(0);
+
+  showArena();
+  loadArenaQuestion();
+}
+
+// REMOVED: $('#btnDojo').addEventListener('click', ()=> startArena({timed:true}));
+// REMOVED: $('#btnTest').addEventListener('click', ()=> startArena({timed:false}));
+
+function stopArena(){
+  if(arena?.timerId) clearInterval(arena.timerId);
+  arena = null;
+}
+
+function buildDots(on){
+  const dots = $('#arenaDots');
+  dots.innerHTML = '';
+  for(let i=0;i<5;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i<on ? ' on' : '');
+    dots.appendChild(d);
+  }
+}
+
+function startTimer(seconds){
+  if(!arena?.timed) return;
+  if(arena.timerId) clearInterval(arena.timerId);
+  arena.timeLeft = seconds;
+  updateTimerUI();
+  arena.timerId = setInterval(()=>{
+    arena.timeLeft = Math.max(0, arena.timeLeft - 0.1); // Clamp to 0
+    if(arena.timeLeft === 0){
+      updateTimerUI();
+      clearInterval(arena.timerId);
+      arena.timerId = null;
+      // timeout counts as wrong
+      arenaWrong('⏱️ Time!', 'Time ran out — slow down and look for the pattern.');
+      // auto continue
+      const arenaNext = $('#arenaNext');
+      if(arenaNext) arenaNext.style.display = 'block';
+    }else{
+      updateTimerUI();
+    }
+  }, 100);
+}
+
+function updateTimerUI(){
+  const fill = $('#timerFill');
+  const t = arena.timeLeft;
+  const max = (arena.stage==='tech') ? 14 : 12;
+  const pct = clamp((t/max)*100, 0, 100);
+  fill.style.width = pct + '%';
+  fill.classList.remove('warn','bad');
+  if(pct < 35) fill.classList.add('warn');
+  if(pct < 18) fill.classList.add('bad');
+  $('#timerText').textContent = Math.ceil(t) + 's';
+}
+
+function setArenaMath(problem){
+  const host = $('#arenaMath');
+  if(!host || !problem) return;
+  // Just use the Unicode text - much more reliable than KaTeX
+  host.textContent = problem.text;
+}
+
+function arenaQuestionObj(){
+  return arena.qList[arena.idx];
+}
+
+function loadArenaQuestion(){
+  const arenaNext = $('#arenaNext');
+  if(arenaNext) arenaNext.style.display = 'none';
+  
+  const q = arenaQuestionObj();
+  if(!q){
+    finishArena();
+    return;
+  }
+  arena.stage = 'tech';
+  arena.lastWasPerfect = true;
+
+  const arenaQ = $('#arenaQ');
+  const arenaLabel = $('#arenaLabel');
+  const arenaQuestion = $('#arenaQuestion');
+  const arenaFeedT = $('#arenaFeedT');
+  const arenaFeedD = $('#arenaFeedD');
+  
+  if(arenaQ) arenaQ.textContent = String(arena.idx+1);
+  if(arenaLabel) arenaLabel.textContent = arena.timed ? 'Dojo Round' : 'Skill Check';
+  setArenaMath(q);
+  if(arenaQuestion) arenaQuestion.textContent = 'Pick the technique';
+  if(arenaFeedT) {
+    arenaFeedT.textContent = 'Ready?';
+    arenaFeedT.className = 't';
+  }
+  if(arenaFeedD) arenaFeedD.textContent = 'Technique first, then the next step.';
+  buildDots(arena.streak);
+
+  // build technique choices (5)
+  const choices = $('#arenaChoices');
+  if(choices){
+    choices.innerHTML = '';
+    Object.keys(TECH).forEach(k=>{
+      const b = document.createElement('button');
+      b.className = 'arena-choice';
+      b.dataset.kind = 'tech';
+      b.dataset.value = k;
+      b.textContent = `${TECH[k].icon} ${TECH[k].full}`;
+      b.addEventListener('click', ()=> arenaPickTechnique(k));
+      choices.appendChild(b);
+    });
+  }
+
+  startTimer(14);
+}
+
+function disableArenaChoices(){
+  $('#arenaChoices').querySelectorAll('button').forEach(b=> b.disabled = true);
+}
+
+function arenaRight(title, detail){
+  sfx('good');
+  $('#arenaFeedT').textContent = title;
+  $('#arenaFeedT').className = 't good';
+  $('#arenaFeedD').textContent = detail;
+  disableArenaChoices();
+}
+
+function arenaWrong(title, detail){
+  sfx('bad');
+  $('#arenaFeedT').textContent = title;
+  $('#arenaFeedT').className = 't bad';
+  $('#arenaFeedD').textContent = detail;
+  disableArenaChoices();
+  arena.streak = 0;
+  buildDots(arena.streak);
+}
+
+function arenaPickByNumber(num){
+  if(!arena) return;
+  if(arena.stage !== 'tech') return;
+  const techKey = Object.keys(TECH).find(k=>TECH[k].key===num);
+  if(!techKey) return;
+  arenaPickTechnique(techKey);
+}
+
+function arenaPickTechnique(techKey){
+  if(!arena || arena.stage !== 'tech') return;
+  const q = arenaQuestionObj();
+  const correct = (q.technique === techKey);
+
+  // stop timer
+  if(arena.timerId){ clearInterval(arena.timerId); arena.timerId=null; }
+
+  const btns = [...$('#arenaChoices').querySelectorAll('button')];
+  const btn = btns.find(b=>b.dataset.value===techKey);
+  if(btn){
+    btn.classList.add(correct ? 'correct' : 'wrong');
+  }
+  if(!correct){
+    arena.lastWasPerfect = false;
+    arenaWrong('❌ Not that technique', q.hint || 'Look for the key pattern.');
+    $('#arenaNext').style.display = 'block';
+    return;
+  }
+
+  arenaRight('✅ Technique matched', 'Now pick the best next step.');
+  // move to step stage after a short beat
+  setTimeout(()=>{
+    arena.stage = 'step';
+    showArenaStep();
+  }, 420);
+}
+
+function showArenaStep(){
+  const q = arenaQuestionObj();
+  $('#arenaQuestion').textContent = 'Choose the best next step';
+  $('#arenaNext').style.display = 'none';
+
+  const choices = $('#arenaChoices');
+  choices.innerHTML = '';
+  (q.check?.choices || []).forEach((c, idx)=>{
+    const b = document.createElement('button');
+    b.className = 'arena-choice';
+    b.textContent = c;
+    b.addEventListener('click', ()=> arenaPickStep(idx));
+    choices.appendChild(b);
+  });
+
+  startTimer(12);
+}
+
+function arenaPickStep(idx){
+  if(!arena || arena.stage !== 'step') return;
+  const q = arenaQuestionObj();
+  const correctIdx = q.check?.correct ?? 0;
+
+  if(arena.timerId){ clearInterval(arena.timerId); arena.timerId=null; }
+
+  const btns = [...$('#arenaChoices').querySelectorAll('button')];
+  if(btns[idx]) btns[idx].classList.add(idx===correctIdx ? 'correct' : 'wrong');
+
+  if(idx !== correctIdx){
+    arena.lastWasPerfect = false;
+    arenaWrong('❌ Not quite', q.check?.explain || 'Re-read the pattern and try again next round.');
+    $('#arenaNext').style.display = 'block';
+    return;
+  }
+
+  // correct step
+  arenaRight('✅ Unlocked', q.check?.explain || 'Nice.');
+
+  arena.score += 1;
+  $('#arenaScore').textContent = String(arena.score);
+
+  // streak only if perfect (tech + step without misses)
+  arena.streak += 1;
+  buildDots(arena.streak);
+
+  // Progressive combo messages (fixed animation restart)
+  const comboPop = $('#comboPop');
+  if(comboPop){
+    let comboMsg = null;
+    
+    if(arena.streak === 2) comboMsg = '🔥 HOT HAND!';
+    else if(arena.streak === 4) comboMsg = '🔥🔥 ON FIRE!';
+    else if(arena.streak === 6) comboMsg = '🔥🔥🔥 UNSTOPPABLE!';
+    else if(arena.streak >= 8 && arena.streak % 2 === 0) comboMsg = '⚡ LEGEND x' + arena.streak + '!';
+    
+    if(comboMsg){
+      comboPop.textContent = comboMsg;
+      comboPop.classList.remove('show');
+      void comboPop.offsetWidth; // Force reflow to restart animation
+      comboPop.classList.add('show');
+      setTimeout(()=>comboPop.classList.remove('show'), 1100);
+    }
+  }
+
+  // award XP for arena questions too
+  const diffBonus = (q.diff==='hard') ? 10 : (q.diff==='medium' ? 7 : 5);
+  const timeBonus = arena.timed ? 2 : 0;
+  awardXP(4 + diffBonus + timeBonus, q.technique);
+
+  $('#arenaNext').style.display = 'block';
+}
+
+// REMOVED: $('#arenaNext').addEventListener('click', ()=>{
+// REMOVED:   if(!arena) return;
+// REMOVED:   arena.idx += 1;
+// REMOVED:   if(arena.idx >= arena.qList.length){
+// REMOVED:     finishArena();
+// REMOVED:   }else{
+// REMOVED:     loadArenaQuestion();
+// REMOVED:   }
+// REMOVED: });
+
+function finishArena(){
+  if(arena?.timerId) clearInterval(arena.timerId);
+  const total = arena?.qList?.length || 0;
+  const score = arena?.score || 0;
+  const pct = Math.round((score/Math.max(1,total))*100);
+
+  // simple end message in feedback panel
+  const arenaFeedT = $('#arenaFeedT');
+  const arenaFeedD = $('#arenaFeedD');
+  const arenaChoices = $('#arenaChoices');
+  const arenaNext = $('#arenaNext');
+  
+  if(arenaFeedT) {
+    arenaFeedT.textContent = '🏁 Done!';
+    arenaFeedT.className = 't good';
+  }
+  if(arenaFeedD) arenaFeedD.textContent = `Score: ${score}/${total} (${pct}%). Back to menu to try again.`;
+  if(arenaChoices) arenaChoices.innerHTML = '';
+  if(arenaNext) arenaNext.style.display = 'none';
+
+  // reset streak for main state? keep as-is
+  setTimeout(()=>{
+    stopArena();
+    showHome();
+  }, arena?.timed ? 2200 : 3200);
+}
+
+/* ------------------------------
+   Wire remaining buttons
+--------------------------------*/
+
+function initEventListeners(){
+  // Sound toggle
+  const soundPill = $('#soundPill');
+  if(soundPill){
+    soundPill.addEventListener('click', ()=>{
+      soundEnabled = !soundEnabled;
+      try{ localStorage.setItem('ilpq_sound', soundEnabled ? '1' : '0'); }catch(e){}
+      setSoundUI();
+      sfx('pop');
+    });
+  }
+  
+  // Back buttons
+  const btnBack = $('#btnBack');
+  if(btnBack) btnBack.addEventListener('click', ()=>{ stopGame(); showHome(); });
+  
+  const btnArenaBack = $('#btnArenaBack');
+  if(btnArenaBack) btnArenaBack.addEventListener('click', ()=>{ stopArena(); showHome(); });
+  
+  // Game buttons
+  const btnMixed = $('#btnMixed');
+  if(btnMixed) btnMixed.addEventListener('click', startMixed);
+  
+  const btnBoss = document.getElementById('btnBoss');
+  if(btnBoss) btnBoss.addEventListener('click', startBoss);
+  
+  const btnDojo = $('#btnDojo');
+  if(btnDojo) btnDojo.addEventListener('click', ()=> startArena({timed:true}));
+  
+  const btnTest = $('#btnTest');
+  if(btnTest) btnTest.addEventListener('click', ()=> startArena({timed:false}));
+  
+  // Pattern/Help overlays
+  const patternClose = $('#patternClose');
+  if(patternClose) patternClose.addEventListener('click', hidePattern);
+  
+  const helpClose = $('#helpClose');
+  if(helpClose) helpClose.addEventListener('click', hideHelp);
+  
+  const helpOverlay = $('#helpOverlay');
+  if(helpOverlay) helpOverlay.addEventListener('click', (e)=>{ if(e.target.id==='helpOverlay') hideHelp(); });
+  
+  // Next button
+  const btnNext = $('#btnNext');
+  if(btnNext) btnNext.addEventListener('click', ()=>{
+    hidePattern();
+    const btnNextEl = $('#btnNext');
+    const checkCardEl = $('#checkCard');
+    if(btnNextEl) btnNextEl.classList.remove('visible');
+    if(checkCardEl) checkCardEl.classList.remove('visible');
+    
+    gameIndex += 1;
+    if(gameIndex >= gameQueue.length){
+      // boss badge
+      if(gameMode && gameMode.type==='boss'){
+        if(bossPerfect){
+          state.badges = state.badges || {};
+          state.badges.bossClear = true;
+          saveState();
+          updatePills();
+        }
+      }
+      
+      // Offer replay for lessons
+      if(gameMode && gameMode.type === 'lesson'){
+        const technique = gameMode.technique;
+        sfx('good');
+        setTimeout(()=>{
+          if(confirm('🎉 Lesson complete!\n\nReplay for more practice?')){
+            const lesson = LESSONS.find(l => l.technique === technique);
+            if(lesson){
+              stopGame();
+              startLesson(lesson);
+              return;
+            }
+          }
+          stopGame();
+          showHome();
+        }, 300);
+        return;
+      }
+      
+      stopGame();
+      showHome();
+      sfx('good');
+      return;
+    }
+    loadQuestion();
+  });
+  
+  // Guide wizard
+  const btnGuide = $('#btnGuide');
+  if(btnGuide) btnGuide.addEventListener('click', ()=>{
+    const layer = currentLayer();
+    if(!layer) return;
+    $('#wizardIntegral').textContent = 'Current lock: ' + layer.text;
+    $('#wizardText').textContent = 'Click "Suggest for this lock" to get a starting technique and confidence.';
+    $('#confWrap').style.display = 'none';
+    $('#wizardExplain').style.display = 'none';
+    $('#wizardOverlay').classList.add('visible');
+  });
+  
+  const wizardClose = $('#wizardClose');
+  if(wizardClose) wizardClose.addEventListener('click', ()=> $('#wizardOverlay').classList.remove('visible'));
+  
+  const wizardOverlay = $('#wizardOverlay');
+  if(wizardOverlay) wizardOverlay.addEventListener('click', (e)=>{ if(e.target.id==='wizardOverlay') $('#wizardOverlay').classList.remove('visible'); });
+  
+  const wizardSuggestBtn = $('#wizardSuggestBtn');
+  if(wizardSuggestBtn) wizardSuggestBtn.addEventListener('click', ()=>{
+    const layer = currentLayer();
+    if(!layer) return;
+    const sug = suggestTechnique(layer.text);
+    const confWrap = $('#confWrap');
+    confWrap.style.display = 'block';
+    
+    const techKey = sug.tech === 'start' ? 'algebra' : sug.tech;
+    $('#confSuggestion').textContent = TECH[techKey]?.full || 'Start';
+    $('#confPct').textContent = sug.conf + '%';
+    $('#confBar').style.width = sug.conf + '%';
+    $('#confLabel').textContent = (sug.conf>=70) ? 'HIGH' : (sug.conf>=55 ? 'MED' : 'LOW');
+    
+    // store explanation for button
+    $('#wizardExplain').textContent = sug.why;
+  });
+  
+  const wizardExplainBtn = $('#wizardExplainBtn');
+  if(wizardExplainBtn) wizardExplainBtn.addEventListener('click', ()=>{
+    const el = $('#wizardExplain');
+    el.style.display = (el.style.display==='none') ? 'block' : 'none';
+  });
+  
+  const btnPeek = $('#btnPeek');
+  if(btnPeek) btnPeek.addEventListener('click', ()=>{
+    const layer = currentLayer();
+    if(!layer) return;
+    $('#hintTitle').textContent = '👀 Technique revealed';
+    $('#hintTitle').className = 'hint-title warn';
+    $('#hintText').innerHTML = `This problem uses <strong>${escapeHtml(TECH[layer.technique].full)}</strong>. Now pass the Step Check.`;
+    showStepCheck(layer, {auto:true});
+  });
+  
+  // Arena next
+  const arenaNext = $('#arenaNext');
+  if(arenaNext) arenaNext.addEventListener('click', ()=>{
+    arena.idx++;
+    if(arena.idx < arena.qList.length){
+      loadArenaQuestion();
+    }else{
+      finishArena();
+    }
+  });
+}
+
+function showIntroModal(){
+  const overlay = $('#introOverlay');
+  if(overlay) overlay.classList.add('visible');
+}
+
+function hideIntroModal(){
+  const overlay = $('#introOverlay');
+  if(overlay) overlay.classList.remove('visible');
+}
+
+// Close overlays with Escape key
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    hidePattern();
+    hideHelp();
+    hideIntroModal();
+    const wizardOverlay = $('#wizardOverlay');
+    if(wizardOverlay) wizardOverlay.classList.remove('visible');
+  }
+});
+
+function init(){
+  setSoundUI();
+  updatePills();
+  buildLessonGrid();
+  buildTechControls();
+  initEventListeners();
+  
+  // Intro modal event listeners
+  const introClose = $('#introClose');
+  const introStart = $('#introStart');
+  const introSkip = $('#introSkip');
+  const introOverlay = $('#introOverlay');
+  
+  if(introClose) introClose.addEventListener('click', hideIntroModal);
+  if(introSkip) introSkip.addEventListener('click', hideIntroModal);
+  if(introOverlay) introOverlay.addEventListener('click', (e)=>{ 
+    if(e.target.id==='introOverlay') hideIntroModal(); 
+  });
+  if(introStart) introStart.addEventListener('click', ()=>{
+    hideIntroModal();
+    const lesson = LESSONS.find(l => l.technique === 'usub');
+    if(lesson) startLesson(lesson);
+  });
+  
+  // Show intro modal for first-time users
+  const hasPlayed = localStorage.getItem('ilpq_has_played');
+  if(!hasPlayed){
+    setTimeout(showIntroModal, 400); // Slight delay for smoother UX
+    localStorage.setItem('ilpq_has_played', '1');
+  }
+  
+  showHome();
+  
+  // Show tooltip pointing to U-Sub lesson for first-timers
+  if(!hasPlayed){
+    setTimeout(() => {
+      const tip = document.createElement('div');
+      tip.style.cssText = `
+        position: fixed; 
+        top: 280px; 
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(147,197,253,0.95);
+        color: #050510;
+        padding: 10px 16px;
+        border-radius: 14px;
+        z-index: 800;
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        max-width: 320px;
+        text-align: center;
+        pointer-events: none;
+      `;
+      tip.innerHTML = '👋 <strong>New?</strong> Start with U‑Sub Lesson ↓';
+      document.body.appendChild(tip);
+      
+      setTimeout(() => {
+        tip.style.opacity = '0';
+        tip.style.transition = 'opacity 0.5s';
+        setTimeout(() => tip.remove(), 500);
+      }, 4500);
+    }, 1200); // Show after intro modal closes
+  }
+}
+
+// Wait for DOM to be ready
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+}else{
+  init();
+}
+
+// Using Unicode math symbols - no external library needed!
+</script>
+</body>
+</html>

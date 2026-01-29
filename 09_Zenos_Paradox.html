@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zeno's Paradox — Series Convergence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    :root {
+      --bg: #0f0f13;
+      --panel: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.08);
+      --text: #e8e8e8;
+      --muted: #888;
+      --accent: #7cf3a0;
+      --accent2: #7cc4f3;
+      --warn: #f3c77c;
+      --runner: #f37c7c;
+    }
+    
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    
+    header {
+      padding: 12px 20px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    header h1 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    
+    header h1 span { color: var(--accent); }
+    
+    .header-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    button {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+    
+    button:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--accent);
+    }
+    
+    button.active {
+      background: rgba(124, 243, 160, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    button.primary {
+      background: rgba(124, 243, 160, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    
+    .track-container {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .track-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    
+    .track {
+      position: relative;
+      height: 80px;
+      background: linear-gradient(90deg, 
+        rgba(124, 243, 160, 0.1) 0%, 
+        rgba(124, 243, 160, 0.05) 100%);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .track-marks {
+      position: absolute;
+      inset: 0;
+      display: flex;
+    }
+    
+    .track-mark {
+      flex: 1;
+      border-right: 1px dashed rgba(255,255,255,0.1);
+      position: relative;
+    }
+    
+    .track-mark::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+    
+    .finish-line {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: repeating-linear-gradient(
+        0deg,
+        #fff 0px, #fff 8px,
+        #000 8px, #000 16px
+      );
+    }
+    
+    .runner {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      transition: left 0.3s ease-out;
+      z-index: 10;
+    }
+    
+    .runner-body {
+      font-size: 32px;
+      line-height: 1;
+    }
+    
+    .distance-marker {
+      position: absolute;
+      top: 4px;
+      font-size: 0.7rem;
+      font-family: ui-monospace, monospace;
+      color: var(--accent);
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    
+    .step-markers {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    
+    .step-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      opacity: 0.6;
+    }
+    
+    .step-marker::before {
+      content: attr(data-step);
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      color: var(--accent);
+    }
+    
+    .panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    
+    .panel h3 {
+      margin: 0 0 12px 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .panel-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .panel-row:last-child { margin-bottom: 0; }
+    
+    .panel-row label {
+      font-size: 0.85rem;
+      min-width: 80px;
+    }
+    
+    select, input[type="number"] {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      background: var(--border);
+      height: 6px;
+      border-radius: 3px;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .value-display {
+      font-family: ui-monospace, monospace;
+      font-size: 0.85rem;
+      min-width: 50px;
+      text-align: right;
+      color: var(--accent);
+    }
+    
+    .series-display {
+      background: rgba(124, 243, 160, 0.08);
+      border: 1px solid rgba(124, 243, 160, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    
+    .series-terms {
+      color: var(--accent2);
+      word-break: break-all;
+    }
+    
+    .series-sum {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .series-sum .partial {
+      color: var(--warn);
+    }
+    
+    .series-sum .limit {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    
+    .convergence-status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .convergence-status.converges {
+      background: rgba(124, 243, 160, 0.2);
+      color: var(--accent);
+    }
+    
+    .convergence-status.diverges {
+      background: rgba(243, 124, 124, 0.2);
+      color: var(--runner);
+    }
+    
+    .explanation {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+    
+    .explanation strong {
+      color: var(--text);
+    }
+    
+    .graph-container {
+      height: 200px;
+      position: relative;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    canvas {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .presets {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    
+    .presets button {
+      padding: 5px 10px;
+      font-size: 0.75rem;
+    }
+    
+    .step-table {
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 0.75rem;
+    }
+    
+    .step-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .step-table th, .step-table td {
+      padding: 4px 8px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .step-table th {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      color: var(--muted);
+      font-weight: 600;
+    }
+    
+    .step-table td:first-child {
+      text-align: left;
+      color: var(--muted);
+    }
+    
+    .step-table .highlight {
+      background: rgba(124, 243, 160, 0.1);
+    }
+    
+    .paradox-quote {
+      font-style: italic;
+      color: var(--muted);
+      font-size: 0.8rem;
+      padding: 12px;
+      border-left: 3px solid var(--accent);
+      margin: 12px 0;
+      background: rgba(124, 243, 160, 0.05);
+      border-radius: 0 6px 6px 0;
+    }
+    
+    .math-note {
+      background: rgba(124, 196, 243, 0.1);
+      border: 1px solid rgba(124, 196, 243, 0.2);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 0.8rem;
+      margin-top: 10px;
+    }
+    
+    .math-note code {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏃 Zeno's <span>Paradox</span> — Series Convergence</h1>
+    <div class="header-controls">
+      <button id="btnStep">Step →</button>
+      <button id="btnRun" class="primary">▶ Run</button>
+      <button id="btnReset">Reset</button>
+      <button id="btnHelp">Help</button>
+    </div>
+  </header>
+  
+  <main>
+    <div class="track-container">
+      <div class="track-label">
+        <span id="trackLabel">The runner must reach the finish line (distance = 1)</span>
+      </div>
+      <div class="track" id="track">
+        <div class="track-marks">
+          <div class="track-mark" data-label="0"></div>
+          <div class="track-mark" data-label="¼"></div>
+          <div class="track-mark" data-label="½"></div>
+          <div class="track-mark" data-label="¾"></div>
+        </div>
+        <div class="step-markers" id="stepMarkers"></div>
+        <div class="finish-line"></div>
+        <div class="runner" id="runner">
+          <div class="runner-body">🏃</div>
+        </div>
+        <div class="distance-marker" id="distanceMarker">0</div>
+      </div>
+    </div>
+    
+    <div class="panels">
+      <div class="panel">
+        <h3>Series Type</h3>
+        <div class="presets">
+          <button data-series="zeno" class="active">Zeno (½ⁿ)</button>
+          <button data-series="geometric">Geometric</button>
+          <button data-series="harmonic">Harmonic</button>
+          <button data-series="p-series">p-Series</button>
+          <button data-series="alternating">Alternating</button>
+        </div>
+        
+        <div class="panel-row" id="ratioRow">
+          <label>Ratio (r)</label>
+          <input type="range" id="rngRatio" min="0.1" max="0.95" step="0.05" value="0.5"/>
+          <span class="value-display" id="ratioDisplay">0.5</span>
+        </div>
+        
+        <div class="panel-row" id="pRow" style="display:none;">
+          <label>p value</label>
+          <input type="range" id="rngP" min="0.5" max="3" step="0.1" value="2"/>
+          <span class="value-display" id="pDisplay">2</span>
+        </div>
+        
+        <div class="panel-row">
+          <label>Speed</label>
+          <input type="range" id="rngSpeed" min="1" max="10" value="5"/>
+          <span class="value-display" id="speedDisplay">5</span>
+        </div>
+      </div>
+      
+      <div class="panel">
+        <h3>Current State</h3>
+        <div class="series-display">
+          <div>S<sub>n</sub> = <span class="series-terms" id="seriesTerms">½ + ¼ + ⅛ + ...</span></div>
+          <div class="series-sum">
+            <div>Steps taken: <strong id="stepCount">0</strong></div>
+            <div>Partial sum S<sub><span id="nValue">0</span></sub> = <span class="partial" id="partialSum">0</span></div>
+            <div>Limit: <span class="limit" id="limitValue">1</span> 
+              <span class="convergence-status converges" id="convergenceStatus">CONVERGES</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="explanation" id="explanation">
+          <strong>Zeno's Dichotomy:</strong> To reach the goal, first go halfway. Then half of what remains. Then half again... Does the runner ever arrive?
+        </div>
+      </div>
+      
+      <div class="panel">
+        <h3>Partial Sums Graph</h3>
+        <div class="graph-container">
+          <canvas id="graphCanvas"></canvas>
+        </div>
+      </div>
+      
+      <div class="panel">
+        <h3>Step-by-Step</h3>
+        <div class="step-table" id="stepTable">
+          <table>
+            <thead>
+              <tr>
+                <th>n</th>
+                <th>aₙ (term)</th>
+                <th>Sₙ (sum)</th>
+                <th>Remaining</th>
+              </tr>
+            </thead>
+            <tbody id="stepTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <div class="paradox-quote">
+        "That which is in locomotion must arrive at the half-way stage before it arrives at the goal."
+        <br/>— Aristotle, describing Zeno's paradox
+      </div>
+      
+      <div class="math-note">
+        <strong>The Resolution:</strong> The infinite series <code>½ + ¼ + ⅛ + ... = Σ(½)ⁿ</code> converges to exactly <strong>1</strong>.
+        <br/>The "paradox" assumes infinite steps require infinite time — but if each step takes proportionally less time, the total time is finite!
+        <br/><br/>
+        <strong>Geometric Series Formula:</strong> <code>Σ arⁿ = a/(1-r)</code> when <code>|r| < 1</code>
+      </div>
+    </div>
+  </main>
+
+<script>
+(() => {
+  'use strict';
+  
+  // === STATE ===
+  const state = {
+    seriesType: 'zeno',
+    ratio: 0.5,
+    pValue: 2,
+    currentStep: 0,
+    maxSteps: 50,
+    running: false,
+    speed: 5,
+    partialSums: [],
+    terms: []
+  };
+  
+  // === ELEMENTS ===
+  const el = {
+    runner: document.getElementById('runner'),
+    distanceMarker: document.getElementById('distanceMarker'),
+    stepMarkers: document.getElementById('stepMarkers'),
+    seriesTerms: document.getElementById('seriesTerms'),
+    stepCount: document.getElementById('stepCount'),
+    nValue: document.getElementById('nValue'),
+    partialSum: document.getElementById('partialSum'),
+    limitValue: document.getElementById('limitValue'),
+    convergenceStatus: document.getElementById('convergenceStatus'),
+    explanation: document.getElementById('explanation'),
+    stepTableBody: document.getElementById('stepTableBody'),
+    graphCanvas: document.getElementById('graphCanvas'),
+    rngRatio: document.getElementById('rngRatio'),
+    ratioDisplay: document.getElementById('ratioDisplay'),
+    ratioRow: document.getElementById('ratioRow'),
+    rngP: document.getElementById('rngP'),
+    pDisplay: document.getElementById('pDisplay'),
+    pRow: document.getElementById('pRow'),
+    rngSpeed: document.getElementById('rngSpeed'),
+    speedDisplay: document.getElementById('speedDisplay'),
+    trackLabel: document.getElementById('trackLabel'),
+    btnStep: document.getElementById('btnStep'),
+    btnRun: document.getElementById('btnRun'),
+    btnReset: document.getElementById('btnReset')
+  };
+  
+  const ctx = el.graphCanvas.getContext('2d');
+  
+  // === SERIES DEFINITIONS ===
+  const series = {
+    zeno: {
+      name: "Zeno's Paradox",
+      term: (n) => Math.pow(0.5, n + 1),
+      limit: () => 1,
+      converges: () => true,
+      explanation: `<strong>Zeno's Dichotomy:</strong> To reach the goal, first go halfway (½). Then half of what remains (¼). Then half again (⅛)... The sum ½ + ¼ + ⅛ + ... = 1. The runner DOES arrive!`
+    },
+    geometric: {
+      name: "Geometric Series",
+      term: (n) => Math.pow(state.ratio, n + 1),
+      limit: () => state.ratio / (1 - state.ratio),
+      converges: () => Math.abs(state.ratio) < 1,
+      explanation: `<strong>Geometric Series:</strong> Σ rⁿ = r + r² + r³ + ... = r/(1-r) when |r| < 1. Try changing the ratio to see convergence/divergence!`
+    },
+    harmonic: {
+      name: "Harmonic Series",
+      term: (n) => 1 / (n + 1),
+      limit: () => Infinity,
+      converges: () => false,
+      explanation: `<strong>Harmonic Series:</strong> 1 + ½ + ⅓ + ¼ + ... DIVERGES! Even though terms → 0, the sum grows without bound (very slowly). This surprised mathematicians!`
+    },
+    'p-series': {
+      name: "p-Series",
+      term: (n) => 1 / Math.pow(n + 1, state.pValue),
+      limit: () => state.pValue > 1 ? 'finite' : Infinity,
+      converges: () => state.pValue > 1,
+      explanation: `<strong>p-Series:</strong> Σ 1/nᵖ converges when p > 1, diverges when p ≤ 1. Current p = ${state.pValue}. Try p = 1 (harmonic) vs p = 2 (Basel problem = π²/6)!`
+    },
+    alternating: {
+      name: "Alternating Series",
+      term: (n) => Math.pow(-1, n) / (n + 1),
+      limit: () => Math.LN2,
+      converges: () => true,
+      explanation: `<strong>Alternating Harmonic:</strong> 1 - ½ + ⅓ - ¼ + ... = ln(2) ≈ 0.693. Unlike the harmonic series, alternating signs make it converge!`
+    }
+  };
+  
+  // === CALCULATIONS ===
+  function calculateTerms() {
+    state.terms = [];
+    state.partialSums = [];
+    let sum = 0;
+    
+    const s = series[state.seriesType];
+    for (let n = 0; n < state.maxSteps; n++) {
+      const term = s.term(n);
+      sum += term;
+      state.terms.push(term);
+      state.partialSums.push(sum);
+    }
+  }
+  
+  function formatNumber(x, decimals = 6) {
+    if (!isFinite(x)) return '∞';
+    if (Math.abs(x) < 0.0001 && x !== 0) return x.toExponential(2);
+    return x.toFixed(decimals).replace(/\.?0+$/, '');
+  }
+  
+  function formatFraction(x) {
+    // Nice fractions for common values
+    const fracs = [
+      [0.5, '½'], [0.25, '¼'], [0.125, '⅛'], [0.0625, '1/16'],
+      [0.333333, '⅓'], [0.666666, '⅔'], [0.75, '¾']
+    ];
+    for (const [val, str] of fracs) {
+      if (Math.abs(x - val) < 0.0001) return str;
+    }
+    return formatNumber(x, 4);
+  }
+  
+  // === RENDERING ===
+  function updateRunner() {
+    const n = state.currentStep;
+    const sum = n > 0 ? state.partialSums[n - 1] : 0;
+    const s = series[state.seriesType];
+    
+    // Position runner (clamped to track)
+    const trackWidth = document.getElementById('track').offsetWidth - 50;
+    const normalizedPos = s.converges() ? Math.min(sum / s.limit(), 1) : Math.min(sum / 10, 1);
+    const pos = normalizedPos * trackWidth;
+    
+    el.runner.style.left = pos + 'px';
+    el.distanceMarker.style.left = (pos + 20) + 'px';
+    el.distanceMarker.textContent = formatNumber(sum, 4);
+  }
+  
+  function updateStepMarkers() {
+    el.stepMarkers.innerHTML = '';
+    const trackWidth = document.getElementById('track').offsetWidth - 10;
+    const s = series[state.seriesType];
+    const limit = s.converges() ? s.limit() : 10;
+    
+    for (let i = 0; i < state.currentStep && i < 20; i++) {
+      const sum = state.partialSums[i];
+      const pos = (sum / limit) * trackWidth;
+      
+      if (pos <= trackWidth) {
+        const marker = document.createElement('div');
+        marker.className = 'step-marker';
+        marker.style.left = pos + 'px';
+        marker.dataset.step = i + 1;
+        el.stepMarkers.appendChild(marker);
+      }
+    }
+  }
+  
+  function updateSeriesDisplay() {
+    const n = state.currentStep;
+    const s = series[state.seriesType];
+    
+    // Build terms string
+    let termsStr = '';
+    const showTerms = Math.min(n, 6);
+    for (let i = 0; i < showTerms; i++) {
+      if (i > 0) termsStr += state.terms[i] >= 0 ? ' + ' : ' - ';
+      termsStr += formatFraction(Math.abs(state.terms[i]));
+    }
+    if (n > 6) termsStr += ' + ...';
+    if (n === 0) termsStr = '(no terms yet)';
+    
+    el.seriesTerms.textContent = termsStr;
+    el.stepCount.textContent = n;
+    el.nValue.textContent = n;
+    el.partialSum.textContent = n > 0 ? formatNumber(state.partialSums[n - 1]) : '0';
+    
+    // Limit
+    const limit = s.limit();
+    if (typeof limit === 'number') {
+      el.limitValue.textContent = isFinite(limit) ? formatNumber(limit) : '∞ (diverges)';
+    } else {
+      el.limitValue.textContent = limit;
+    }
+    
+    // Convergence status
+    el.convergenceStatus.textContent = s.converges() ? 'CONVERGES' : 'DIVERGES';
+    el.convergenceStatus.className = 'convergence-status ' + (s.converges() ? 'converges' : 'diverges');
+    
+    // Explanation
+    el.explanation.innerHTML = s.explanation;
+  }
+  
+  function updateStepTable() {
+    let html = '';
+    const s = series[state.seriesType];
+    const limit = s.converges() && isFinite(s.limit()) ? s.limit() : null;
+    
+    for (let i = 0; i < state.currentStep && i < 20; i++) {
+      const term = state.terms[i];
+      const sum = state.partialSums[i];
+      const remaining = limit ? limit - sum : '—';
+      const isLast = i === state.currentStep - 1;
+      
+      html += `<tr class="${isLast ? 'highlight' : ''}">
+        <td>${i + 1}</td>
+        <td>${formatNumber(term, 6)}</td>
+        <td>${formatNumber(sum, 6)}</td>
+        <td>${typeof remaining === 'number' ? formatNumber(remaining, 6) : remaining}</td>
+      </tr>`;
+    }
+    
+    if (state.currentStep > 20) {
+      html += `<tr><td colspan="4" style="text-align:center;color:var(--muted)">... and ${state.currentStep - 20} more steps</td></tr>`;
+    }
+    
+    el.stepTableBody.innerHTML = html;
+  }
+  
+  function drawGraph() {
+    const canvas = el.graphCanvas;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    
+    const w = rect.width;
+    const h = rect.height;
+    const padding = 40;
+    
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, h - padding);
+    ctx.lineTo(w - padding, h - padding);
+    ctx.stroke();
+    
+    // Labels
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('n (steps)', w / 2, h - 5);
+    ctx.save();
+    ctx.translate(12, h / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Sₙ', 0, 0);
+    ctx.restore();
+    
+    if (state.partialSums.length === 0) return;
+    
+    const s = series[state.seriesType];
+    const limit = s.converges() && isFinite(s.limit()) ? s.limit() : null;
+    
+    // Determine Y scale
+    const maxY = limit || Math.max(...state.partialSums.slice(0, state.currentStep)) * 1.2;
+    const minY = Math.min(0, ...state.partialSums.slice(0, state.currentStep)) * 1.2;
+    const yRange = maxY - minY || 1;
+    
+    // Draw limit line
+    if (limit && isFinite(limit)) {
+      const ly = h - padding - ((limit - minY) / yRange) * (h - 2 * padding);
+      ctx.strokeStyle = 'rgba(124, 243, 160, 0.5)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(padding, ly);
+      ctx.lineTo(w - padding, ly);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      ctx.fillStyle = 'rgba(124, 243, 160, 0.8)';
+      ctx.font = '10px ui-monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`limit = ${formatNumber(limit)}`, padding + 5, ly - 5);
+    }
+    
+    // Draw partial sums
+    if (state.currentStep > 0) {
+      ctx.strokeStyle = '#7cc4f3';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      const xStep = (w - 2 * padding) / Math.max(state.maxSteps - 1, 1);
+      
+      for (let i = 0; i < state.currentStep; i++) {
+        const x = padding + i * xStep;
+        const y = h - padding - ((state.partialSums[i] - minY) / yRange) * (h - 2 * padding);
+        
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      
+      // Draw points
+      ctx.fillStyle = '#7cc4f3';
+      for (let i = 0; i < state.currentStep; i++) {
+        const x = padding + i * xStep;
+        const y = h - padding - ((state.partialSums[i] - minY) / yRange) * (h - 2 * padding);
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      // Highlight current point
+      if (state.currentStep > 0) {
+        const i = state.currentStep - 1;
+        const x = padding + i * xStep;
+        const y = h - padding - ((state.partialSums[i] - minY) / yRange) * (h - 2 * padding);
+        ctx.fillStyle = '#f3c77c';
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // Y-axis labels
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '9px ui-monospace';
+    ctx.textAlign = 'right';
+    const ySteps = 5;
+    for (let i = 0; i <= ySteps; i++) {
+      const val = minY + (yRange * i / ySteps);
+      const y = h - padding - (i / ySteps) * (h - 2 * padding);
+      ctx.fillText(formatNumber(val, 2), padding - 5, y + 3);
+    }
+  }
+  
+  function updateAll() {
+    updateRunner();
+    updateStepMarkers();
+    updateSeriesDisplay();
+    updateStepTable();
+    drawGraph();
+  }
+  
+  // === CONTROLS ===
+  function step() {
+    if (state.currentStep < state.maxSteps) {
+      state.currentStep++;
+      updateAll();
+    }
+  }
+  
+  function reset() {
+    state.currentStep = 0;
+    state.running = false;
+    el.btnRun.textContent = '▶ Run';
+    el.btnRun.classList.remove('active');
+    calculateTerms();
+    updateAll();
+  }
+  
+  let runInterval = null;
+  function toggleRun() {
+    state.running = !state.running;
+    
+    if (state.running) {
+      el.btnRun.textContent = '⏸ Pause';
+      el.btnRun.classList.add('active');
+      
+      runInterval = setInterval(() => {
+        if (state.currentStep < state.maxSteps) {
+          step();
+        } else {
+          state.running = false;
+          el.btnRun.textContent = '▶ Run';
+          el.btnRun.classList.remove('active');
+          clearInterval(runInterval);
+        }
+      }, 1000 / state.speed);
+    } else {
+      el.btnRun.textContent = '▶ Run';
+      el.btnRun.classList.remove('active');
+      clearInterval(runInterval);
+    }
+  }
+  
+  function setSeriesType(type) {
+    state.seriesType = type;
+    
+    // Stop running if active
+    if (state.running) {
+      state.running = false;
+      clearInterval(runInterval);
+      el.btnRun.textContent = '▶ Run';
+      el.btnRun.classList.remove('active');
+    }
+    
+    // Update UI
+    document.querySelectorAll('[data-series]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.series === type);
+    });
+    
+    // Show/hide ratio or p-value
+    el.ratioRow.style.display = (type === 'geometric') ? 'flex' : 'none';
+    el.pRow.style.display = (type === 'p-series') ? 'flex' : 'none';
+    
+    reset();
+  }
+  
+  // === EVENT LISTENERS ===
+  el.btnStep.addEventListener('click', step);
+  el.btnRun.addEventListener('click', toggleRun);
+  el.btnReset.addEventListener('click', reset);
+  
+  document.querySelectorAll('[data-series]').forEach(btn => {
+    btn.addEventListener('click', () => setSeriesType(btn.dataset.series));
+  });
+  
+  el.rngRatio.addEventListener('input', () => {
+    state.ratio = parseFloat(el.rngRatio.value);
+    el.ratioDisplay.textContent = state.ratio.toFixed(2);
+    
+    // Stop if running
+    if (state.running) {
+      state.running = false;
+      clearInterval(runInterval);
+      el.btnRun.textContent = '▶ Run';
+      el.btnRun.classList.remove('active');
+    }
+    reset();
+  });
+  
+  el.rngP.addEventListener('input', () => {
+    state.pValue = parseFloat(el.rngP.value);
+    el.pDisplay.textContent = state.pValue.toFixed(1);
+    // Update explanation with current p
+    series['p-series'].explanation = `<strong>p-Series:</strong> Σ 1/nᵖ converges when p > 1, diverges when p ≤ 1. Current p = ${state.pValue.toFixed(1)}. Try p = 1 (harmonic) vs p = 2 (Basel problem ≈ π²/6)!`;
+    
+    // Stop if running
+    if (state.running) {
+      state.running = false;
+      clearInterval(runInterval);
+      el.btnRun.textContent = '▶ Run';
+      el.btnRun.classList.remove('active');
+    }
+    reset();
+  });
+  
+  el.rngSpeed.addEventListener('input', () => {
+    state.speed = parseInt(el.rngSpeed.value);
+    el.speedDisplay.textContent = state.speed;
+    
+    // Update interval if running
+    if (state.running) {
+      clearInterval(runInterval);
+      runInterval = setInterval(() => {
+        if (state.currentStep < state.maxSteps) {
+          step();
+        } else {
+          state.running = false;
+          el.btnRun.textContent = '▶ Run';
+          clearInterval(runInterval);
+        }
+      }, 1000 / state.speed);
+    }
+  });
+  
+  window.addEventListener('resize', () => {
+    drawGraph();
+    updateRunner();
+    updateStepMarkers();
+  });
+  
+  // === HELP MODAL ===
+  el.btnHelp = document.getElementById('btnHelp');
+  el.btnHelp.addEventListener('click', () => {
+    alert(`Zeno's Paradox — Series Convergence
+
+PARADOX: To reach a goal, you must first go halfway. Then half of what remains. Then half again... Infinitely many steps — can you ever arrive?
+
+RESOLUTION: Yes! The infinite series ½ + ¼ + ⅛ + ... = 1
+The sum of infinitely many terms can be finite!
+
+SERIES TYPES:
+• Zeno (½ⁿ): Classic paradox, converges to 1
+• Geometric (rⁿ): Converges if |r| < 1
+• Harmonic (1/n): DIVERGES despite terms → 0
+• p-Series (1/nᵖ): Converges if p > 1
+• Alternating: Signs flip, often converges
+
+CONTROLS:
+• Step: Add one term
+• Run: Auto-step through series
+• Reset: Start over
+
+Watch the graph to see partial sums approach (or not!) the limit.`);
+  });
+  
+  // === INIT ===
+  calculateTerms();
+  updateAll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Related Rates Lab: Shadow Explorer v3</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #container { width: 100vw; height: 100vh; position: relative; }
+        canvas { display: block; }
+
+        /* Math Panel */
+        #math-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid #f39c12;
+            border-radius: 8px;
+            padding: 10px 12px;
+            width: 280px;
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+
+        #math-panel h2 {
+            color: #f39c12;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        .math-section {
+            margin: 6px 0;
+            padding: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .math-section h3 {
+            font-size: 0.6rem;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .math-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 3px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .math-label { color: #aaa; font-size: 0.75rem; }
+        .math-value { font-size: 0.85rem; font-weight: bold; }
+        .math-value.distance { color: #3498db; }
+        .math-value.shadow { color: #9b59b6; }
+        .math-value.velocity { color: #2ecc71; }
+        .math-value.rate { color: #e74c3c; }
+        .math-value.angular { color: #f39c12; }
+        .math-value.tip { color: #e91e63; }
+
+        .formula-box {
+            background: rgba(243, 156, 18, 0.1);
+            border: 1px solid rgba(243, 156, 18, 0.3);
+            border-radius: 4px;
+            padding: 6px;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 0.95rem;
+            color: #f39c12;
+            font-style: italic;
+        }
+
+        .formula-computed {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #ccc;
+            margin-top: 3px;
+        }
+
+        .key-insight {
+            background: rgba(46, 204, 113, 0.15);
+            border: 1px solid #2ecc71;
+            border-radius: 4px;
+            padding: 6px;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: #2ecc71;
+            text-align: center;
+        }
+
+        /* Rate Components Box */
+        .rate-components {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+        }
+
+        .rate-box {
+            background: rgba(0,0,0,0.4);
+            border-radius: 4px;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .rate-box .label { color: #888; font-size: 0.6rem; }
+        .rate-box .value { font-family: 'Courier New', monospace; font-weight: bold; margin-top: 2px; }
+
+        /* Controls Panel */
+        #controls-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 10px 12px;
+            width: 220px;
+        }
+
+        #controls-panel h3 {
+            color: #3498db;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 5px 0;
+            gap: 6px;
+        }
+
+        .control-row label { font-size: 0.65rem; color: #aaa; }
+        .control-row input[type="range"] { width: 70px; accent-color: #3498db; }
+        .control-row span {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #3498db;
+            min-width: 35px;
+            text-align: right;
+        }
+
+        .btn-row { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+
+        .btn {
+            flex: 1;
+            min-width: 45px;
+            padding: 5px 6px;
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid #3498db;
+            border-radius: 3px;
+            color: #3498db;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover { background: rgba(52, 152, 219, 0.4); }
+        .btn.active { background: #3498db; color: #000; }
+
+        /* Demo Mode Dropdown */
+        .demo-modes { margin-top: 8px; }
+        .demo-modes h4 { color: #9b59b6; font-size: 0.7rem; margin-bottom: 5px; }
+
+        .demo-modes select {
+            width: 100%;
+            padding: 6px 8px;
+            background: rgba(155, 89, 182, 0.15);
+            border: 1px solid rgba(155, 89, 182, 0.5);
+            border-radius: 4px;
+            color: #9b59b6;
+            font-size: 0.7rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .demo-modes select:hover { background: rgba(155, 89, 182, 0.25); }
+        .demo-modes select:focus { border-color: #9b59b6; }
+
+        .mode-desc {
+            font-size: 0.6rem;
+            color: #888;
+            margin-top: 4px;
+            padding: 4px 6px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+        /* Spiral Controls */
+        .spiral-controls {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+            display: none;
+        }
+
+        .spiral-controls.visible { display: block; }
+        .spiral-controls h4 { color: #e91e63; font-size: 0.7rem; margin-bottom: 5px; }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 4px 0;
+            font-size: 0.65rem;
+            color: #aaa;
+        }
+
+        .checkbox-row input { accent-color: #e91e63; }
+
+        /* Status Bar */
+        #status-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid #555;
+            border-radius: 15px;
+            padding: 6px 15px;
+            display: flex;
+            gap: 15px;
+            font-size: 0.7rem;
+        }
+
+        .status-item { display: flex; align-items: center; gap: 4px; }
+        .status-item.paused { color: #e74c3c; }
+
+        /* Insight Panel */
+        #insight-panel {
+            position: absolute;
+            bottom: 50px;
+            left: 10px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid #2ecc71;
+            border-radius: 8px;
+            padding: 8px 12px;
+            max-width: 300px;
+        }
+
+        #insight-panel h3 { color: #2ecc71; font-size: 0.7rem; margin-bottom: 4px; }
+        #insight-text { font-size: 0.75rem; line-height: 1.3; color: #ccc; }
+
+        /* Instructions */
+        #instructions {
+            position: absolute;
+            bottom: 50px;
+            right: 10px;
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 8px 10px;
+            font-size: 0.6rem;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        #instructions kbd {
+            background: #333;
+            border: 1px solid #555;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-family: monospace;
+        }
+
+        /* Paused Overlay */
+        #paused-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(231, 76, 60, 0.9);
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: none;
+            z-index: 100;
+        }
+
+        #paused-overlay.visible { display: block; }
+
+        /* Trail toggle indicator */
+        .trail-indicator {
+            position: absolute;
+            top: 50%;
+            right: 240px;
+            transform: translateY(-50%);
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid #e91e63;
+            border-radius: 5px;
+            padding: 6px 10px;
+            font-size: 0.65rem;
+            display: none;
+        }
+
+        .trail-indicator.visible { display: block; }
+        .trail-indicator h4 { color: #e91e63; margin-bottom: 3px; }
+
+        @media (max-width: 768px) {
+            #math-panel { width: 240px; font-size: 0.7rem; }
+            #controls-panel { width: 180px; }
+            #insight-panel { max-width: 240px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <!-- Math Panel -->
+    <div id="math-panel">
+        <h2>📐 Shadow Related Rates</h2>
+        
+        <div class="math-section">
+            <h3>Constants</h3>
+            <div class="math-row">
+                <span class="math-label">Lamp H</span>
+                <span class="math-value" id="lamp-height">15.0 ft</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Your h</span>
+                <span class="math-value" id="player-height">6.0 ft</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">m = h/(H−h)</span>
+                <span class="math-value angular" id="ratio-m">0.667</span>
+            </div>
+        </div>
+
+        <div class="math-section">
+            <h3>Position (Polar)</h3>
+            <div class="math-row">
+                <span class="math-label">r (distance)</span>
+                <span class="math-value distance" id="distance-r">0.00 ft</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">θ (angle)</span>
+                <span class="math-value angular" id="angle-theta">0°</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">s (shadow)</span>
+                <span class="math-value shadow" id="shadow-s">0.00 ft</span>
+            </div>
+        </div>
+
+        <div class="math-section">
+            <h3>Velocity Components</h3>
+            <div class="rate-components">
+                <div class="rate-box">
+                    <div class="label">Radial dr/dt</div>
+                    <div class="value velocity" id="rate-dr">0.00</div>
+                </div>
+                <div class="rate-box">
+                    <div class="label">Angular r·dθ/dt</div>
+                    <div class="value angular" id="rate-tangent">0.00</div>
+                </div>
+                <div class="rate-box">
+                    <div class="label">Shadow ds/dt</div>
+                    <div class="value rate" id="rate-ds">0.00</div>
+                </div>
+                <div class="rate-box">
+                    <div class="label">Tip Speed</div>
+                    <div class="value tip" id="tip-speed">0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="formula-box">
+            <div class="formula">ds/dt = m · dr/dt</div>
+            <div class="formula-computed" id="rate-formula">ds/dt = (0.667)(0) = 0</div>
+        </div>
+
+        <div class="key-insight" id="key-insight">
+            🔑 Shadow rate depends ONLY on radial motion!
+        </div>
+        
+        <!-- Two Cars Distance Section -->
+        <div class="math-section" id="distance-section" style="display:none; border: 1px solid #2ecc71;">
+            <h3 style="color:#2ecc71;">🚗 Two Cars Distance</h3>
+            <div class="math-row">
+                <span class="math-label">Distance D</span>
+                <span class="math-value" style="color:#2ecc71" id="distance-d">0.00 ft</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Rate dD/dt</span>
+                <span class="math-value" style="color:#e74c3c" id="distance-rate">0.00 ft/s</span>
+            </div>
+            <div class="formula-box" style="border-color:#2ecc71; background:rgba(46,204,113,0.1);">
+                <div class="formula" style="color:#2ecc71; font-size:0.85rem;">dD/dt = (Δx·Δvx + Δz·Δvz) / D</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div id="controls-panel">
+        <h3>⚙️ Parameters</h3>
+        <div class="control-row">
+            <label>Lamp H</label>
+            <input type="range" id="lamp-slider" min="10" max="25" value="15" step="0.5">
+            <span id="lamp-slider-val">15</span>
+        </div>
+        <div class="control-row">
+            <label>Your h</label>
+            <input type="range" id="player-slider" min="3" max="8" value="6" step="0.5">
+            <span id="player-slider-val">6</span>
+        </div>
+        
+        <h3 style="margin-top:8px;">📷 Camera</h3>
+        <div class="btn-row">
+            <button class="btn active" id="cam-follow">Follow</button>
+            <button class="btn" id="cam-side">Side</button>
+            <button class="btn" id="cam-top">Top</button>
+        </div>
+
+        <div class="demo-modes">
+            <h4>🎬 Demo Mode</h4>
+            <select id="mode-select">
+                <option value="manual">🎮 Manual Control</option>
+                <option value="orbit">🌀 Ellipse Orbit</option>
+                <option value="spiral-out">🌊 Spiral Out</option>
+                <option value="spiral-in">🕳️ Spiral In</option>
+                <option value="oscillate">〰️ In/Out Oscillate</option>
+            </select>
+            <div class="mode-desc" id="mode-desc">WASD to move freely</div>
+            
+            <div class="checkbox-row" style="margin-top:8px;">
+                <input type="checkbox" id="two-cars-toggle">
+                <label for="two-cars-toggle">🚗🚙 Two Cars Mode</label>
+            </div>
+            <div class="two-cars-controls" id="two-cars-controls" style="display:none;">
+                <div class="two-cars-hint" style="font-size:0.55rem; color:#e67e22; margin:4px 0;">
+                    🟠 OKL; mirrors WASD in manual mode
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="p2-mirror" checked>
+                    <label for="p2-mirror">Mirror demo (180° offset)</label>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="back-forth">
+                    <label for="back-forth">Back & Forth mode</label>
+                </div>
+                <div class="control-row">
+                    <label>P2 Offset</label>
+                    <input type="range" id="p2-offset" min="-20" max="20" value="0" step="1">
+                    <span id="p2-offset-val">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="spiral-controls" id="spiral-controls">
+            <h4>⚙️ Mode Settings</h4>
+            <div class="control-row">
+                <label>Spiral Rate</label>
+                <input type="range" id="spiral-rate" min="0.1" max="2" value="0.5" step="0.1">
+                <span id="spiral-rate-val">0.5</span>
+            </div>
+            <div class="control-row">
+                <label>Angular Speed</label>
+                <input type="range" id="angular-speed" min="0.2" max="2" value="0.8" step="0.1">
+                <span id="angular-speed-val">0.8</span>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="conserve-momentum" checked>
+                <label for="conserve-momentum">Conserve Angular Momentum</label>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="show-trail" checked>
+                <label for="show-trail">Show Trail</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insight Panel -->
+    <div id="insight-panel">
+        <h3>💡 Insight</h3>
+        <div id="insight-text">Move with WASD or select a demo mode!</div>
+    </div>
+
+    <!-- Trail Indicator -->
+    <div class="trail-indicator" id="trail-indicator">
+        <h4>📍 Trail Active</h4>
+        <div>Points: <span id="trail-count">0</span></div>
+    </div>
+
+    <!-- Instructions -->
+    <div id="instructions">
+        🔵 <kbd>WASD</kbd>/<kbd>↑↓←→</kbd> Blue<br>
+        🟠 <kbd>O</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd> Orange<br>
+        <kbd>Shift</kbd> Run | <kbd>Space</kbd> Pause<br>
+        <kbd>C</kbd> Cam | <kbd>T</kbd> Trail | <kbd>R</kbd> Reset
+    </div>
+
+    <!-- Paused Overlay -->
+    <div id="paused-overlay">⏸️ PAUSED</div>
+
+    <!-- Status Bar -->
+    <div id="status-bar">
+        <div class="status-item" id="status-mode">🎮 Manual</div>
+        <div class="status-item paused" id="status-paused" style="display:none;">⏸️ PAUSED</div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// === CONFIG ===
+const CONFIG = {
+    lampHeight: 15,
+    playerHeight: 6,
+    groundSize: 100,
+    moveSpeed: 8,
+    runMultiplier: 2,
+    // Orbit
+    orbitA: 12,
+    orbitB: 8,
+    // Spiral
+    spiralRate: 0.5,
+    angularSpeed: 0.8,
+    conserveMomentum: true,
+    angularMomentum: 80,
+    // Oscillate
+    oscillateAmp: 4,
+    oscillateFreq: 0.3
+};
+
+// === STATE ===
+const state = {
+    // Player 1 (Blue) - Polar coordinates
+    r: 8,
+    theta: 0,
+    x: 8,
+    z: 0,
+    vx: 0,
+    vz: 0,
+    rdot: 0,
+    thetadot: 0,
+    dsdt: 0,
+    tipSpeed: 0,
+    shadowLength: 0,
+    shadowEndX: 0,
+    shadowEndZ: 0,
+    
+    // Player 2 (Orange) - for Two Cars mode
+    p2: {
+        r: 8,
+        theta: Math.PI,
+        x: -8,
+        z: 0,
+        vx: 0,
+        vz: 0,
+        rdot: 0,
+        shadowLength: 0,
+        shadowEndX: 0,
+        shadowEndZ: 0
+    },
+    
+    // Distance between players (Two Cars)
+    distance: 16,
+    dDistancedt: 0,
+    
+    // Mode
+    demoMode: 'manual',
+    twoCarsMode: false,
+    p2Mirror: true,
+    backForth: false,
+    p2Offset: 0,
+    backForthPhase: 0,
+    paused: false,
+    cameraMode: 'follow',
+    showTrail: true,
+    
+    // Trail
+    trailPoints: [],
+    trailPoints2: [],
+    maxTrailPoints: 500
+};
+
+const keys = { w: false, a: false, s: false, d: false, shift: false };
+const keys2 = { up: false, left: false, down: false, right: false };
+
+// === THREE.JS ===
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a1a);
+scene.fog = new THREE.Fog(0x0a0a1a, 50, 150);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+camera.position.set(-5, 15, 30);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('container').appendChild(renderer.domElement);
+
+// === LIGHTING ===
+scene.add(new THREE.AmbientLight(0x1a1a2e, 0.4));
+
+const lampLight = new THREE.SpotLight(0xffeaa7, 2.5, 100, Math.PI / 3, 0.4, 1);
+lampLight.position.set(0, CONFIG.lampHeight, 0);
+lampLight.castShadow = true;
+lampLight.shadow.mapSize.width = 2048;
+lampLight.shadow.mapSize.height = 2048;
+scene.add(lampLight);
+
+const glowLight = new THREE.PointLight(0xf39c12, 1.5, 30);
+glowLight.position.set(0, CONFIG.lampHeight, 0);
+scene.add(glowLight);
+
+// === GROUND ===
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(CONFIG.groundSize, CONFIG.groundSize),
+    new THREE.MeshStandardMaterial({ color: 0x0f0f1a, roughness: 0.95 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(CONFIG.groundSize, 25, 0x2a2a3a, 0x1a1a2a);
+grid.position.y = 0.01;
+scene.add(grid);
+
+// === LAMPPOST ===
+const lamppost = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.25, CONFIG.lampHeight, 8),
+    new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.8 })
+);
+lamppost.position.set(0, CONFIG.lampHeight / 2, 0);
+lamppost.castShadow = true;
+scene.add(lamppost);
+
+const lampHead = new THREE.Mesh(
+    new THREE.SphereGeometry(0.6, 16, 16),
+    new THREE.MeshStandardMaterial({ color: 0xf39c12, emissive: 0xf39c12, emissiveIntensity: 1 })
+);
+lampHead.position.set(0, CONFIG.lampHeight, 0);
+scene.add(lampHead);
+
+// === PLAYER ===
+const player = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.6, 0.8, CONFIG.playerHeight, 16),
+    new THREE.MeshStandardMaterial({ color: 0x3498db, roughness: 0.5 })
+);
+player.position.set(state.x, CONFIG.playerHeight / 2, state.z);
+player.castShadow = true;
+scene.add(player);
+
+const playerHead = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 16, 16),
+    new THREE.MeshStandardMaterial({ color: 0x2980b9 })
+);
+playerHead.position.set(state.x, CONFIG.playerHeight + 0.2, state.z);
+playerHead.castShadow = true;
+scene.add(playerHead);
+
+// === PLAYER 2 (Orange - for Two Cars mode) ===
+const player2 = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.6, 0.8, CONFIG.playerHeight, 16),
+    new THREE.MeshStandardMaterial({ color: 0xe67e22, roughness: 0.5 })
+);
+player2.position.set(state.p2.x, CONFIG.playerHeight / 2, state.p2.z);
+player2.castShadow = true;
+player2.visible = false;
+scene.add(player2);
+
+const player2Head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 16, 16),
+    new THREE.MeshStandardMaterial({ color: 0xd35400 })
+);
+player2Head.position.set(state.p2.x, CONFIG.playerHeight + 0.2, state.p2.z);
+player2Head.castShadow = true;
+player2Head.visible = false;
+scene.add(player2Head);
+
+// Player 2 light ray
+const ray2Geometry = new THREE.BufferGeometry();
+const lightRay2 = new THREE.Line(ray2Geometry, new THREE.LineBasicMaterial({ 
+    color: 0xe67e22, transparent: true, opacity: 0.5 
+}));
+lightRay2.visible = false;
+scene.add(lightRay2);
+
+// Player 2 shadow line
+const shadow2LineGeometry = new THREE.BufferGeometry();
+const shadow2Line = new THREE.Line(shadow2LineGeometry, 
+    new THREE.LineBasicMaterial({ color: 0xe67e22, transparent: true, opacity: 0.6 }));
+shadow2Line.visible = false;
+scene.add(shadow2Line);
+
+// Distance line between players
+const distanceLineMaterial = new THREE.LineBasicMaterial({ color: 0x2ecc71, transparent: true, opacity: 0.8 });
+const distanceLineGeometry = new THREE.BufferGeometry();
+const distanceLine = new THREE.Line(distanceLineGeometry, distanceLineMaterial);
+distanceLine.visible = false;
+scene.add(distanceLine);
+
+// === LIGHT RAY ===
+const rayGeometry = new THREE.BufferGeometry();
+const lightRay = new THREE.Line(rayGeometry, new THREE.LineBasicMaterial({ 
+    color: 0xffeaa7, transparent: true, opacity: 0.5 
+}));
+scene.add(lightRay);
+
+// === SHADOW MARKER ===
+const shadowMarker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.3, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0x9b59b6 })
+);
+shadowMarker.position.y = 0.3;
+scene.add(shadowMarker);
+
+// Shadow line
+const shadowLineGeometry = new THREE.BufferGeometry();
+const shadowLine = new THREE.Line(shadowLineGeometry, 
+    new THREE.LineBasicMaterial({ color: 0x9b59b6, transparent: true, opacity: 0.6 }));
+scene.add(shadowLine);
+
+// === TRAIL ===
+const trailMaterial = new THREE.LineBasicMaterial({ color: 0xe91e63, transparent: true, opacity: 0.6 });
+const trailGeometry = new THREE.BufferGeometry();
+const trail = new THREE.Line(trailGeometry, trailMaterial);
+scene.add(trail);
+
+// Trail for player 2
+const trail2Material = new THREE.LineBasicMaterial({ color: 0xe67e22, transparent: true, opacity: 0.6 });
+const trail2Geometry = new THREE.BufferGeometry();
+const trail2 = new THREE.Line(trail2Geometry, trail2Material);
+trail2.visible = false;
+scene.add(trail2);
+
+// === ORBIT PATH PREVIEW ===
+function createOrbitPath() {
+    const points = [];
+    for (let i = 0; i <= 64; i++) {
+        const t = (i / 64) * Math.PI * 2;
+        points.push(new THREE.Vector3(
+            CONFIG.orbitA * Math.cos(t),
+            0.1,
+            CONFIG.orbitB * Math.sin(t)
+        ));
+    }
+    return points;
+}
+
+const orbitPath = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(createOrbitPath()),
+    new THREE.LineBasicMaterial({ color: 0x9b59b6, transparent: true, opacity: 0.2 })
+);
+orbitPath.visible = false;
+scene.add(orbitPath);
+
+// === UI ELEMENTS ===
+const ui = {
+    distanceR: document.getElementById('distance-r'),
+    angleTheta: document.getElementById('angle-theta'),
+    shadowS: document.getElementById('shadow-s'),
+    rateDr: document.getElementById('rate-dr'),
+    rateTangent: document.getElementById('rate-tangent'),
+    rateDs: document.getElementById('rate-ds'),
+    tipSpeed: document.getElementById('tip-speed'),
+    ratioM: document.getElementById('ratio-m'),
+    rateFormula: document.getElementById('rate-formula'),
+    keyInsight: document.getElementById('key-insight'),
+    insightText: document.getElementById('insight-text'),
+    lampHeight: document.getElementById('lamp-height'),
+    playerHeight: document.getElementById('player-height'),
+    lampSlider: document.getElementById('lamp-slider'),
+    playerSlider: document.getElementById('player-slider'),
+    lampSliderVal: document.getElementById('lamp-slider-val'),
+    playerSliderVal: document.getElementById('player-slider-val'),
+    spiralControls: document.getElementById('spiral-controls'),
+    modeSelect: document.getElementById('mode-select'),
+    modeDesc: document.getElementById('mode-desc'),
+    spiralRate: document.getElementById('spiral-rate'),
+    spiralRateVal: document.getElementById('spiral-rate-val'),
+    angularSpeed: document.getElementById('angular-speed'),
+    angularSpeedVal: document.getElementById('angular-speed-val'),
+    conserveMomentum: document.getElementById('conserve-momentum'),
+    showTrail: document.getElementById('show-trail'),
+    pausedOverlay: document.getElementById('paused-overlay'),
+    statusMode: document.getElementById('status-mode'),
+    statusPaused: document.getElementById('status-paused'),
+    trailIndicator: document.getElementById('trail-indicator'),
+    trailCount: document.getElementById('trail-count'),
+    twoCarsToggle: document.getElementById('two-cars-toggle'),
+    twoCarsControls: document.getElementById('two-cars-controls'),
+    p2Mirror: document.getElementById('p2-mirror'),
+    backForth: document.getElementById('back-forth'),
+    p2Offset: document.getElementById('p2-offset'),
+    p2OffsetVal: document.getElementById('p2-offset-val'),
+    distanceSection: document.getElementById('distance-section'),
+    distanceD: document.getElementById('distance-d'),
+    distanceRate: document.getElementById('distance-rate')
+};
+
+// === POLAR KINEMATICS (GPT-5) ===
+// Stabilize small numbers to prevent display jitter
+function stable(n, threshold = 0.005) {
+    return Math.abs(n) < threshold ? 0 : n;
+}
+
+function polarFromCartesian(x, z, vx, vz) {
+    const r = Math.hypot(x, z);
+    const theta = Math.atan2(z, x);
+    if (r < 0.01) return { r, theta, rdot: vx, thetadot: 0 };
+    const rdot = (x * vx + z * vz) / r;
+    const thetadot = (x * vz - z * vx) / (r * r);
+    return { r, theta, rdot, thetadot };
+}
+
+function cartesianFromPolar(r, theta, rdot, thetadot) {
+    const x = r * Math.cos(theta);
+    const z = r * Math.sin(theta);
+    const vx = rdot * Math.cos(theta) - r * thetadot * Math.sin(theta);
+    const vz = rdot * Math.sin(theta) + r * thetadot * Math.cos(theta);
+    return { x, z, vx, vz };
+}
+
+// === SHADOW MATH ===
+function calculateShadow(x, z, H, h) {
+    const r = Math.hypot(x, z);
+    if (r < 0.01 || H <= h) return { r, s: 0, endX: x, endZ: z };
+    const lambda = H / (H - h);
+    return { r, s: (h / (H - h)) * r, endX: lambda * x, endZ: lambda * z };
+}
+
+function tipSpeedFrom(r, thetadot, rdot, H, h) {
+    if (H <= h) return 0;
+    const lambda = H / (H - h);
+    return lambda * Math.hypot(rdot, r * thetadot);
+}
+
+// === PHYSICS UPDATE ===
+function updatePhysics(dt) {
+    if (state.paused) return;
+    
+    const H = CONFIG.lampHeight;
+    const h = CONFIG.playerHeight;
+    const m = h / (H - h);
+    
+    switch (state.demoMode) {
+        case 'manual':
+            updateManual(dt);
+            break;
+        case 'orbit':
+            updateOrbit(dt);
+            break;
+        case 'spiral-out':
+            updateSpiral(dt, 1);
+            break;
+        case 'spiral-in':
+            updateSpiral(dt, -1);
+            break;
+        case 'oscillate':
+            updateOscillate(dt);
+            break;
+    }
+    
+    // Calculate shadow
+    const shadow = calculateShadow(state.x, state.z, H, h);
+    state.r = shadow.r;
+    state.shadowLength = shadow.s;
+    state.shadowEndX = shadow.endX;
+    state.shadowEndZ = shadow.endZ;
+    
+    // Calculate polar kinematics (but preserve theta for orbit mode)
+    const polar = polarFromCartesian(state.x, state.z, state.vx, state.vz);
+    state.rdot = polar.rdot;
+    state.thetadot = polar.thetadot;
+    // Only update theta from position for manual mode (orbit/spiral track it internally)
+    if (state.demoMode === 'manual') {
+        state.theta = polar.theta;
+    }
+    
+    // Shadow rate
+    state.dsdt = m * state.rdot;
+    state.tipSpeed = tipSpeedFrom(state.r, state.thetadot, state.rdot, H, h);
+    
+    // Update 3D objects - Player 1
+    player.position.set(state.x, h / 2, state.z);
+    playerHead.position.set(state.x, h + 0.2, state.z);
+    
+    rayGeometry.setFromPoints([
+        new THREE.Vector3(0, H, 0),
+        new THREE.Vector3(state.x, h, state.z),
+        new THREE.Vector3(state.shadowEndX, 0, state.shadowEndZ)
+    ]);
+    
+    shadowMarker.position.set(state.shadowEndX, 0.3, state.shadowEndZ);
+    shadowLineGeometry.setFromPoints([
+        new THREE.Vector3(state.x, 0.05, state.z),
+        new THREE.Vector3(state.shadowEndX, 0.05, state.shadowEndZ)
+    ]);
+    
+    // === PLAYER 2 (Two Cars Mode) ===
+    if (state.twoCarsMode) {
+        updatePlayer2(dt);
+        
+        // Player 2 shadow
+        const shadow2 = calculateShadow(state.p2.x, state.p2.z, H, h);
+        state.p2.shadowLength = shadow2.s;
+        state.p2.shadowEndX = shadow2.endX;
+        state.p2.shadowEndZ = shadow2.endZ;
+        
+        // Player 2 polar kinematics
+        const polar2 = polarFromCartesian(state.p2.x, state.p2.z, state.p2.vx, state.p2.vz);
+        state.p2.rdot = polar2.rdot;
+        state.p2.r = shadow2.r;
+        
+        // Update Player 2 3D objects
+        player2.position.set(state.p2.x, h / 2, state.p2.z);
+        player2Head.position.set(state.p2.x, h + 0.2, state.p2.z);
+        
+        ray2Geometry.setFromPoints([
+            new THREE.Vector3(0, H, 0),
+            new THREE.Vector3(state.p2.x, h, state.p2.z),
+            new THREE.Vector3(state.p2.shadowEndX, 0, state.p2.shadowEndZ)
+        ]);
+        
+        shadow2LineGeometry.setFromPoints([
+            new THREE.Vector3(state.p2.x, 0.05, state.p2.z),
+            new THREE.Vector3(state.p2.shadowEndX, 0.05, state.p2.shadowEndZ)
+        ]);
+        
+        // Calculate distance between players (Two Cars formula!)
+        const dx = state.x - state.p2.x;
+        const dz = state.z - state.p2.z;
+        state.distance = Math.hypot(dx, dz);
+        
+        // dD/dt = (Δx·Δvx + Δz·Δvz) / D
+        const dvx = state.vx - state.p2.vx;
+        const dvz = state.vz - state.p2.vz;
+        if (state.distance > 0.1) {
+            state.dDistancedt = (dx * dvx + dz * dvz) / state.distance;
+        } else {
+            state.dDistancedt = 0;
+        }
+        
+        // Distance line
+        distanceLineGeometry.setFromPoints([
+            new THREE.Vector3(state.x, 0.5, state.z),
+            new THREE.Vector3(state.p2.x, 0.5, state.p2.z)
+        ]);
+        
+        // Player 2 trail
+        if (state.showTrail && state.demoMode !== 'manual') {
+            state.trailPoints2.push(new THREE.Vector3(state.p2.x, 0.1, state.p2.z));
+            if (state.trailPoints2.length > state.maxTrailPoints) {
+                state.trailPoints2.shift();
+            }
+            trail2Geometry.setFromPoints(state.trailPoints2);
+        }
+    }
+    
+    // Trail for player 1
+    if (state.showTrail && state.demoMode !== 'manual') {
+        state.trailPoints.push(new THREE.Vector3(state.x, 0.1, state.z));
+        if (state.trailPoints.length > state.maxTrailPoints) {
+            state.trailPoints.shift();
+        }
+        trailGeometry.setFromPoints(state.trailPoints);
+    }
+    
+    updateCamera();
+}
+
+// === PLAYER 2 UPDATE ===
+function updatePlayer2(dt) {
+    // Back & forth mode overrides everything
+    if (state.backForth) {
+        updateBackForth(dt);
+        return;
+    }
+    
+    // In demo modes (not manual), mirror player 1's motion
+    if (state.demoMode !== 'manual' && state.p2Mirror) {
+        // Mirror with 180° offset + any slider offset
+        const offsetAngle = Math.PI; // 180 degrees
+        
+        switch (state.demoMode) {
+            case 'orbit':
+                updatePlayer2Orbit(dt, offsetAngle);
+                break;
+            case 'spiral-out':
+            case 'spiral-in':
+            case 'oscillate':
+                updatePlayer2Spiral(dt, offsetAngle);
+                break;
+        }
+    } else {
+        // Manual control with OKL; (mirrors WASD layout)
+        let dx = 0, dz = 0;
+        if (keys2.up) dz -= 1;    // O
+        if (keys2.down) dz += 1;  // L
+        if (keys2.left) dx -= 1;  // K
+        if (keys2.right) dx += 1; // ;
+        
+        const mag = Math.hypot(dx, dz);
+        if (mag > 0) { dx /= mag; dz /= mag; }
+        
+        const speed = CONFIG.moveSpeed * (keys.shift ? CONFIG.runMultiplier : 1);
+        state.p2.vx = dx * speed;
+        state.p2.vz = dz * speed;
+        
+        // Apply offset from slider
+        const baseX = state.p2.x + state.p2.vx * dt;
+        const baseZ = state.p2.z + state.p2.vz * dt;
+        
+        state.p2.x = Math.max(-40, Math.min(40, baseX));
+        state.p2.z = Math.max(-40, Math.min(40, baseZ));
+    }
+}
+
+function updatePlayer2Orbit(dt, offsetAngle) {
+    // Same orbit as P1 but offset by 180°
+    state.p2.theta = state.theta + offsetAngle;
+    
+    const newX = CONFIG.orbitA * Math.cos(state.p2.theta) + state.p2Offset;
+    const newZ = CONFIG.orbitB * Math.sin(state.p2.theta);
+    
+    state.p2.vx = (newX - state.p2.x) / Math.max(dt, 0.001);
+    state.p2.vz = (newZ - state.p2.z) / Math.max(dt, 0.001);
+    state.p2.x = newX;
+    state.p2.z = newZ;
+}
+
+function updatePlayer2Spiral(dt, offsetAngle) {
+    // Same spiral as P1 but offset
+    state.p2.theta = state.theta + offsetAngle;
+    state.p2.r = state.r; // Same radius
+    
+    const newX = state.p2.r * Math.cos(state.p2.theta) + state.p2Offset;
+    const newZ = state.p2.r * Math.sin(state.p2.theta);
+    
+    state.p2.vx = (newX - state.p2.x) / Math.max(dt, 0.001);
+    state.p2.vz = (newZ - state.p2.z) / Math.max(dt, 0.001);
+    state.p2.x = newX;
+    state.p2.z = newZ;
+}
+
+function updateBackForth(dt) {
+    // Classic two cars: both move toward/away from each other on perpendicular paths
+    state.backForthPhase += dt * 0.5; // Slow oscillation
+    
+    const amplitude = 15;
+    const speed = Math.cos(state.backForthPhase) * 5; // Oscillating speed
+    
+    // P1 moves along X axis
+    state.x = amplitude * Math.sin(state.backForthPhase);
+    state.z = 0;
+    state.vx = amplitude * Math.cos(state.backForthPhase) * 0.5;
+    state.vz = 0;
+    
+    // P2 moves along Z axis (perpendicular!)
+    state.p2.x = 0 + state.p2Offset;
+    state.p2.z = amplitude * Math.sin(state.backForthPhase + Math.PI/2); // 90° phase offset
+    state.p2.vx = 0;
+    state.p2.vz = amplitude * Math.cos(state.backForthPhase + Math.PI/2) * 0.5;
+}
+
+function updateManual(dt) {
+    let dx = 0, dz = 0;
+    if (keys.w) dz -= 1;
+    if (keys.s) dz += 1;
+    if (keys.a) dx -= 1;
+    if (keys.d) dx += 1;
+    
+    const mag = Math.hypot(dx, dz);
+    if (mag > 0) { dx /= mag; dz /= mag; }
+    
+    const speed = CONFIG.moveSpeed * (keys.shift ? CONFIG.runMultiplier : 1);
+    state.vx = dx * speed;
+    state.vz = dz * speed;
+    
+    state.x = Math.max(-40, Math.min(40, state.x + state.vx * dt));
+    state.z = Math.max(-40, Math.min(40, state.z + state.vz * dt));
+}
+
+function updateOrbit(dt) {
+    // Elliptical orbit with variable speed (faster near center)
+    const currentR = Math.hypot(
+        CONFIG.orbitA * Math.cos(state.theta),
+        CONFIG.orbitB * Math.sin(state.theta)
+    );
+    const speedFactor = 1 + 0.4 * (CONFIG.orbitA - currentR) / CONFIG.orbitA;
+    
+    // Use angular speed from slider
+    state.theta += CONFIG.angularSpeed * speedFactor * dt;
+    if (state.theta > Math.PI * 2) state.theta -= Math.PI * 2;
+    
+    const newX = CONFIG.orbitA * Math.cos(state.theta);
+    const newZ = CONFIG.orbitB * Math.sin(state.theta);
+    
+    // Calculate velocities
+    state.vx = (newX - state.x) / Math.max(dt, 0.001);
+    state.vz = (newZ - state.z) / Math.max(dt, 0.001);
+    state.x = newX;
+    state.z = newZ;
+}
+
+function updateSpiral(dt, direction) {
+    // Spiral with optional angular momentum conservation (Claude suggestion)
+    const spiralRate = CONFIG.spiralRate * direction;
+    
+    // Update radius
+    state.r += spiralRate * dt;
+    state.r = Math.max(1, Math.min(40, state.r));
+    
+    // Angular velocity
+    let omega;
+    if (CONFIG.conserveMomentum) {
+        // ω = L / (m·r²) - angular momentum conservation
+        omega = CONFIG.angularMomentum / (state.r * state.r);
+        omega = Math.min(omega, 5); // Cap to avoid crazy spinning
+    } else {
+        omega = CONFIG.angularSpeed;
+    }
+    
+    state.theta += omega * dt;
+    if (state.theta > Math.PI * 2) state.theta -= Math.PI * 2;
+    
+    // Convert to Cartesian
+    const cart = cartesianFromPolar(state.r, state.theta, spiralRate, omega);
+    state.x = cart.x;
+    state.z = cart.z;
+    state.vx = cart.vx;
+    state.vz = cart.vz;
+    state.rdot = spiralRate;
+    state.thetadot = omega;
+}
+
+function updateOscillate(dt) {
+    // Radial oscillation while orbiting
+    const time = performance.now() / 1000;
+    const baseR = 10;
+    const targetR = baseR + CONFIG.oscillateAmp * Math.sin(2 * Math.PI * CONFIG.oscillateFreq * time);
+    
+    const rdot = (targetR - state.r) * 3; // Smooth approach
+    state.r += rdot * dt;
+    state.r = Math.max(2, Math.min(30, state.r));
+    
+    const omega = CONFIG.angularSpeed;
+    state.theta += omega * dt;
+    if (state.theta > Math.PI * 2) state.theta -= Math.PI * 2;
+    
+    const cart = cartesianFromPolar(state.r, state.theta, rdot, omega);
+    state.x = cart.x;
+    state.z = cart.z;
+    state.vx = cart.vx;
+    state.vz = cart.vz;
+    state.rdot = rdot;
+    state.thetadot = omega;
+}
+
+function updateCamera() {
+    const target = new THREE.Vector3(state.x, CONFIG.playerHeight / 2, state.z);
+    let camPos;
+    
+    switch (state.cameraMode) {
+        case 'follow':
+            camPos = new THREE.Vector3(state.x - 8, CONFIG.playerHeight + 10, state.z + 18);
+            break;
+        case 'side':
+            camPos = new THREE.Vector3(30, 8, state.z);
+            break;
+        case 'top':
+            camPos = new THREE.Vector3(0, 50, 1);
+            target.set(0, 0, 0);
+            break;
+    }
+    
+    camera.position.lerp(camPos, 0.05);
+    camera.lookAt(target);
+}
+
+// === UI UPDATE ===
+function updateUI() {
+    const H = CONFIG.lampHeight;
+    const h = CONFIG.playerHeight;
+    const m = h / (H - h);
+    
+    ui.distanceR.textContent = state.r.toFixed(2) + ' ft';
+    ui.angleTheta.textContent = ((state.theta * 180 / Math.PI) % 360).toFixed(0) + '°';
+    ui.shadowS.textContent = state.shadowLength.toFixed(2) + ' ft';
+    
+    // Use stable() to prevent number jitter
+    const stableRdot = stable(state.rdot);
+    const stableTangent = stable(state.r * state.thetadot);
+    const stableDsdt = stable(state.dsdt);
+    
+    ui.rateDr.textContent = stableRdot.toFixed(2);
+    ui.rateTangent.textContent = stableTangent.toFixed(2);
+    ui.rateDs.textContent = stableDsdt.toFixed(2);
+    ui.tipSpeed.textContent = state.tipSpeed.toFixed(2);
+    
+    ui.ratioM.textContent = m.toFixed(3);
+    ui.rateFormula.textContent = `ds/dt = (${m.toFixed(2)})(${stableRdot.toFixed(2)}) = ${stableDsdt.toFixed(2)}`;
+    
+    // Key insight based on mode
+    updateInsight();
+    
+    // Trail count
+    ui.trailCount.textContent = state.trailPoints.length;
+    ui.trailIndicator.classList.toggle('visible', state.showTrail && state.demoMode !== 'manual');
+    
+    // Two Cars distance display
+    if (state.twoCarsMode) {
+        ui.distanceD.textContent = state.distance.toFixed(2) + ' ft';
+        ui.distanceRate.textContent = stable(state.dDistancedt).toFixed(2) + ' ft/s';
+    }
+}
+
+function updateInsight() {
+    const m = CONFIG.playerHeight / (CONFIG.lampHeight - CONFIG.playerHeight);
+    const tangentSpeed = Math.abs(state.r * state.thetadot);
+    let insight = '';
+    let keyInsight = '';
+    
+    switch (state.demoMode) {
+        case 'manual':
+            if (Math.hypot(state.vx, state.vz) < 0.1) {
+                insight = `📍 Standing at r=${state.r.toFixed(1)}ft. Shadow=${state.shadowLength.toFixed(1)}ft. Move to see rates!`;
+            } else if (Math.abs(state.rdot) > 0.5) {
+                const dir = state.rdot > 0 ? 'AWAY from' : 'TOWARD';
+                insight = `🚶 Moving ${dir} lamp → ds/dt = ${state.dsdt.toFixed(2)} ft/s`;
+            } else {
+                insight = `↔️ Mostly tangent motion → ds/dt ≈ 0 even though you're moving!`;
+            }
+            keyInsight = '🔑 Only radial motion changes shadow length!';
+            break;
+            
+        case 'orbit':
+            insight = `🌀 Orbiting: r oscillates slightly, dr/dt ≈ ${state.rdot.toFixed(2)}, so ds/dt ≈ ${state.dsdt.toFixed(2)}`;
+            keyInsight = `🔑 Tangent speed = ${tangentSpeed.toFixed(1)} ft/s but shadow barely changes!`;
+            break;
+            
+        case 'spiral-out':
+            insight = `🌊 Spiraling OUT at dr/dt = ${state.rdot.toFixed(2)} ft/s → Shadow grows steadily!`;
+            if (CONFIG.conserveMomentum) {
+                insight += ` Angular velocity ω = ${state.thetadot.toFixed(2)} rad/s (slowing as r grows)`;
+            }
+            keyInsight = `🔑 ds/dt = ${state.dsdt.toFixed(2)} is CONSTANT even though path curves!`;
+            break;
+            
+        case 'spiral-in':
+            insight = `🕳️ Spiraling IN at dr/dt = ${state.rdot.toFixed(2)} ft/s → Shadow shrinking!`;
+            if (CONFIG.conserveMomentum) {
+                insight += ` Spinning faster: ω = ${state.thetadot.toFixed(2)} rad/s`;
+            }
+            keyInsight = `🔑 Like water draining — faster spin near center!`;
+            break;
+            
+        case 'oscillate':
+            const phase = state.rdot > 0.1 ? 'expanding' : state.rdot < -0.1 ? 'contracting' : 'turning';
+            insight = `〰️ ${phase.toUpperCase()}: dr/dt = ${state.rdot.toFixed(2)} → ds/dt = ${state.dsdt.toFixed(2)}`;
+            keyInsight = `🔑 ds/dt alternates ± as you breathe in/out!`;
+            break;
+    }
+    
+    // Add Two Cars insight
+    if (state.twoCarsMode) {
+        const approaching = state.dDistancedt < -0.1;
+        const separating = state.dDistancedt > 0.1;
+        if (state.backForth) {
+            insight = `🚗🚙 Back & Forth: D=${state.distance.toFixed(1)}ft, dD/dt=${stable(state.dDistancedt).toFixed(2)} ft/s`;
+            keyInsight = approaching ? `🔑 Getting CLOSER → dD/dt < 0` : 
+                         separating ? `🔑 Getting FARTHER → dD/dt > 0` : 
+                         `🔑 Distance rate depends on relative velocities!`;
+        } else {
+            insight += ` | 🚙 D=${state.distance.toFixed(1)}ft`;
+            if (approaching) keyInsight = `🔑 Cars approaching! dD/dt = ${stable(state.dDistancedt).toFixed(2)}`;
+            else if (separating) keyInsight = `🔑 Cars separating! dD/dt = ${stable(state.dDistancedt).toFixed(2)}`;
+        }
+    }
+    
+    ui.insightText.textContent = insight;
+    ui.keyInsight.textContent = keyInsight;
+}
+
+// === MODE SWITCHING ===
+function setMode(mode) {
+    state.demoMode = mode;
+    
+    // Update select
+    ui.modeSelect.value = mode;
+    
+    // Update description
+    const modeDescs = {
+        manual: 'WASD/Arrows to move freely',
+        orbit: 'Adjust size (2-12) & speed',
+        'spiral-out': 'dr/dt > 0 → shadow grows',
+        'spiral-in': 'dr/dt < 0 → shadow shrinks',
+        oscillate: 'dr/dt alternates ±'
+    };
+    ui.modeDesc.textContent = modeDescs[mode];
+    
+    // Update status
+    const modeNames = {
+        manual: '🎮 Manual',
+        orbit: '🌀 Orbit',
+        'spiral-out': '🌊 Spiral Out',
+        'spiral-in': '🕳️ Spiral In',
+        oscillate: '〰️ Oscillate'
+    };
+    ui.statusMode.textContent = modeNames[mode];
+    
+    // Show/hide spiral controls (also show for orbit)
+    const showControls = ['orbit', 'spiral-out', 'spiral-in', 'oscillate'].includes(mode);
+    ui.spiralControls.classList.toggle('visible', showControls);
+    
+    // Update control labels based on mode
+    const spiralRateLabel = document.querySelector('#spiral-controls .control-row:first-of-type label');
+    const momentumRow = ui.conserveMomentum ? ui.conserveMomentum.closest('.checkbox-row') : null;
+    
+    if (mode === 'orbit') {
+        if (spiralRateLabel) spiralRateLabel.textContent = 'Orbit Size';
+        ui.spiralRate.min = 2;
+        ui.spiralRate.max = 12;
+        ui.spiralRate.value = CONFIG.orbitA;
+        ui.spiralRateVal.textContent = CONFIG.orbitA;
+        if (momentumRow) momentumRow.style.display = 'none';
+    } else {
+        if (spiralRateLabel) spiralRateLabel.textContent = 'Spiral Rate';
+        ui.spiralRate.min = 0.1;
+        ui.spiralRate.max = 2;
+        ui.spiralRate.value = CONFIG.spiralRate;
+        ui.spiralRateVal.textContent = CONFIG.spiralRate;
+        if (momentumRow) momentumRow.style.display = 'flex';
+    }
+    
+    // Show/hide orbit path
+    orbitPath.visible = mode === 'orbit';
+    
+    // Reset trail
+    state.trailPoints = [];
+    trailGeometry.setFromPoints([]);
+    
+    // Reset position for demo modes
+    if (mode !== 'manual') {
+        state.theta = 0;
+        
+        if (mode === 'orbit') {
+            // Start on ellipse at current size
+            state.x = CONFIG.orbitA;
+            state.z = 0;
+            state.r = CONFIG.orbitA;
+        } else if (mode === 'spiral-in') {
+            state.r = 25;
+            state.x = state.r;
+            state.z = 0;
+        } else {
+            state.r = 8;
+            state.x = state.r;
+            state.z = 0;
+        }
+    }
+}
+
+function setCamera(mode) {
+    state.cameraMode = mode;
+    document.querySelectorAll('#controls-panel .btn:not(.mode-btn)').forEach(b => b.classList.remove('active'));
+    document.getElementById('cam-' + mode).classList.add('active');
+}
+
+// === LAMPPOST UPDATE ===
+function updateLamppost() {
+    lamppost.scale.y = CONFIG.lampHeight / 15;
+    lamppost.position.y = CONFIG.lampHeight / 2;
+    lampHead.position.y = CONFIG.lampHeight;
+    lampLight.position.y = CONFIG.lampHeight;
+    glowLight.position.y = CONFIG.lampHeight;
+    ui.lampHeight.textContent = CONFIG.lampHeight.toFixed(1) + ' ft';
+}
+
+function updatePlayerModel() {
+    player.scale.y = CONFIG.playerHeight / 6;
+    player.position.y = CONFIG.playerHeight / 2;
+    playerHead.position.y = CONFIG.playerHeight + 0.2;
+    ui.playerHeight.textContent = CONFIG.playerHeight.toFixed(1) + ' ft';
+}
+
+// === INPUT ===
+document.addEventListener('keydown', e => {
+    const key = e.key.toLowerCase();
+    // Player 1: WASD and Arrows
+    if (key === 'w' || key === 'arrowup') keys.w = true;
+    if (key === 'a' || key === 'arrowleft') keys.a = true;
+    if (key === 's' || key === 'arrowdown') keys.s = true;
+    if (key === 'd' || key === 'arrowright') keys.d = true;
+    
+    // Player 2: OKL;
+    if (key === 'o') keys2.up = true;
+    if (key === 'k') keys2.left = true;
+    if (key === 'l') keys2.down = true;
+    if (key === ';') keys2.right = true;
+    
+    if (e.shiftKey) keys.shift = true;
+    if (key === ' ') { e.preventDefault(); state.paused = !state.paused; ui.pausedOverlay.classList.toggle('visible', state.paused); ui.statusPaused.style.display = state.paused ? 'flex' : 'none'; }
+    if (key === 'r') { 
+        state.x = 8; state.z = 0; state.r = 8; state.theta = 0; 
+        state.p2.x = -8; state.p2.z = 0; state.p2.theta = Math.PI;
+        state.trailPoints = []; state.trailPoints2 = [];
+        trailGeometry.setFromPoints([]); trail2Geometry.setFromPoints([]); 
+    }
+    if (key === 'c') { const modes = ['follow', 'side', 'top']; setCamera(modes[(modes.indexOf(state.cameraMode) + 1) % modes.length]); }
+    if (key === 't') { state.showTrail = !state.showTrail; ui.showTrail.checked = state.showTrail; trail.visible = state.showTrail; trail2.visible = state.showTrail && state.twoCarsMode; }
+    if (key === '1') setMode('manual');
+    if (key === '2') setMode('orbit');
+    if (key === '3') setMode('spiral-out');
+    if (key === '4') setMode('spiral-in');
+    if (key === '5') setMode('oscillate');
+    // Prevent arrow keys from scrolling page
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) e.preventDefault();
+});
+
+document.addEventListener('keyup', e => {
+    const key = e.key.toLowerCase();
+    // Player 1
+    if (key === 'w' || key === 'arrowup') keys.w = false;
+    if (key === 'a' || key === 'arrowleft') keys.a = false;
+    if (key === 's' || key === 'arrowdown') keys.s = false;
+    if (key === 'd' || key === 'arrowright') keys.d = false;
+    
+    // Player 2
+    if (key === 'o') keys2.up = false;
+    if (key === 'k') keys2.left = false;
+    if (key === 'l') keys2.down = false;
+    if (key === ';') keys2.right = false;
+    
+    if (!e.shiftKey) keys.shift = false;
+});
+
+// Mode dropdown
+ui.modeSelect.addEventListener('change', e => setMode(e.target.value));
+
+// Camera buttons
+document.getElementById('cam-follow').addEventListener('click', () => setCamera('follow'));
+document.getElementById('cam-side').addEventListener('click', () => setCamera('side'));
+document.getElementById('cam-top').addEventListener('click', () => setCamera('top'));
+
+// Sliders
+ui.lampSlider.addEventListener('input', e => { CONFIG.lampHeight = parseFloat(e.target.value); ui.lampSliderVal.textContent = CONFIG.lampHeight; updateLamppost(); });
+ui.playerSlider.addEventListener('input', e => { CONFIG.playerHeight = parseFloat(e.target.value); ui.playerSliderVal.textContent = CONFIG.playerHeight; updatePlayerModel(); });
+ui.spiralRate.addEventListener('input', e => {
+    const val = parseFloat(e.target.value);
+    if (state.demoMode === 'orbit') {
+        CONFIG.orbitA = val;
+        CONFIG.orbitB = val * 0.67; // Keep ellipse proportions
+        ui.spiralRateVal.textContent = val;
+        // Update orbit path preview
+        const points = [];
+        for (let i = 0; i <= 64; i++) {
+            const t = (i / 64) * Math.PI * 2;
+            points.push(new THREE.Vector3(CONFIG.orbitA * Math.cos(t), 0.1, CONFIG.orbitB * Math.sin(t)));
+        }
+        orbitPath.geometry.setFromPoints(points);
+    } else {
+        CONFIG.spiralRate = val;
+        ui.spiralRateVal.textContent = val;
+    }
+});
+ui.angularSpeed.addEventListener('input', e => { CONFIG.angularSpeed = parseFloat(e.target.value); ui.angularSpeedVal.textContent = CONFIG.angularSpeed; });
+ui.conserveMomentum.addEventListener('change', e => { CONFIG.conserveMomentum = e.target.checked; });
+ui.showTrail.addEventListener('change', e => { state.showTrail = e.target.checked; trail.visible = state.showTrail; trail2.visible = state.showTrail && state.twoCarsMode; });
+
+// Two Cars mode toggle
+ui.twoCarsToggle.addEventListener('change', e => {
+    state.twoCarsMode = e.target.checked;
+    
+    // Show/hide player 2 elements
+    player2.visible = state.twoCarsMode;
+    player2Head.visible = state.twoCarsMode;
+    lightRay2.visible = state.twoCarsMode;
+    shadow2Line.visible = state.twoCarsMode;
+    distanceLine.visible = state.twoCarsMode;
+    trail2.visible = state.twoCarsMode && state.showTrail;
+    
+    // Show/hide UI elements
+    ui.twoCarsControls.style.display = state.twoCarsMode ? 'block' : 'none';
+    ui.distanceSection.style.display = state.twoCarsMode ? 'block' : 'none';
+    
+    // Reset player 2 position (opposite side)
+    if (state.twoCarsMode) {
+        state.p2.x = -state.x;
+        state.p2.z = -state.z;
+        state.p2.theta = state.theta + Math.PI;
+        state.trailPoints2 = [];
+        trail2Geometry.setFromPoints([]);
+    }
+});
+
+// P2 mirror checkbox
+ui.p2Mirror.addEventListener('change', e => { state.p2Mirror = e.target.checked; });
+
+// Back & forth checkbox
+ui.backForth.addEventListener('change', e => { 
+    state.backForth = e.target.checked;
+    state.backForthPhase = 0;
+});
+
+// P2 offset slider
+ui.p2Offset.addEventListener('input', e => {
+    state.p2Offset = parseFloat(e.target.value);
+    ui.p2OffsetVal.textContent = state.p2Offset;
+});
+
+// Resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// === ANIMATION ===
+let lastTime = 0;
+function animate(time) {
+    requestAnimationFrame(animate);
+    try {
+        const dt = Math.min((time - lastTime) / 1000, 0.1);
+        lastTime = time;
+        
+        updatePhysics(dt);
+        updateUI();
+        renderer.render(scene, camera);
+    } catch(e) {
+        console.error('Animation error:', e);
+    }
+}
+
+// === INIT ===
+console.log('Starting init...');
+try {
+    console.log('updateLamppost...');
+    updateLamppost();
+    console.log('updatePlayerModel...');
+    updatePlayerModel();
+    console.log('setMode...');
+    setMode('manual');
+    console.log('animate...');
+    animate(0);
+    console.log('Init complete!');
+} catch(e) {
+    console.error('Init error:', e);
+}
+</script>
+</body>
+</html>

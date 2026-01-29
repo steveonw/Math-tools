@@ -1,0 +1,2346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Calculus Bike - Ultimate Edition</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --panel: rgba(20, 24, 40, 0.86);
+    --text:#e8eefc;
+    --muted: rgba(232, 238, 252, 0.72);
+    --accent:#7cf3a0;
+    --warn:#ffcf5a;
+    --bad:#ff6b6b;
+    --good:#54d6ff;
+    --border: rgba(232, 238, 252, 0.15);
+  }
+  body{
+    margin:0;
+    background: radial-gradient(circle at 30% 10%, #18224a, #05070f 70%);
+    color:var(--text);
+    font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  #wrap{ max-width: 1200px; margin: 0 auto; padding: 12px; }
+  #top{ display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
+  #game{
+    flex: 1 1 900px;
+    width: 900px;
+    height: 360px;
+    max-width: 100%;
+    border-radius: 12px;
+    background:#000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    border: 1px solid var(--border);
+  }
+  #side{
+    flex: 0 0 280px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    min-width:260px;
+  }
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+  .panel h2{
+    margin:0 0 8px 0;
+    font-size: 13px;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .big{ font-size: 22px; font-weight: 700; letter-spacing: .2px; }
+  .kv{ display:flex; justify-content:space-between; gap:10px; }
+  .kv span:first-child{ color: var(--muted); }
+  .mono{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .bar{
+    height:10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(0,0,0,0.25);
+    overflow:hidden;
+  }
+  .bar>div{ height:100%; width:0%; background: linear-gradient(90deg, var(--good), var(--accent)); }
+  #brakeBar{ background: linear-gradient(90deg, var(--warn), var(--bad)); }
+
+  #controls{
+    margin-top: 10px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+  }
+  button{
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor:pointer;
+    user-select:none;
+    touch-action:none;
+    transition: transform 80ms ease, background 120ms ease;
+  }
+  button:active, button.pressed{
+    transform: translateY(1px);
+    background: rgba(255,255,255,0.14);
+  }
+  button.small{ padding: 8px 10px; border-radius: 9px; }
+
+  /* Options accordion */
+  details.panel{ padding: 0; overflow:hidden; }
+  details.panel > summary{
+    list-style:none;
+    cursor:pointer;
+    user-select:none;
+    padding: 10px 12px;
+    color: var(--text);
+    font-weight: 700;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  details.panel > summary::-webkit-details-marker{ display:none; }
+  details.panel[open] > summary{
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+  }
+  .optBody{ padding: 10px 12px; }
+  .optGrid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px 14px;
+    align-items:center;
+  }
+  .optGrid label{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    color: var(--muted);
+  }
+  .optGrid select, .optGrid input[type="range"]{ width: 100%; }
+  .optRow{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    color: var(--muted);
+  }
+  .optHint{
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  #recording{
+    margin-top: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  #recording .row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:baseline;
+    color: var(--muted);
+  }
+  #recording strong{ color: var(--text); }
+  .tableWrap{
+    margin-top: 10px;
+    max-height: 240px;
+    overflow:auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  table{ width:100%; border-collapse:collapse; font-variant-numeric: tabular-nums; }
+  thead th{
+    position: sticky;
+    top:0;
+    background: rgba(10, 12, 18, 0.85);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 8px;
+    text-align:right;
+    font-size:12px;
+    color: var(--muted);
+  }
+  thead th:first-child, tbody td:first-child{ text-align:left; }
+  tbody td{
+    border-bottom: 1px solid rgba(232, 238, 252, 0.08);
+    padding: 6px 8px;
+    text-align:right;
+  }
+  tbody tr:hover{ background: rgba(255,255,255,0.04); }
+  .hint{ color: var(--muted); margin-top:10px; font-size:12px; }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding: 2px 8px;
+    border-radius:999px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.25);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .dot{ width:10px; height:10px; border-radius:999px; background:#999; display:inline-block; }
+  .dot.green{ background:#3bf37c; }
+  .dot.yellow{ background:#ffd166; }
+  .dot.red{ background:#ff5c5c; }
+  .bad{ color: var(--bad); }
+  .good{ color: var(--accent); }
+  .warn{ color: var(--warn); }
+
+  /* Help modal */
+  #helpModal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding: 18px;
+    background: rgba(0,0,0,0.55);
+    z-index: 9999;
+  }
+  #helpModal.open{ display:flex; }
+  #helpCard{
+    max-width: 720px;
+    width: 100%;
+    background: rgba(20, 24, 40, 0.96);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  #helpCard h3{ margin: 0 0 8px 0; font-size: 16px; letter-spacing: .2px; }
+  #helpCard p, #helpCard li{ color: var(--muted); margin: 8px 0; }
+  #helpCard code{
+    color: var(--text);
+    background: rgba(0,0,0,0.25);
+    padding: 2px 6px;
+    border-radius: 8px;
+  }
+  #helpTop{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  @media (max-width: 900px){
+    #top{ flex-direction:column; }
+    #side{ flex-direction:row; flex-wrap:wrap; min-width: unset; }
+    #side .panel{ flex: 1 1 260px; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="top">
+    <canvas id="game"></canvas>
+
+    <div id="side">
+      <div class="panel">
+        <h2>Dashboard</h2>
+        <div class="big"><span id="speedText">0.0 km/h</span></div>
+
+        <div class="kv"><span>Odometer (∫v dt)</span><strong id="odoText" class="mono">0.000 km</strong></div>
+        <div class="kv"><span>Acceleration (dv/dt)</span><strong id="accelText" class="mono">0.0 km/h/s</strong></div>
+        <div class="kv"><span>Jerk (d²v/dt²)</span><strong id="jerkText" class="mono">0.0 km/h/s²</strong></div>
+        <div class="kv"><span>Kinetic Energy</span><strong id="keText" class="mono">0.0 kJ</strong></div>
+
+        <div style="margin-top:10px">
+          <div class="kv"><span>Pedal Power</span><strong id="pedalPct" class="mono">0%</strong></div>
+          <div class="bar"><div id="pedalBar"></div></div>
+
+          <div class="kv" style="margin-top:8px"><span>Brake Power</span><strong id="brakePct" class="mono">0%</strong></div>
+          <div class="bar"><div id="brakeBar"></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>City Mode</h2>
+        <div class="kv"><span>Status</span><strong id="cityStatus">ON</strong></div>
+        <div class="kv"><span>Speed Limit</span><strong id="limitText" class="mono">50 km/h</strong></div>
+
+        <div class="kv"><span>Traffic Light</span>
+          <strong class="mono">
+            <span class="pill">
+              <span id="lightDot" class="dot green"></span>
+              <span id="lightLabel">GREEN</span>
+              <span id="lightDist" class="mono"></span>
+            </span>
+          </strong>
+        </div>
+
+        <div class="kv"><span>Checkpoint</span><strong id="cpText" class="mono">—</strong></div>
+        <div class="kv"><span>Violations</span><strong id="violText" class="mono">0</strong></div>
+
+        <div class="hint">Stop for reds + checkpoints, stay under the limit. It forces variable speed (better calculus).</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button id="btnPedal" aria-label="Pedal - hold W or Up Arrow">Pedal (W / ↑)</button>
+    <button id="btnBrake" aria-label="Brake - hold S or Down Arrow">Brake (S / ↓)</button>
+    <button id="btnAutopilot" class="small" style="background: rgba(124,243,160,0.15);">🤖 Auto (A)</button>
+    <button id="btnPause" class="small">Pause (Space)</button>
+    <button id="btnReset" class="small">Reset (R)</button>
+    <button id="btnUnits" class="small">Units: Metric (U)</button>
+    <button id="btnCity" class="small">City: ON (M)</button>
+    <button id="btnHelp" class="small">Help (H)</button>
+    <button id="btnExport" class="small">Export CSV</button>
+  </div>
+
+  <details class="panel" id="optPanel">
+    <summary>
+      <span>Options</span>
+      <span class="mono" id="optSummary">Riemann: Left · Δt 15s</span>
+    </summary>
+    <div class="optBody">
+      <div class="optGrid">
+        <label><input type="checkbox" id="chkRects" checked /> Show Riemann overlay</label>
+        <label><input type="checkbox" id="chkMarks" checked /> Show recording markers</label>
+
+        <div class="optRow">
+          <span>Riemann method</span>
+          <select id="selMethod">
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+            <option value="mid">Midpoint</option>
+            <option value="trap">Trapezoid</option>
+          </select>
+        </div>
+
+        <div class="optRow">
+          <span>Recording interval (Δt)</span>
+          <div class="mono" id="dtLabel">15s</div>
+        </div>
+        <input type="range" id="rngDt" min="3" max="30" step="1" value="15" />
+
+        <div class="optRow">
+          <span>Extra</span>
+          <div class="mono" id="sumMini"></div>
+        </div>
+        <div class="optHint">
+          Try lowering Δt to watch the approximation converge. Switch methods to see why left/right over/under-estimate depending on whether v(t) is rising or falling.
+        </div>
+
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <div style="margin-bottom:6px;"><strong>📝 Homework Mode</strong></div>
+          <label><input type="checkbox" id="chkHideTrueDx" /> Hide true Δx (students calculate)</label>
+          <label><input type="checkbox" id="chkHideApproxDx" /> Hide approx Δx (students calculate)</label>
+          <label><input type="checkbox" id="chkHideOdometer" /> Hide odometer x(t)</label>
+          <div class="optHint" style="margin-top:4px;">
+            Hide columns so students must compute distance from v(t) and Δt. Great for: "Find Δx between t=15s and t=30s given v=42 km/h"
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Simulation Settings Panel -->
+  <details class="panel" id="simPanel">
+    <summary>
+      <span>Simulation Settings</span>
+      <span class="mono" id="simSummary">Arcade · Manual</span>
+    </summary>
+    <div class="optBody">
+      <div class="optGrid">
+        <div class="optRow">
+          <span>Realism Preset</span>
+          <select id="selRealism">
+            <option value="arcade">Arcade (fast lights)</option>
+            <option value="realistic">Realistic (real timing)</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div style="margin: 8px 0; padding: 8px; background: rgba(124,243,160,0.1); border-radius: 8px;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="chkAutopilot" />
+            <span><strong>🤖 Autopilot</strong> — bike drives itself</span>
+          </label>
+          <div class="optHint" style="margin-top:4px;">Watch calculus happen! Autopilot has human-like randomness for interesting curves.</div>
+        </div>
+
+        <div id="autopilotSettings" style="display:none; padding-top:8px; border-top:1px solid var(--border);">
+          <div class="optRow">
+            <span>Driving style</span>
+            <select id="selDriveStyle">
+              <option value="cautious">Cautious (obeys all rules)</option>
+              <option value="normal" selected>Normal (mostly obeys)</option>
+              <option value="aggressive">Aggressive (runs yellows)</option>
+              <option value="chaotic">Chaotic (drunk driver)</option>
+            </select>
+          </div>
+          <div class="optRow">
+            <span>Randomness</span>
+            <span class="mono" id="randomLabel">50%</span>
+          </div>
+          <input type="range" id="rngRandom" min="0" max="100" step="5" value="50" style="width:100%"/>
+          <div class="optHint" style="margin-top:4px;">Higher = bigger speed swings. All styles create interesting v(t) curves.</div>
+        </div>
+
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <div class="optRow" style="margin-bottom:4px;">
+            <span><strong>Traffic Light Timing</strong></span>
+            <span class="mono" id="cycleTotalLabel">23s cycle</span>
+          </div>
+          
+          <div class="optRow">
+            <span style="color:#4ade80;">● Green</span>
+            <span class="mono" id="greenLabel">10s</span>
+          </div>
+          <input type="range" id="rngGreen" min="5" max="60" step="1" value="10" style="width:100%"/>
+          
+          <div class="optRow">
+            <span style="color:#fbbf24;">● Yellow</span>
+            <span class="mono" id="yellowLabel">3s</span>
+          </div>
+          <input type="range" id="rngYellow" min="2" max="8" step="1" value="3" style="width:100%"/>
+          
+          <div class="optRow">
+            <span style="color:#f87171;">● Red</span>
+            <span class="mono" id="redLabel">10s</span>
+          </div>
+          <input type="range" id="rngRed" min="5" max="90" step="1" value="10" style="width:100%"/>
+        </div>
+
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <div class="optRow">
+            <span>Max bike speed</span>
+            <span class="mono" id="maxSpeedLabel">200 km/h</span>
+          </div>
+          <input type="range" id="rngMaxSpeed" min="40" max="200" step="10" value="200" style="width:100%"/>
+          <div class="optHint">Realistic max ~50-60 km/h. Higher = arcade fun.</div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Calculus Tools Panel -->
+  <details class="panel" id="calcPanel">
+    <summary>
+      <span>Calculus Tools</span>
+      <span class="mono" id="calcSummary">Graph: v(t)</span>
+    </summary>
+    <div class="optBody">
+      <div class="optGrid">
+        <div class="optRow">
+          <span>Graph Type</span>
+          <select id="selGraph">
+            <option value="velocity">v(t) — Velocity</option>
+            <option value="position">x(t) — Position</option>
+            <option value="accel">a(t) — Acceleration</option>
+            <option value="jerk">j(t) — Jerk</option>
+          </select>
+        </div>
+
+        <label><input type="checkbox" id="chkTangent" checked /> Tangent line (slope = derivative)</label>
+        <label><input type="checkbox" id="chkSecant" /> Secant → Tangent (limit demo)</label>
+        <label><input type="checkbox" id="chkMVT" /> Mean Value Theorem point</label>
+        <label><input type="checkbox" id="chkIntegralShade" checked /> Integral shading (area)</label>
+      </div>
+
+      <div id="secantControls" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+        <div class="optRow">
+          <span>Δt (secant width)</span>
+          <span class="mono" id="deltaTLabel">3.0s</span>
+        </div>
+        <input type="range" id="rngDeltaT" min="0.2" max="8" step="0.1" value="3" style="width:100%"/>
+        <button class="small" id="btnAnimateDeltaT" style="margin-top:6px;">▶ Animate Δt → 0</button>
+        <div class="optHint">Watch the secant line become the tangent as Δt shrinks — this is the limit definition of the derivative.</div>
+      </div>
+
+      <div id="mvtDisplay" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+        <div class="optHint" style="color:var(--warn);">
+          <strong>Mean Value Theorem:</strong> There exists a point c where instantaneous velocity = average velocity.
+        </div>
+        <div class="mono" id="mvtInfo" style="margin-top:4px;">Avg: — | MVT point: —</div>
+      </div>
+
+      <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+        <div class="optRow">
+          <span>∫ v(t) dt from t=0 to now</span>
+          <span class="mono" id="integralValue" style="color:var(--accent);">0.000 km</span>
+        </div>
+        <div class="optHint">The integral of velocity = total distance traveled (odometer reading).</div>
+      </div>
+    </div>
+  </details>
+
+  <div id="recording">
+    <div class="row">
+      <div>Next recording in <strong id="recCountdown" class="mono">15.0s</strong></div>
+      <div><span id="methodLabel">Left</span> sum Σ(v·Δt) = <strong id="riemannText" class="mono">0.000 km</strong></div>
+      <div>Actual distance = <strong id="actualText" class="mono">0.000 km</strong></div>
+      <div>Error = <strong id="errText" class="mono">0.00%</strong></div>
+    </div>
+
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Speed</th>
+            <th>Odometer</th>
+            <th>Δ distance</th>
+            <th>Approx Δx</th>
+          </tr>
+        </thead>
+        <tbody id="recBody"></tbody>
+      </table>
+    </div>
+
+    <div class="hint">
+      True odometer: <span class="mono">x += v · dt</span> each frame.
+      The table records every Δt seconds and shows a chosen numerical approximation (Left/Right/Midpoint/Trapezoid).
+    </div>
+  </div>
+</div>
+
+<div id="helpModal" role="dialog" aria-modal="true" aria-label="Calculus Help">
+  <div id="helpCard">
+    <div id="helpTop">
+      <h3>Calculus Concepts While Riding 🚴📈</h3>
+      <button id="btnCloseHelp" class="small">Close</button>
+    </div>
+
+    <p><b>Derivatives (Rates of Change):</b></p>
+    <ul>
+      <li><b>Velocity</b> v(t) = dx/dt — rate of change of position</li>
+      <li><b>Acceleration</b> a(t) = dv/dt — rate of change of velocity</li>
+      <li><b>Jerk</b> j(t) = da/dt — rate of change of acceleration</li>
+    </ul>
+
+    <p><b>Integrals (Accumulation):</b></p>
+    <ul>
+      <li><b>Odometer</b> x(t) = ∫v(t)dt — total distance is area under velocity curve</li>
+      <li><b>Riemann sums</b> approximate integrals using rectangles (Left/Right/Midpoint/Trapezoid)</li>
+    </ul>
+
+    <p><b>Calculus Tools:</b></p>
+    <ul>
+      <li><b>Tangent line:</b> Slope = derivative at that point</li>
+      <li><b>Secant → Tangent:</b> Watch the <em>limit definition</em> of derivative</li>
+      <li><b>MVT point:</b> Mean Value Theorem visualization</li>
+      <li><b>Graph switcher:</b> View x(t), v(t), a(t), or j(t)</li>
+    </ul>
+
+    <p><b>Simulation Settings:</b></p>
+    <ul>
+      <li><b>Autopilot (A):</b> Bike drives itself with human-like randomness — great for observing calculus!</li>
+      <li><b>Realism:</b> Arcade (fast) or Realistic (real traffic timing)</li>
+      <li><b>Light timing:</b> Adjust green/yellow/red durations</li>
+    </ul>
+
+    <p><b>📝 Homework Mode:</b> Hide Δx and approx columns — students calculate distances from v(t) and Δt!</p>
+
+    <p><b>Keyboard:</b> W/↑ pedal · S/↓ brake · Space pause · R reset · A autopilot · M city mode · H help</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const CFG = {
+    MAX_SPEED: 200,
+    MAX_ACCEL: 60,
+    MAX_BRAKE: 100,
+    FRICTION: 3,
+    PEDAL_RAMP_TIME: 1.5,
+    BRAKE_RAMP_TIME: 0.35,
+    MASS_KG: 120,
+    RECORDING_INTERVAL: 15,
+    HIST_WINDOW_S: 15,
+    HIST_KEEP_S: 35,  // Must be > max recording interval (30s) for midpoint sampling
+    HIST_SAMPLE_DT: 0.05,
+
+    VISIBLE_DISTANCE_M: 420,
+    ROAD_WIDTH_NEAR: 860,
+    ROAD_WIDTH_FAR: 120,
+    ROAD_GAMMA: 1.85,
+    SEGMENTS: 80,
+
+    SPEEDING_GRACE: 2,
+    SPEEDING_TRIGGER_S: 1.0,
+    CHECKPOINT_STOP_S: 2.0,
+    LIGHT_GREEN_S: 10,
+    LIGHT_YELLOW_S: 3,
+    LIGHT_RED_S: 10,
+    LIGHT_VISIBLE_M: 160,
+    CHECKPOINT_VISIBLE_M: 180
+  };
+
+  let SPEED_LIMITS = [30, 50, 60, 80, 100];
+  const getLightCycle = () => CFG.LIGHT_GREEN_S + CFG.LIGHT_YELLOW_S + CFG.LIGHT_RED_S;
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  const el = {
+    speedText: document.getElementById('speedText'),
+    odoText: document.getElementById('odoText'),
+    accelText: document.getElementById('accelText'),
+    jerkText: document.getElementById('jerkText'),
+    keText: document.getElementById('keText'),
+    pedalBar: document.getElementById('pedalBar'),
+    brakeBar: document.getElementById('brakeBar'),
+    pedalPct: document.getElementById('pedalPct'),
+    brakePct: document.getElementById('brakePct'),
+
+    cityStatus: document.getElementById('cityStatus'),
+    limitText: document.getElementById('limitText'),
+    lightDot: document.getElementById('lightDot'),
+    lightLabel: document.getElementById('lightLabel'),
+    lightDist: document.getElementById('lightDist'),
+    cpText: document.getElementById('cpText'),
+    violText: document.getElementById('violText'),
+
+    recCountdown: document.getElementById('recCountdown'),
+    methodLabel: document.getElementById('methodLabel'),
+    riemannText: document.getElementById('riemannText'),
+    actualText: document.getElementById('actualText'),
+    errText: document.getElementById('errText'),
+    recBody: document.getElementById('recBody'),
+
+    btnPedal: document.getElementById('btnPedal'),
+    btnBrake: document.getElementById('btnBrake'),
+    btnAutopilot: document.getElementById('btnAutopilot'),
+    btnPause: document.getElementById('btnPause'),
+    btnReset: document.getElementById('btnReset'),
+    btnUnits: document.getElementById('btnUnits'),
+    btnCity: document.getElementById('btnCity'),
+    btnHelp: document.getElementById('btnHelp'),
+    btnExport: document.getElementById('btnExport'),
+
+    optSummary: document.getElementById('optSummary'),
+    chkRects: document.getElementById('chkRects'),
+    chkMarks: document.getElementById('chkMarks'),
+    selMethod: document.getElementById('selMethod'),
+    rngDt: document.getElementById('rngDt'),
+    dtLabel: document.getElementById('dtLabel'),
+    sumMini: document.getElementById('sumMini'),
+
+    // Homework mode
+    chkHideTrueDx: document.getElementById('chkHideTrueDx'),
+    chkHideApproxDx: document.getElementById('chkHideApproxDx'),
+    chkHideOdometer: document.getElementById('chkHideOdometer'),
+
+    // Calculus tools
+    calcSummary: document.getElementById('calcSummary'),
+    selGraph: document.getElementById('selGraph'),
+    chkTangent: document.getElementById('chkTangent'),
+    chkSecant: document.getElementById('chkSecant'),
+    chkMVT: document.getElementById('chkMVT'),
+    chkIntegralShade: document.getElementById('chkIntegralShade'),
+    secantControls: document.getElementById('secantControls'),
+    rngDeltaT: document.getElementById('rngDeltaT'),
+    deltaTLabel: document.getElementById('deltaTLabel'),
+    btnAnimateDeltaT: document.getElementById('btnAnimateDeltaT'),
+    mvtDisplay: document.getElementById('mvtDisplay'),
+    mvtInfo: document.getElementById('mvtInfo'),
+    integralValue: document.getElementById('integralValue'),
+
+    // Simulation settings
+    simSummary: document.getElementById('simSummary'),
+    selRealism: document.getElementById('selRealism'),
+    chkAutopilot: document.getElementById('chkAutopilot'),
+    autopilotSettings: document.getElementById('autopilotSettings'),
+    selDriveStyle: document.getElementById('selDriveStyle'),
+    rngRandom: document.getElementById('rngRandom'),
+    randomLabel: document.getElementById('randomLabel'),
+    cycleTotalLabel: document.getElementById('cycleTotalLabel'),
+    rngGreen: document.getElementById('rngGreen'),
+    greenLabel: document.getElementById('greenLabel'),
+    rngYellow: document.getElementById('rngYellow'),
+    yellowLabel: document.getElementById('yellowLabel'),
+    rngRed: document.getElementById('rngRed'),
+    redLabel: document.getElementById('redLabel'),
+    rngMaxSpeed: document.getElementById('rngMaxSpeed'),
+    maxSpeedLabel: document.getElementById('maxSpeedLabel'),
+
+    helpModal: document.getElementById('helpModal'),
+    btnCloseHelp: document.getElementById('btnCloseHelp')
+  };
+
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const lerp  = (a, b, t) => a + (b - a) * t;
+  const rand  = (a, b) => a + Math.random() * (b - a);
+  const pick  = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const fmt   = (n, d=1) => Number(n).toFixed(d);
+  const pad3  = (n) => Number(n).toFixed(3);
+
+  function fmtTime(s){
+    const m = Math.floor(s/60);
+    const ss = Math.floor(s%60);
+    return m ? `${m}:${String(ss).padStart(2,'0')}` : `${ss}s`;
+  }
+
+  const UNITS = {
+    metric:   { speed: 'km/h', dist: 'km', speedFactor: 1.0,      distFactor: 1.0 },
+    imperial: { speed: 'mph',  dist: 'mi', speedFactor: 0.621371, distFactor: 0.621371 }
+  };
+
+  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const state = {
+    t: 0, x: 0, v: 0, a: 0, j: 0, ke: 0,
+
+    pedalPower: 0, brakePower: 0, _pedalHold: 0, _brakeHold: 0,
+    pedalPressed: false, brakePressed: false, paused: false,
+
+    viewW: 900, viewH: 360, dpr: 1,
+    wheelAngle: 0, pedalAngle: 0, camBob: 0,
+
+    units: 'metric',
+    cityMode: true,
+
+    showRiemannRects: true,
+    showRecordMarkers: true,
+    method: 'left',
+    recIntervalS: CFG.RECORDING_INTERVAL,
+
+    // Homework mode - hide values so students calculate
+    hideTrueDx: false,
+    hideApproxDx: false,
+    hideOdometer: false,
+
+    // Calculus tools state
+    graphType: 'velocity',
+    showTangent: true,
+    showSecant: false,
+    showMVT: false,
+    showIntegralShade: true,
+    deltaT: 3.0,
+    animatingDeltaT: false,
+    _deltaTDir: -1,
+
+    // Autopilot state
+    autopilot: false,
+    driveStyle: 'normal',
+    randomness: 0.5,
+    _apBurstUntil: 0,
+    _apBurstType: 0,
+    _apStuckTime: 0,
+    _apBrakeTime: 0,
+
+    records: [],
+    recCountdown: CFG.RECORDING_INTERVAL,
+    sumLeftKm: 0, sumRightKm: 0, sumMidKm: 0, sumTrapKm: 0,
+
+    history: [],
+    _histAcc: 0,
+    _uiAcc: 0,
+
+    speedLimit: 50,
+    nextLimitChangeT: 10,
+    speedingTime: 0,
+    speedingFlag: false,
+    light: null,
+    checkpoint: null,
+    violations: { speeding: 0, red: 0, checkpoint: 0 }
+  };
+
+  function makeNextLight(fromDistKm){
+    return { distKm: fromDistKm + rand(0.18, 0.45), phaseS: rand(0, getLightCycle()) };
+  }
+  function lightColor(light, t){
+    const tt = (t + light.phaseS) % getLightCycle();
+    if (tt < CFG.LIGHT_GREEN_S) return 'GREEN';
+    if (tt < CFG.LIGHT_GREEN_S + CFG.LIGHT_YELLOW_S) return 'YELLOW';
+    return 'RED';
+  }
+  function lightTimeToChange(light, t){
+    const tt = (t + light.phaseS) % getLightCycle();
+    if (tt < CFG.LIGHT_GREEN_S) return CFG.LIGHT_GREEN_S - tt;
+    if (tt < CFG.LIGHT_GREEN_S + CFG.LIGHT_YELLOW_S) return (CFG.LIGHT_GREEN_S + CFG.LIGHT_YELLOW_S) - tt;
+    return getLightCycle() - tt;
+  }
+  function makeNextCheckpoint(fromDistKm){
+    return { distKm: fromDistKm + rand(0.35, 0.85), stoppedS: 0, cleared: false };
+  }
+
+  function sampleVAtTime(targetT){
+    if (!state.history.length) return state.v;
+    let best = state.history[0];
+    let bestD = Math.abs(best.t - targetT);
+    for (let i = state.history.length - 1; i >= 0; i--){
+      const h = state.history[i];
+      const d = Math.abs(h.t - targetT);
+      if (d < bestD){ bestD = d; best = h; }
+      if (h.t < targetT - 0.25) break;
+    }
+    return best.v;
+  }
+
+  function methodName(m){
+    if (m === 'left') return 'Left';
+    if (m === 'right') return 'Right';
+    if (m === 'mid') return 'Midpoint';
+    return 'Trapezoid';
+  }
+
+  function getSumKm(m){
+    if (m === 'left') return state.sumLeftKm;
+    if (m === 'right') return state.sumRightKm;
+    if (m === 'mid') return state.sumMidKm;
+    return state.sumTrapKm;
+  }
+
+  function getRecApproxDx(rec, m){
+    if (!rec || rec.isBase) return 0;
+    if (m === 'left') return rec.leftDx;
+    if (m === 'right') return rec.rightDx;
+    if (m === 'mid') return rec.midDx;
+    return rec.trapDx;
+  }
+
+  function addRecord(isBaseline=false){
+    const last = state.records[state.records.length - 1];
+    const rec = {
+      t: state.t,
+      v: state.v,
+      x: state.x,
+      dx: last ? (state.x - last.x) : 0,
+      intervalS: last ? (state.t - last.t) : 0,
+      isBase: isBaseline,
+
+      vLeft: 0, vRight: 0, vMid: 0,
+      leftDx: 0, rightDx: 0, midDx: 0, trapDx: 0
+    };
+
+    if (!isBaseline && last){
+      const dtH = rec.intervalS / 3600;
+      rec.vLeft  = last.v;
+      rec.vRight = state.v;
+      rec.vMid   = sampleVAtTime(last.t + rec.intervalS * 0.5);
+
+      rec.leftDx  = rec.vLeft * dtH;
+      rec.rightDx = rec.vRight * dtH;
+      rec.midDx   = rec.vMid * dtH;
+      rec.trapDx  = ((rec.vLeft + rec.vRight) / 2) * dtH;
+
+      state.sumLeftKm  += rec.leftDx;
+      state.sumRightKm += rec.rightDx;
+      state.sumMidKm   += rec.midDx;
+      state.sumTrapKm  += rec.trapDx;
+    }
+
+    state.records.push(rec);
+  }
+
+  function renderRecordTable(){
+    const u = UNITS[state.units];
+    const rows = state.records.slice(-40);
+    el.recBody.innerHTML = rows.map((r) => {
+      const tStr = fmtTime(r.t);
+      const vStr = `${fmt(r.v * u.speedFactor, 1)} ${u.speed}`;
+      
+      // Homework mode: show "?" for hidden values
+      const xStr = state.hideOdometer 
+        ? '<span style="color:var(--warn);font-weight:700;">?</span>' 
+        : `${pad3(r.x * u.distFactor)} ${u.dist}`;
+      const dxStr = r.isBase ? '—' : (state.hideTrueDx 
+        ? '<span style="color:var(--warn);font-weight:700;">?</span>' 
+        : `${pad3(r.dx * u.distFactor)} ${u.dist}`);
+      const approx = r.isBase ? '—' : (state.hideApproxDx 
+        ? '<span style="color:var(--warn);font-weight:700;">?</span>' 
+        : `${pad3(getRecApproxDx(r, state.method) * u.distFactor)} ${u.dist}`);
+      
+      return `<tr>
+        <td>${tStr}</td>
+        <td>${vStr}</td>
+        <td>${xStr}</td>
+        <td>${dxStr}</td>
+        <td>${approx}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function resetRecording(){
+    state.records = [];
+    state.recCountdown = state.recIntervalS;
+    state.sumLeftKm = 0;
+    state.sumRightKm = 0;
+    state.sumMidKm = 0;
+    state.sumTrapKm = 0;
+    addRecord(true);
+    renderRecordTable();
+  }
+
+  function exportCSV(){
+    const u = UNITS[state.units];
+    const lines = [];
+    lines.push(`Calculus Bike City Ride`);
+    lines.push(`units,${state.units}`);
+    lines.push(`method,${state.method}`);
+    lines.push(`recording_interval_s,${state.recIntervalS}`);
+    lines.push(`city_mode,${state.cityMode ? 'ON' : 'OFF'}`);
+    lines.push(``);
+
+    lines.push(`time_s,speed_${u.speed.replace('/','_')},odometer_${u.dist},true_delta_${u.dist},left_${u.dist},right_${u.dist},mid_${u.dist},trap_${u.dist}`);
+    for (const r of state.records){
+      const speed = (r.v * u.speedFactor).toFixed(3);
+      const dist  = (r.x * u.distFactor).toFixed(6);
+      const dx    = r.isBase ? '' : (r.dx * u.distFactor).toFixed(6);
+      const ldx   = r.isBase ? '' : (r.leftDx * u.distFactor).toFixed(6);
+      const rdx   = r.isBase ? '' : (r.rightDx * u.distFactor).toFixed(6);
+      const mdx   = r.isBase ? '' : (r.midDx * u.distFactor).toFixed(6);
+      const tdx   = r.isBase ? '' : (r.trapDx * u.distFactor).toFixed(6);
+      lines.push(`${r.t.toFixed(3)},${speed},${dist},${dx},${ldx},${rdx},${mdx},${tdx}`);
+    }
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `calculus_bike_records_${Date.now()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function resetAll(){
+    state.t = 0; state.x = 0; state.v = 0; state.a = 0; state.j = 0; state.ke = 0;
+    state.pedalPower = 0; state.brakePower = 0; state._pedalHold = 0; state._brakeHold = 0;
+    state.wheelAngle = 0; state.pedalAngle = 0; state.camBob = 0;
+    state.history = []; state._histAcc = 0;
+
+    state.paused = false;
+    el.btnPause.textContent = 'Pause (Space)';
+
+    state.speedLimit = 50;
+    state.nextLimitChangeT = rand(8, 16);
+    state.speedingTime = 0; state.speedingFlag = false;
+
+    state.light = makeNextLight(0.22);
+    state.checkpoint = makeNextCheckpoint(0.55);
+    state.violations = { speeding: 0, red: 0, checkpoint: 0 };
+
+    resetRecording();
+  }
+
+  function setButtonPressed(btn, on){ btn.classList.toggle('pressed', on); }
+
+  function bindHoldButton(button, onDown, onUp){
+    button.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      try { button.setPointerCapture(ev.pointerId); } catch {}
+      onDown();
+    });
+    const end = (ev) => {
+      ev.preventDefault();
+      onUp();
+      try { button.releasePointerCapture(ev.pointerId); } catch {}
+    };
+    button.addEventListener('pointerup', end);
+    button.addEventListener('pointercancel', end);
+    button.addEventListener('contextmenu', (ev) => ev.preventDefault());
+  }
+
+  bindHoldButton(el.btnPedal,
+    () => { state.pedalPressed = true; setButtonPressed(el.btnPedal, true); },
+    () => { state.pedalPressed = false; setButtonPressed(el.btnPedal, false); }
+  );
+  bindHoldButton(el.btnBrake,
+    () => { state.brakePressed = true; setButtonPressed(el.btnBrake, true); },
+    () => { state.brakePressed = false; setButtonPressed(el.btnBrake, false); }
+  );
+
+  el.btnPause.addEventListener('click', () => {
+    state.paused = !state.paused;
+    el.btnPause.textContent = state.paused ? 'Resume (Space)' : 'Pause (Space)';
+  });
+  el.btnReset.addEventListener('click', resetAll);
+  el.btnAutopilot.addEventListener('click', () => {
+    el.chkAutopilot.checked = !el.chkAutopilot.checked;
+    el.chkAutopilot.dispatchEvent(new Event('change'));
+  });
+  el.btnUnits.addEventListener('click', () => {
+    state.units = (state.units === 'metric') ? 'imperial' : 'metric';
+    el.btnUnits.textContent = `Units: ${state.units === 'metric' ? 'Metric' : 'Imperial'} (U)`;
+    renderRecordTable();
+  });
+  el.btnCity.addEventListener('click', () => {
+    state.cityMode = !state.cityMode;
+    el.btnCity.textContent = `City: ${state.cityMode ? 'ON' : 'OFF'} (M)`;
+  });
+  el.btnExport.addEventListener('click', exportCSV);
+
+  function openHelp(){ el.helpModal.classList.add('open'); }
+  function closeHelp(){ el.helpModal.classList.remove('open'); }
+  el.btnHelp.addEventListener('click', openHelp);
+  el.btnCloseHelp.addEventListener('click', closeHelp);
+  el.helpModal.addEventListener('click', (e) => { if (e.target === el.helpModal) closeHelp(); });
+
+  el.chkRects.addEventListener('change', () => state.showRiemannRects = el.chkRects.checked);
+  el.chkMarks.addEventListener('change', () => state.showRecordMarkers = el.chkMarks.checked);
+  el.selMethod.addEventListener('change', () => { state.method = el.selMethod.value; renderRecordTable(); });
+  el.rngDt.addEventListener('input', () => {
+    const v = Number(el.rngDt.value);
+    state.recIntervalS = v;
+    state.recCountdown = v;
+    el.dtLabel.textContent = `${v}s`;
+  });
+
+  // Homework mode event handlers
+  el.chkHideTrueDx.addEventListener('change', () => {
+    state.hideTrueDx = el.chkHideTrueDx.checked;
+    renderRecordTable();
+  });
+  el.chkHideApproxDx.addEventListener('change', () => {
+    state.hideApproxDx = el.chkHideApproxDx.checked;
+    renderRecordTable();
+  });
+  el.chkHideOdometer.addEventListener('change', () => {
+    state.hideOdometer = el.chkHideOdometer.checked;
+    renderRecordTable();
+  });
+
+  // Calculus tools event handlers
+  el.selGraph.addEventListener('change', () => {
+    state.graphType = el.selGraph.value;
+    const labels = { velocity:'v(t)', position:'x(t)', accel:'a(t)', jerk:'j(t)' };
+    el.calcSummary.textContent = `Graph: ${labels[state.graphType]}`;
+  });
+  el.chkTangent.addEventListener('change', () => state.showTangent = el.chkTangent.checked);
+  el.chkSecant.addEventListener('change', () => {
+    state.showSecant = el.chkSecant.checked;
+    el.secantControls.style.display = state.showSecant ? 'block' : 'none';
+  });
+  el.chkMVT.addEventListener('change', () => {
+    state.showMVT = el.chkMVT.checked;
+    el.mvtDisplay.style.display = state.showMVT ? 'block' : 'none';
+  });
+  el.chkIntegralShade.addEventListener('change', () => state.showIntegralShade = el.chkIntegralShade.checked);
+  el.rngDeltaT.addEventListener('input', () => {
+    state.deltaT = Number(el.rngDeltaT.value);
+    el.deltaTLabel.textContent = `${state.deltaT.toFixed(1)}s`;
+  });
+  el.btnAnimateDeltaT.addEventListener('click', () => {
+    state.animatingDeltaT = !state.animatingDeltaT;
+    if (state.animatingDeltaT) {
+      state.deltaT = 8;
+      state._deltaTDir = -1;
+      el.btnAnimateDeltaT.textContent = '⏹ Stop';
+    } else {
+      el.btnAnimateDeltaT.textContent = '▶ Animate Δt → 0';
+    }
+  });
+
+  // Simulation settings event handlers
+  function updateSimSummary() {
+    const mode = el.selRealism.value === 'realistic' ? 'Real' : 
+                 el.selRealism.value === 'arcade' ? 'Arcade' : 'Custom';
+    const pilot = state.autopilot ? 'Auto' : 'Manual';
+    el.simSummary.textContent = `${mode} · ${pilot}`;
+  }
+
+  function updateLightLabels() {
+    el.greenLabel.textContent = `${CFG.LIGHT_GREEN_S}s`;
+    el.yellowLabel.textContent = `${CFG.LIGHT_YELLOW_S}s`;
+    el.redLabel.textContent = `${CFG.LIGHT_RED_S}s`;
+    el.cycleTotalLabel.textContent = `${getLightCycle()}s cycle`;
+    el.rngGreen.value = CFG.LIGHT_GREEN_S;
+    el.rngYellow.value = CFG.LIGHT_YELLOW_S;
+    el.rngRed.value = CFG.LIGHT_RED_S;
+  }
+
+  function applyRealism(preset) {
+    if (preset === 'arcade') {
+      CFG.LIGHT_GREEN_S = 10;
+      CFG.LIGHT_YELLOW_S = 3;
+      CFG.LIGHT_RED_S = 10;
+      CFG.MAX_SPEED = 200;
+      SPEED_LIMITS = [30, 50, 60, 80, 100];
+    } else if (preset === 'realistic') {
+      CFG.LIGHT_GREEN_S = 35;
+      CFG.LIGHT_YELLOW_S = 4;
+      CFG.LIGHT_RED_S = 50;
+      CFG.MAX_SPEED = 60;
+      SPEED_LIMITS = [20, 30, 40, 50];
+    }
+    updateLightLabels();
+    el.maxSpeedLabel.textContent = `${CFG.MAX_SPEED} km/h`;
+    el.rngMaxSpeed.value = CFG.MAX_SPEED;
+    updateSimSummary();
+  }
+
+  el.selRealism.addEventListener('change', () => {
+    const v = el.selRealism.value;
+    if (v !== 'custom') applyRealism(v);
+    updateSimSummary();
+  });
+
+  el.chkAutopilot.addEventListener('change', () => {
+    state.autopilot = el.chkAutopilot.checked;
+    el.autopilotSettings.style.display = state.autopilot ? 'block' : 'none';
+    el.btnAutopilot.textContent = state.autopilot ? '🤖 Auto: ON' : '🤖 Auto (A)';
+    el.btnAutopilot.style.background = state.autopilot ? 'rgba(124,243,160,0.35)' : 'rgba(124,243,160,0.15)';
+    if (state.autopilot) {
+      // Reset autopilot state
+      state._apBurstUntil = 0;
+      state._apBurstType = 0;
+      state._apStuckTime = 0;
+      state._apBrakeTime = 0;
+    } else {
+      // Release controls when turning off autopilot
+      state.pedalPressed = false;
+      state.brakePressed = false;
+      setButtonPressed(el.btnPedal, false);
+      setButtonPressed(el.btnBrake, false);
+    }
+    updateSimSummary();
+  });
+
+  el.selDriveStyle.addEventListener('change', () => {
+    state.driveStyle = el.selDriveStyle.value;
+  });
+
+  el.rngRandom.addEventListener('input', () => {
+    state.randomness = Number(el.rngRandom.value) / 100;
+    el.randomLabel.textContent = `${el.rngRandom.value}%`;
+  });
+
+  el.rngGreen.addEventListener('input', () => {
+    CFG.LIGHT_GREEN_S = Number(el.rngGreen.value);
+    el.greenLabel.textContent = `${CFG.LIGHT_GREEN_S}s`;
+    el.cycleTotalLabel.textContent = `${getLightCycle()}s cycle`;
+    el.selRealism.value = 'custom';
+    updateSimSummary();
+  });
+
+  el.rngYellow.addEventListener('input', () => {
+    CFG.LIGHT_YELLOW_S = Number(el.rngYellow.value);
+    el.yellowLabel.textContent = `${CFG.LIGHT_YELLOW_S}s`;
+    el.cycleTotalLabel.textContent = `${getLightCycle()}s cycle`;
+    el.selRealism.value = 'custom';
+    updateSimSummary();
+  });
+
+  el.rngRed.addEventListener('input', () => {
+    CFG.LIGHT_RED_S = Number(el.rngRed.value);
+    el.redLabel.textContent = `${CFG.LIGHT_RED_S}s`;
+    el.cycleTotalLabel.textContent = `${getLightCycle()}s cycle`;
+    el.selRealism.value = 'custom';
+    updateSimSummary();
+  });
+
+  el.rngMaxSpeed.addEventListener('input', () => {
+    CFG.MAX_SPEED = Number(el.rngMaxSpeed.value);
+    el.maxSpeedLabel.textContent = `${CFG.MAX_SPEED} km/h`;
+    el.selRealism.value = 'custom';
+    updateSimSummary();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    if (e.key === 'a' || e.key === 'A'){
+      el.chkAutopilot.checked = !el.chkAutopilot.checked;
+      el.chkAutopilot.dispatchEvent(new Event('change'));
+    } else if ((e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') && !state.autopilot){
+      state.pedalPressed = true; setButtonPressed(el.btnPedal, true);
+    } else if ((e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') && !state.autopilot){
+      state.brakePressed = true; setButtonPressed(el.btnBrake, true);
+    } else if (e.key === ' '){
+      el.btnPause.click();
+    } else if (e.key === 'r' || e.key === 'R'){
+      resetAll();
+    } else if (e.key === 'u' || e.key === 'U'){
+      el.btnUnits.click();
+    } else if (e.key === 'm' || e.key === 'M'){
+      el.btnCity.click();
+    } else if (e.key === 'h' || e.key === 'H'){
+      openHelp();
+    } else if (e.key === 'Escape'){
+      closeHelp();
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (state.autopilot) return; // Autopilot controls the bike
+    if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp'){
+      state.pedalPressed = false; setButtonPressed(el.btnPedal, false);
+    } else if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown'){
+      state.brakePressed = false; setButtonPressed(el.btnBrake, false);
+    }
+  });
+
+  function resizeCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    state.viewW = Math.max(320, rect.width);
+    state.viewH = Math.max(180, rect.height);
+    state.dpr = dpr;
+
+    canvas.width  = Math.round(state.viewW * dpr);
+    canvas.height = Math.round(state.viewH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  function updateCity(dt){
+    if (state.t >= state.nextLimitChangeT){
+      let next = pick(SPEED_LIMITS);
+      if (next === state.speedLimit) next = pick(SPEED_LIMITS);
+      state.speedLimit = next;
+      state.nextLimitChangeT = state.t + rand(8, 18);
+      state.speedingTime = 0;
+      state.speedingFlag = false;
+    }
+
+    if (state.v > state.speedLimit + CFG.SPEEDING_GRACE){
+      state.speedingTime += dt;
+      if (state.speedingTime >= CFG.SPEEDING_TRIGGER_S && !state.speedingFlag){
+        state.violations.speeding += 1;
+        state.speedingFlag = true;
+      }
+    } else {
+      state.speedingTime = 0;
+      state.speedingFlag = false;
+    }
+
+    if (!state.light) state.light = makeNextLight(state.x + 0.25);
+    const distToLightKm = state.light.distKm - state.x;
+    if (distToLightKm <= 0){
+      const c = lightColor(state.light, state.t);
+      if (c === 'RED') state.violations.red += 1;
+      state.light = makeNextLight(state.light.distKm);
+    }
+
+    if (!state.checkpoint) state.checkpoint = makeNextCheckpoint(state.x + 0.6);
+    const distToCPKm = state.checkpoint.distKm - state.x;
+    const distToCPM  = distToCPKm * 1000;
+
+    if (distToCPKm > 0 && distToCPM < 25){
+      if (state.v < 1.0){
+        state.checkpoint.stoppedS += dt;
+        if (state.checkpoint.stoppedS >= CFG.CHECKPOINT_STOP_S) state.checkpoint.cleared = true;
+      } else {
+        state.checkpoint.stoppedS = Math.max(0, state.checkpoint.stoppedS - dt * 2.5);
+      }
+    }
+
+    if (distToCPKm <= 0){
+      if (!state.checkpoint.cleared) state.violations.checkpoint += 1;
+      state.checkpoint = makeNextCheckpoint(state.checkpoint.distKm);
+    }
+  }
+
+  // Autopilot AI - interesting curves, follows rules (mostly), never gets stuck
+  function updateAutopilot(dt) {
+    if (!state.autopilot) return;
+
+    // Style parameters
+    const styles = {
+      cautious:   { swing: 0.25, obey: 1.0,  burstChance: 0.01, maxWait: 999 },
+      normal:     { swing: 0.35, obey: 0.95, burstChance: 0.03, maxWait: 12 },
+      aggressive: { swing: 0.50, obey: 0.7,  burstChance: 0.06, maxWait: 6 },
+      chaotic:    { swing: 0.70, obey: 0.3,  burstChance: 0.12, maxWait: 3 }
+    };
+    const style = styles[state.driveStyle] || styles.normal;
+    const r = state.randomness;
+
+    // === INTERESTING SPEED VARIATION ===
+    // Multiple sine waves create organic-looking oscillation
+    const wave1 = Math.sin(state.t * 0.25) * 0.5;
+    const wave2 = Math.sin(state.t * 0.6 + 1.5) * 0.3;
+    const wave3 = Math.sin(state.t * 1.1 + 3.0) * 0.2;
+    const waveSum = (wave1 + wave2 + wave3) * style.swing * r;
+
+    // Base target speed varies with waves
+    const baseTarget = state.speedLimit * 0.85;
+    let targetSpeed = baseTarget * (1 + waveSum);
+    targetSpeed = clamp(targetSpeed, 12, CFG.MAX_SPEED * 0.92);
+
+    // === RANDOM BURSTS ===
+    if (!state._apBurstUntil) state._apBurstUntil = 0;
+    if (!state._apBurstType) state._apBurstType = 0;
+    
+    if (state.t > state._apBurstUntil && Math.random() < style.burstChance * r * dt * 60) {
+      state._apBurstType = Math.random() > 0.35 ? 1 : -1;
+      state._apBurstUntil = state.t + rand(1.5, 4);
+    }
+    
+    const inBurst = state.t < state._apBurstUntil;
+    if (inBurst && state._apBurstType > 0) {
+      targetSpeed = clamp(targetSpeed * 1.5, 25, CFG.MAX_SPEED * 0.95);
+    } else if (inBurst && state._apBurstType < 0) {
+      targetSpeed = clamp(targetSpeed * 0.4, 8, 30);
+    }
+
+    // === OBSTACLE DETECTION ===
+    let obstacle = null; // { dist, type, canGo }
+    
+    if (state.cityMode) {
+      // Check traffic light
+      if (state.light) {
+        const distM = (state.light.distKm - state.x) * 1000;
+        if (distM > 0 && distM < 120) {
+          const color = lightColor(state.light, state.t);
+          const isRed = color === 'RED';
+          const isYellow = color === 'YELLOW';
+          const isGreen = color === 'GREEN';
+          
+          // Should we obey? (based on style)
+          const willObey = Math.random() < style.obey;
+          
+          if ((isRed || isYellow) && willObey && distM > 8) {
+            obstacle = { dist: distM, type: 'light', canGo: false };
+          } else if (isGreen) {
+            obstacle = { dist: distM, type: 'light', canGo: true };
+          }
+        }
+      }
+      
+      // Check checkpoint
+      if (state.checkpoint && !state.checkpoint.cleared) {
+        const distM = (state.checkpoint.distKm - state.x) * 1000;
+        if (distM > 0 && distM < 80) {
+          const willObey = Math.random() < style.obey;
+          const needMoreStop = state.checkpoint.stoppedS < CFG.CHECKPOINT_STOP_S;
+          
+          if (willObey && needMoreStop && distM < 30) {
+            obstacle = { dist: distM, type: 'checkpoint', canGo: false };
+          }
+        }
+      }
+    }
+
+    // === STUCK PREVENTION ===
+    if (!state._apStuckTime) state._apStuckTime = 0;
+    if (!state._apBrakeTime) state._apBrakeTime = 0;
+    
+    // Track how long we've been nearly stopped
+    if (state.v < 3) {
+      state._apStuckTime += dt;
+    } else {
+      state._apStuckTime = 0;
+    }
+    
+    // Force go if stuck too long
+    const forceGo = state._apStuckTime > style.maxWait;
+
+    // === DECISION MAKING ===
+    let wantPedal = false;
+    let wantBrake = false;
+    
+    if (forceGo) {
+      // OVERRIDE: Been stopped too long, just go!
+      wantPedal = true;
+      wantBrake = false;
+      state._apBrakeTime = 0;
+    } else if (obstacle && !obstacle.canGo) {
+      // Approaching obstacle we should stop for
+      // d = v² / (2a) where v is m/s, a is m/s², result is meters
+      const vMs = state.v / 3.6;  // km/h to m/s
+      const decelMs2 = 5;  // comfortable braking ~5 m/s²
+      const stoppingDist = (vMs * vMs) / (2 * decelMs2) + 8;  // +buffer
+      
+      if (obstacle.dist < stoppingDist && state.v > 5) {
+        // Need to brake
+        wantBrake = true;
+        state._apBrakeTime += dt;
+        
+        // ANTI-LOCK: Don't brake forever - pulse the brakes
+        if (state._apBrakeTime > 2.5) {
+          wantBrake = false; // Release briefly
+          if (state._apBrakeTime > 2.8) state._apBrakeTime = 0;
+        }
+      } else if (state.v <= 5) {
+        // Slow enough, just coast/wait
+        wantPedal = false;
+        wantBrake = false;
+        state._apBrakeTime = 0;
+      } else {
+        // Far from obstacle, drive normally toward target
+        wantPedal = state.v < targetSpeed * 0.7;
+      }
+    } else {
+      // Open road - chase target speed with the waves
+      state._apBrakeTime = 0;
+      
+      const speedError = targetSpeed - state.v;
+      
+      if (speedError > 8) {
+        wantPedal = true;
+      } else if (speedError < -10) {
+        wantBrake = true;
+      } else if (speedError > 2) {
+        // Gentle acceleration
+        wantPedal = true;
+      } else if (speedError < -3) {
+        // Gentle coast/brake
+        wantBrake = state.v > 20; // Only brake if going fast enough
+      } else {
+        // Near target - gentle wobble
+        const wobble = Math.sin(state.t * 3) * r;
+        if (wobble > 0.4) wantPedal = true;
+        // Don't brake during wobble - just coast
+      }
+    }
+    
+    // === FINAL SAFETY: Never hold brake when stopped ===
+    if (state.v < 1 && wantBrake) {
+      wantBrake = false; // No point braking when already stopped
+    }
+
+    // Apply inputs
+    state.pedalPressed = wantPedal;
+    state.brakePressed = wantBrake;
+    
+    setButtonPressed(el.btnPedal, wantPedal);
+    setButtonPressed(el.btnBrake, wantBrake);
+  }
+
+  function update(dt){
+    state.t += dt;
+
+    // Run autopilot before input processing
+    updateAutopilot(dt);
+
+    if (state.pedalPressed){
+      state._pedalHold += dt;
+      state.pedalPower = clamp(state._pedalHold / CFG.PEDAL_RAMP_TIME, 0, 1);
+    } else {
+      state._pedalHold = 0;
+      state.pedalPower = Math.max(0, state.pedalPower - dt * 3);
+    }
+
+    if (state.brakePressed){
+      state._brakeHold += dt;
+      state.brakePower = clamp(state._brakeHold / CFG.BRAKE_RAMP_TIME, 0, 1);
+    } else {
+      state._brakeHold = 0;
+      state.brakePower = Math.max(0, state.brakePower - dt * 6);
+    }
+
+    const prevV = state.v;
+    const prevA = state.a;
+
+    state.v += state.pedalPower * CFG.MAX_ACCEL * dt;
+    state.v -= state.brakePower * CFG.MAX_BRAKE * dt;
+    if (state.v > 0) state.v -= CFG.FRICTION * dt;
+    state.v = clamp(state.v, 0, CFG.MAX_SPEED);
+
+    state.x += state.v * (dt / 3600);
+
+    if (dt > 0){
+      state.a = (state.v - prevV) / dt;
+      state.j = (state.a - prevA) / dt;
+    } else {
+      state.a = 0; state.j = 0;
+    }
+
+    const vms = state.v / 3.6;
+    state.ke = 0.5 * CFG.MASS_KG * vms * vms / 1000;
+
+    state.wheelAngle += vms * dt * 2.2;
+
+    const omega = clamp(3.5 + 0.08 * state.v, 0, 16);
+    const engage = (state.pedalPressed || state.pedalPower > 0.02)
+      ? (0.25 + 0.75 * state.pedalPower)
+      : 0.0;
+    state.pedalAngle += omega * engage * dt;
+
+    state.camBob = reducedMotion ? 0 : Math.sin(state.t * 6) * (1.5 + 2.5 * state.pedalPower);
+
+    if (state.cityMode) updateCity(dt);
+    else state.speedLimit = CFG.MAX_SPEED;
+
+    state._histAcc += dt;
+    while (state._histAcc >= CFG.HIST_SAMPLE_DT){
+      state._histAcc -= CFG.HIST_SAMPLE_DT;
+      state.history.push({ t: state.t, v: state.v, x: state.x, a: state.a, j: state.j });
+    }
+    const cutoff = state.t - CFG.HIST_KEEP_S;
+    while (state.history.length && state.history[0].t < cutoff) state.history.shift();
+
+    // Animate deltaT for secant→tangent demo
+    if (state.animatingDeltaT) {
+      state.deltaT += state._deltaTDir * dt * 1.5;
+      if (state.deltaT <= 0.2) {
+        state.deltaT = 0.2;
+        state._deltaTDir = 1;
+      } else if (state.deltaT >= 8) {
+        state.deltaT = 8;
+        state._deltaTDir = -1;
+      }
+      el.rngDeltaT.value = state.deltaT;
+      el.deltaTLabel.textContent = `${state.deltaT.toFixed(1)}s`;
+    }
+
+    state.recCountdown -= dt;
+    while (state.recCountdown <= 0){
+      state.recCountdown += state.recIntervalS;
+      addRecord(false);
+      renderRecordTable();
+    }
+  }
+
+  function project(zMeters, horizonY, ch){
+    const t = clamp(1 - zMeters / CFG.VISIBLE_DISTANCE_M, 0, 1);
+    const p = Math.pow(t, CFG.ROAD_GAMMA);
+    const y = horizonY + p * (ch - horizonY);
+    const w = lerp(CFG.ROAD_WIDTH_FAR, CFG.ROAD_WIDTH_NEAR, Math.pow(t, 1.15));
+    return { y, w, t };
+  }
+
+  function hash01(n){
+    const s = Math.sin(n * 999.123) * 43758.5453;
+    return s - Math.floor(s);
+  }
+
+  function drawCloud(x, y, s){
+    ctx.beginPath();
+    const r = 14 * s;
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.arc(x + 16*s, y + 4*s, r*1.2, 0, Math.PI*2);
+    ctx.arc(x + 34*s, y, r*0.9, 0, Math.PI*2);
+    ctx.arc(x + 18*s, y - 8*s, r, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function drawBike(x, y){
+    const s = Math.min(1.2, Math.max(0.85, state.viewW / 900));
+    const wheelR = 20 * s;
+    const bounce = Math.sin(state.t * 10) * (0.6 + 1.2 * state.pedalPower);
+    const rearX = x;
+    const rearY = y + bounce;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(rearX, rearY + wheelR * 0.95, wheelR * 1.2, wheelR * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(15,15,18,0.95)';
+    ctx.lineWidth = 8 * s;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(rearX, rearY - wheelR);
+    ctx.lineTo(rearX, rearY + wheelR);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 2 * s;
+    ctx.beginPath();
+    ctx.moveTo(rearX + 2 * s, rearY - wheelR * 0.9);
+    ctx.lineTo(rearX + 2 * s, rearY + wheelR * 0.9);
+    ctx.stroke();
+
+    const seatY  = rearY - wheelR - 24 * s;
+    const headY  = rearY - 82 * s;
+    const crankX = rearX;
+    const crankY = rearY - wheelR * 0.55;
+
+    ctx.strokeStyle = 'rgba(230,230,240,0.85)';
+    ctx.lineWidth = 2.4 * s;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(rearX, rearY - wheelR * 0.15);
+    ctx.lineTo(rearX, seatY);
+    ctx.lineTo(rearX, headY);
+    ctx.moveTo(rearX, seatY + 12 * s);
+    ctx.lineTo(crankX, crankY);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(230,230,240,0.85)';
+    ctx.lineWidth = 3.4 * s;
+    ctx.beginPath();
+    ctx.moveTo(rearX - 22 * s, headY);
+    ctx.lineTo(rearX + 22 * s, headY);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(20,20,24,0.88)';
+    ctx.beginPath();
+    ctx.arc(rearX, seatY - 18 * s, 10 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(rearX - 8 * s, seatY - 8 * s, 16 * s, 24 * s);
+
+    ctx.strokeStyle = 'rgba(20,20,24,0.88)';
+    ctx.lineWidth = 4.8 * s;
+    ctx.beginPath();
+    ctx.moveTo(rearX, seatY + 4 * s);
+    ctx.lineTo(rearX - 10 * s, headY + 2 * s);
+    ctx.moveTo(rearX, seatY + 4 * s);
+    ctx.lineTo(rearX + 10 * s, headY + 2 * s);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(240,240,245,0.85)';
+    ctx.beginPath();
+    ctx.arc(crankX, crankY, 3.2 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    const ph = state.pedalAngle;
+    const pedalLift   = 12 * s;
+    const pedalSpread = 14 * s;
+    const lift = Math.sin(ph) * pedalLift;
+
+    const leftPedalX  = crankX - pedalSpread;
+    const rightPedalX = crankX + pedalSpread;
+    const leftPedalY  = crankY + lift;
+    const rightPedalY = crankY - lift;
+
+    ctx.strokeStyle = 'rgba(240,240,245,0.75)';
+    ctx.lineWidth = 2.2 * s;
+    ctx.beginPath();
+    ctx.moveTo(crankX, crankY); ctx.lineTo(leftPedalX, leftPedalY);
+    ctx.moveTo(crankX, crankY); ctx.lineTo(rightPedalX, rightPedalY);
+    ctx.stroke();
+
+    const pulse = 1 + 0.18 * state.pedalPower * Math.sin(state.t * 20);
+    ctx.fillStyle = 'rgba(255, 209, 102, 0.92)';
+    ctx.fillRect(leftPedalX  - 6 * s * pulse, leftPedalY  - 2 * s * pulse, 12 * s * pulse, 4 * s * pulse);
+    ctx.fillRect(rightPedalX - 6 * s * pulse, rightPedalY - 2 * s * pulse, 12 * s * pulse, 4 * s * pulse);
+
+    ctx.strokeStyle = 'rgba(20,20,24,0.88)';
+    ctx.lineWidth = 5.2 * s;
+    const hipY = seatY + 16 * s;
+    ctx.beginPath();
+    ctx.moveTo(rearX - 2 * s, hipY); ctx.lineTo(leftPedalX, leftPedalY);
+    ctx.moveTo(rearX + 2 * s, hipY); ctx.lineTo(rightPedalX, rightPedalY);
+    ctx.stroke();
+  }
+
+  function drawSpeedGraph(x, y, w, h){
+    const u = UNITS[state.units];
+    const t1 = state.t;
+    const t0 = t1 - CFG.HIST_WINDOW_S;
+
+    // Determine which data to show based on graphType
+    const graphConfig = {
+      velocity: { color: 'rgba(124,243,160,0.85)', label: 'v(t)', max: CFG.MAX_SPEED, getValue: (s) => s.v, derivative: 'a', unit: u.speed },
+      position: { color: 'rgba(84,214,255,0.85)', label: 'x(t)', max: null, getValue: (s) => s.x, derivative: 'v', unit: u.dist },
+      accel:    { color: 'rgba(255,102,255,0.85)', label: 'a(t)', max: 80, getValue: (s) => s.a, derivative: 'j', unit: u.speed + '/s', allowNeg: true },
+      jerk:     { color: 'rgba(102,255,255,0.85)', label: 'j(t)', max: 200, getValue: (s) => s.j, derivative: null, unit: u.speed + '/s²', allowNeg: true }
+    };
+    const cfg = graphConfig[state.graphType];
+
+    // Calculate max for position (changes over time)
+    let dataMax = cfg.max;
+    if (state.graphType === 'position') {
+      dataMax = 0;
+      for (const s of state.history) {
+        if (s.t >= t0 && s.t <= t1) dataMax = Math.max(dataMax, s.x);
+      }
+      dataMax = Math.max(0.001, dataMax * 1.2);
+    }
+
+    // For graphs that can be negative, find range
+    let dataMin = 0;
+    if (cfg.allowNeg) {
+      dataMin = 0; dataMax = cfg.max;
+      for (const s of state.history) {
+        if (s.t >= t0 && s.t <= t1) {
+          const val = cfg.getValue(s);
+          dataMin = Math.min(dataMin, val);
+          dataMax = Math.max(dataMax, val);
+        }
+      }
+      const range = Math.max(Math.abs(dataMin), Math.abs(dataMax), 10);
+      dataMin = -range; dataMax = range;
+    }
+
+    const getY = (val) => {
+      if (cfg.allowNeg) {
+        return y + h/2 - ((val / dataMax) * h/2);
+      }
+      return y + h - (val / dataMax) * h;
+    };
+    const getX = (t) => x + ((t - t0) / (t1 - t0)) * w;
+
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.strokeRect(x, y, w, h);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    for (let i=1; i<4; i++){
+      const yy = y + (i/4)*h;
+      ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x+w, yy); ctx.stroke();
+    }
+
+    // Zero line for graphs that can be negative
+    if (cfg.allowNeg) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath();
+      ctx.moveTo(x, y + h/2);
+      ctx.lineTo(x + w, y + h/2);
+      ctx.stroke();
+    }
+
+    // Integral shading (area under curve) - only for velocity
+    if (state.showIntegralShade && state.graphType === 'velocity') {
+      let started = false;
+      ctx.fillStyle = 'rgba(124,243,160,0.10)';
+      ctx.beginPath();
+      for (const s of state.history){
+        if (s.t < t0 || s.t > t1) continue;
+        const px = getX(s.t);
+        const py = getY(cfg.getValue(s));
+        if (!started){
+          ctx.moveTo(px, y+h);
+          ctx.lineTo(px, py);
+          started = true;
+        } else {
+          ctx.lineTo(px, py);
+        }
+      }
+      if (started){
+        ctx.lineTo(x+w, y+h);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // Record markers
+    if (state.showRecordMarkers && state.records.length > 1){
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 207, 90, 0.22)';
+      ctx.setLineDash([4,4]);
+      ctx.lineWidth = 1;
+      for (let i=1; i<state.records.length; i++){
+        const rt = state.records[i].t;
+        if (rt < t0 || rt > t1) continue;
+        const px = getX(rt);
+        ctx.beginPath(); ctx.moveTo(px, y); ctx.lineTo(px, y+h); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Riemann overlay (only for velocity graph)
+    if (state.showRiemannRects && state.records.length > 1 && state.graphType === 'velocity'){
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 207, 90, 0.10)';
+      ctx.strokeStyle = 'rgba(255, 207, 90, 0.18)';
+      ctx.lineWidth = 1;
+
+      for (let i=1; i<state.records.length; i++){
+        const prev = state.records[i-1];
+        const rec  = state.records[i];
+        const a = prev.t;
+        const b = rec.t;
+        if (b < t0 || a > t1) continue;
+
+        const px0 = getX(Math.max(a,t0));
+        const px1 = getX(Math.min(b,t1));
+        if (px1 <= px0) continue;
+
+        if (state.method === 'trap'){
+          const h0 = clamp(prev.v / dataMax, 0, 1) * h;
+          const h1 = clamp(rec.v  / dataMax, 0, 1) * h;
+          ctx.beginPath();
+          ctx.moveTo(px0, y+h);
+          ctx.lineTo(px0, y+h - h0);
+          ctx.lineTo(px1, y+h - h1);
+          ctx.lineTo(px1, y+h);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          let vSample = prev.v;
+          if (state.method === 'right') vSample = rec.v;
+          if (state.method === 'mid') vSample = rec.vMid || ((prev.v + rec.v)/2);
+          const hh = clamp(vSample / dataMax, 0, 1) * h;
+          ctx.fillRect(px0, y+h - hh, px1 - px0, hh);
+          ctx.strokeRect(px0, y+h - hh, px1 - px0, hh);
+        }
+      }
+      ctx.restore();
+    }
+
+    // Speed limit line (only for velocity graph)
+    if (state.cityMode && state.graphType === 'velocity'){
+      const yy = getY(state.speedLimit);
+      ctx.strokeStyle = 'rgba(255, 209, 102, 0.35)';
+      ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x+w, yy); ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 209, 102, 0.85)';
+      ctx.font = '600 11px system-ui, sans-serif';
+      ctx.fillText(`limit ${fmt(state.speedLimit * u.speedFactor,0)} ${u.speed}`, x+8, yy-4);
+    }
+
+    // Main curve
+    let started = false;
+    ctx.strokeStyle = cfg.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (const s of state.history){
+      if (s.t < t0 || s.t > t1) continue;
+      const px = getX(s.t);
+      const py = getY(cfg.getValue(s));
+      if (!started){ ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    if (started) ctx.stroke();
+
+    // Find current data point
+    const lastHist = state.history.length > 0 ? state.history[state.history.length - 1] : null;
+    const nowX = x + w;
+    const nowVal = lastHist ? cfg.getValue(lastHist) : 0;
+    const nowY = getY(nowVal);
+
+    // SECANT LINE (limit definition of derivative)
+    if (state.showSecant && state.history.length > 2) {
+      const t2 = t1;
+      const t1s = Math.max(t0, t2 - state.deltaT);
+      
+      // Find point at t1s
+      let p1 = null;
+      for (const s of state.history) {
+        if (s.t >= t1s) { p1 = s; break; }
+      }
+      if (p1 && lastHist) {
+        const x1 = getX(p1.t);
+        const y1 = getY(cfg.getValue(p1));
+        const x2 = nowX;
+        const y2 = nowY;
+        
+        if (x2 > x1) {
+          const slope = (y2 - y1) / (x2 - x1);
+          
+          // Draw secant line extended
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255, 152, 0, 0.8)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          const extendL = 60, extendR = 20;
+          ctx.moveTo(x1 - extendL, y1 - slope * extendL);
+          ctx.lineTo(x2 + extendR, y2 + slope * extendR);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          
+          // Points
+          ctx.fillStyle = 'rgba(255, 152, 0, 1)';
+          ctx.beginPath();
+          ctx.arc(x1, y1, 5, 0, Math.PI * 2);
+          ctx.arc(x2, y2, 5, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Label
+          ctx.font = '600 10px system-ui, sans-serif';
+          ctx.fillText(`Secant Δt=${state.deltaT.toFixed(1)}s`, x1 + 8, y1 - 8);
+          ctx.restore();
+        }
+      }
+    }
+
+    // TANGENT LINE
+    if (state.showTangent && state.history.length > 0) {
+      // Get derivative value based on graph type
+      let derivVal = 0;
+      if (state.graphType === 'velocity') derivVal = state.a;
+      else if (state.graphType === 'position') derivVal = state.v;
+      else if (state.graphType === 'accel') derivVal = state.j;
+      
+      // Calculate pixel slope
+      const timePerPixel = CFG.HIST_WINDOW_S / w;
+      const valPerPixel = (dataMax - dataMin) / h;
+      const pixelSlope = -(derivVal * timePerPixel / valPerPixel);
+      
+      // Draw tangent
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 120, 180, 0.9)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      const len = 60;
+      ctx.moveTo(nowX - len, nowY - pixelSlope * len);
+      ctx.lineTo(nowX + 15, nowY + pixelSlope * 15);
+      ctx.stroke();
+      
+      // Current point dot
+      ctx.fillStyle = 'rgba(255, 120, 180, 1)';
+      ctx.beginPath();
+      ctx.arc(nowX, nowY, 5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Slope label
+      ctx.font = '600 10px ui-monospace, monospace';
+      const slopeLabel = `slope=${derivVal.toFixed(1)}`;
+      ctx.fillText(slopeLabel, nowX - 80, nowY - 15);
+      ctx.font = '500 9px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255, 120, 180, 0.7)';
+      const derivName = cfg.derivative ? `(=${cfg.derivative})` : '';
+      ctx.fillText(derivName, nowX - 80, nowY - 4);
+      ctx.restore();
+    }
+
+    // MVT POINT (Mean Value Theorem)
+    if (state.showMVT && state.graphType === 'velocity' && state.t > 0.5) {
+      const avgVel = (state.x / state.t) * 3600; // km/h
+      
+      // Find where instantaneous velocity ≈ average velocity
+      let mvtPoint = null;
+      let minDiff = Infinity;
+      for (const s of state.history) {
+        if (s.t < t0 || s.t > t1) continue;
+        const diff = Math.abs(s.v - avgVel);
+        if (diff < minDiff) {
+          minDiff = diff;
+          mvtPoint = s;
+        }
+      }
+      
+      if (mvtPoint && minDiff < avgVel * 0.15) {
+        const mx = getX(mvtPoint.t);
+        const my = getY(mvtPoint.v);
+        
+        // Draw MVT point
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 170, 0, 0.9)';
+        ctx.beginPath();
+        ctx.arc(mx, my, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 11px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('c', mx, my + 4);
+        
+        // Draw average velocity line
+        ctx.strokeStyle = 'rgba(255, 170, 0, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        const avgY = getY(avgVel);
+        ctx.beginPath();
+        ctx.moveTo(x, avgY);
+        ctx.lineTo(x + w, avgY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+      
+      // Update MVT info panel
+      el.mvtInfo.textContent = `Avg v: ${avgVel.toFixed(1)} ${u.speed} | Point c at t≈${mvtPoint ? mvtPoint.t.toFixed(1) : '--'}s`;
+    }
+
+    // Labels
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = '700 11px system-ui, sans-serif';
+    ctx.fillText(`${cfg.label} last ${CFG.HIST_WINDOW_S}s`, x+8, y+14);
+
+    if (state.graphType === 'velocity') {
+      ctx.fillStyle = 'rgba(255, 207, 90, 0.85)';
+      ctx.font = '600 11px ui-monospace, monospace';
+      ctx.fillText(`${methodName(state.method)} Riemann`, x+8, y+28);
+    }
+
+    // Update integral display
+    el.integralValue.textContent = `${(state.x * u.distFactor).toFixed(4)} ${u.dist}`;
+  }
+
+  function drawHudOverlay(horizonY){
+    const u = UNITS[state.units];
+    const pad = 10;
+    const boxW = 290;
+    const boxH = 86;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(pad, pad, boxW, boxH);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.strokeRect(pad, pad, boxW, boxH);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.font = '700 18px system-ui, sans-serif';
+    ctx.fillText(`${fmt(state.v * u.speedFactor,1)} ${u.speed}`, pad+12, pad+28);
+
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.fillText(`x(t)=∫vdt: ${pad3(state.x * u.distFactor)} ${u.dist}`, pad+12, pad+50);
+    ctx.fillText(`v=dx/dt: ${fmt(state.v * u.speedFactor,1)} ${u.speed}`, pad+12, pad+68);
+
+    // warnings
+    let warn = '';
+    let warnColor = 'rgba(255,255,255,0.85)';
+
+    if (state.cityMode){
+      if (state.v > state.speedLimit + CFG.SPEEDING_GRACE){
+        warn = `SLOW DOWN! limit ${fmt(state.speedLimit * u.speedFactor,0)} ${u.speed}`;
+        warnColor = 'rgba(255, 92, 92, 0.95)';
+      }
+
+      if (state.light){
+        const distM = (state.light.distKm - state.x) * 1000;
+        if (distM > 0 && distM < 70){
+          const c = lightColor(state.light, state.t);
+          if (c === 'RED'){ warn = `RED LIGHT — STOP`; warnColor = 'rgba(255, 92, 92, 0.95)'; }
+          if (c === 'YELLOW'){ warn = `YELLOW — PREPARE`; warnColor = 'rgba(255, 209, 102, 0.95)'; }
+        }
+      }
+
+      if (state.checkpoint){
+        const distM = (state.checkpoint.distKm - state.x) * 1000;
+        if (distM > 0 && distM < 90 && !state.checkpoint.cleared){
+          const left = Math.max(0, CFG.CHECKPOINT_STOP_S - state.checkpoint.stoppedS);
+          warn = `CHECKPOINT — stop ${fmt(left,1)}s`;
+          warnColor = 'rgba(255, 209, 102, 0.95)';
+        }
+      }
+    }
+
+    if (warn){
+      ctx.font = '700 14px system-ui, sans-serif';
+      const ww = ctx.measureText(warn).width + 16;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(pad, pad + boxH + 10, ww, 26);
+      ctx.fillStyle = warnColor;
+      ctx.fillText(warn, pad+8, pad + boxH + 29);
+    }
+
+    const cd = Math.max(0, state.recCountdown);
+    const text = `REC in ${fmt(cd,1)}s`;
+    ctx.font = '700 13px system-ui, sans-serif';
+    const tw = ctx.measureText(text).width;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(state.viewW - tw - 24, 10, tw + 14, 24);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText(text, state.viewW - tw - 17, 28);
+
+    // Autopilot indicator
+    if (state.autopilot) {
+      const apText = `🤖 AUTOPILOT · ${state.driveStyle}`;
+      ctx.font = '700 12px system-ui, sans-serif';
+      const apW = ctx.measureText(apText).width + 12;
+      ctx.fillStyle = 'rgba(124, 243, 160, 0.25)';
+      ctx.fillRect(state.viewW - apW - 20, 40, apW + 10, 22);
+      ctx.strokeStyle = 'rgba(124, 243, 160, 0.5)';
+      ctx.strokeRect(state.viewW - apW - 20, 40, apW + 10, 22);
+      ctx.fillStyle = 'rgba(124, 243, 160, 0.95)';
+      ctx.fillText(apText, state.viewW - apW - 14, 56);
+    }
+  }
+
+  function updateUI(){
+    const u = UNITS[state.units];
+
+    el.speedText.textContent = `${fmt(state.v * u.speedFactor, 1)} ${u.speed}`;
+    el.odoText.textContent   = `${pad3(state.x * u.distFactor)} ${u.dist}`;
+    el.accelText.textContent = `${fmt(state.a * u.speedFactor, 1)} ${u.speed}/s`;
+    el.jerkText.textContent  = `${fmt(state.j * u.speedFactor, 1)} ${u.speed}/s²`;
+    el.keText.textContent    = `${fmt(state.ke, 1)} kJ`;
+
+    el.pedalBar.style.width  = `${Math.round(state.pedalPower * 100)}%`;
+    el.brakeBar.style.width  = `${Math.round(state.brakePower * 100)}%`;
+    el.pedalPct.textContent  = `${Math.round(state.pedalPower * 100)}%`;
+    el.brakePct.textContent  = `${Math.round(state.brakePower * 100)}%`;
+
+    el.cityStatus.textContent = state.cityMode ? 'ON' : 'OFF';
+    el.limitText.textContent  = `${fmt(state.speedLimit * u.speedFactor, 0)} ${u.speed}`;
+
+    if (state.cityMode && state.light){
+      const c = lightColor(state.light, state.t);
+      const tt = lightTimeToChange(state.light, state.t);
+      const distM = (state.light.distKm - state.x) * 1000;
+
+      el.lightLabel.textContent = `${c} (${fmt(tt,1)}s)`;
+      el.lightDist.textContent  = distM > 0 ? ` · ${Math.round(distM)}m` : ` · passed`;
+      el.lightDot.className     = 'dot ' + (c === 'GREEN' ? 'green' : c === 'YELLOW' ? 'yellow' : 'red');
+    } else {
+      el.lightLabel.textContent = '—';
+      el.lightDist.textContent  = '';
+      el.lightDot.className     = 'dot';
+    }
+
+    if (state.cityMode && state.checkpoint){
+      const distM = (state.checkpoint.distKm - state.x) * 1000;
+      if (distM > 0){
+        const left = Math.max(0, CFG.CHECKPOINT_STOP_S - state.checkpoint.stoppedS);
+        el.cpText.textContent = state.checkpoint.cleared
+          ? `cleared · ${Math.round(distM)}m`
+          : `stop ${fmt(left,1)}s · ${Math.round(distM)}m`;
+      } else {
+        el.cpText.textContent = 'passed';
+      }
+    } else {
+      el.cpText.textContent = '—';
+    }
+
+    const vCount = state.violations.speeding + state.violations.red + state.violations.checkpoint;
+    el.violText.textContent = `${vCount} (spd ${state.violations.speeding}, red ${state.violations.red}, cp ${state.violations.checkpoint})`;
+
+    el.recCountdown.textContent = `${fmt(Math.max(0, state.recCountdown), 1)}s`;
+    el.methodLabel.textContent = methodName(state.method);
+
+    const start = state.records[0];
+    const last  = state.records[state.records.length - 1];
+    const actualKm = (start && last) ? (last.x - start.x) : 0;
+
+    const actual  = actualKm * u.distFactor;
+    const approx  = getSumKm(state.method) * u.distFactor;
+    const errPct  = (actual > 1e-9) ? (100 * (approx - actual) / actual) : 0;
+
+    // Homework mode: hide computed values
+    el.riemannText.textContent = state.hideApproxDx ? '?' : `${pad3(approx)} ${u.dist}`;
+    el.riemannText.style.color = state.hideApproxDx ? 'var(--warn)' : '';
+    el.actualText.textContent  = state.hideTrueDx ? '?' : `${pad3(actual)} ${u.dist}`;
+    el.actualText.style.color = state.hideTrueDx ? 'var(--warn)' : '';
+    
+    if (state.hideTrueDx || state.hideApproxDx) {
+      el.errText.textContent = '?';
+      el.errText.className = 'mono';
+      el.errText.style.color = 'var(--warn)';
+    } else {
+      el.errText.textContent = `${fmt(errPct, 2)}%`;
+      el.errText.className = 'mono ' + (Math.abs(errPct) < 2 ? 'good' : (Math.abs(errPct) < 7 ? 'warn' : 'bad'));
+      el.errText.style.color = '';
+    }
+
+    el.optSummary.textContent = `Riemann: ${methodName(state.method)} · Δt ${state.recIntervalS}s`;
+    el.dtLabel.textContent = `${state.recIntervalS}s`;
+
+    const left = (state.sumLeftKm * u.distFactor).toFixed(3);
+    const right = (state.sumRightKm * u.distFactor).toFixed(3);
+    const mid = (state.sumMidKm * u.distFactor).toFixed(3);
+    const trap = (state.sumTrapKm * u.distFactor).toFixed(3);
+    
+    // Hide sum mini in homework mode
+    if (state.hideApproxDx) {
+      el.sumMini.textContent = 'L ? · R ? · M ? · T ?';
+      el.sumMini.style.color = 'var(--warn)';
+    } else {
+      el.sumMini.textContent = `L ${left} · R ${right} · M ${mid} · T ${trap}`;
+      el.sumMini.style.color = '';
+    }
+  }
+
+  function render(){
+    const cw = state.viewW, ch = state.viewH;
+    const horizonY = ch * 0.36 + state.camBob;
+    const centerX  = cw * 0.5 + Math.sin(state.t * 0.7) * (1.0 + state.pedalPower * 2.5);
+
+    const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
+    sky.addColorStop(0, '#1a2a5e');
+    sky.addColorStop(1, '#94c6ff');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, cw, ch);
+
+    ctx.fillStyle = 'rgba(255, 245, 210, 0.9)';
+    ctx.beginPath();
+    ctx.arc(cw * 0.78, ch * 0.12, 24, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    const cloudT = state.t * 2.0;
+    const clouds = [
+      {x:0.05, y:0.18, s:1.0},
+      {x:0.35, y:0.13, s:0.8},
+      {x:0.65, y:0.20, s:1.1}
+    ];
+    for (const c of clouds){
+      const cx = (c.x * cw + (cloudT * 18 * c.s)) % (cw + 120) - 60;
+      const cy = c.y * horizonY + Math.sin(state.t * 0.2 + c.x * 10) * 2;
+      drawCloud(cx, cy, c.s);
+    }
+
+    ctx.fillStyle = 'rgba(35, 90, 60, 0.55)';
+    ctx.beginPath();
+    ctx.moveTo(0, horizonY + 40);
+    for (let i=0; i<=10; i++){
+      const x = (i/10) * cw;
+      const y = horizonY + 26 + Math.sin(i*1.05 + state.t*0.08) * 10 + (i%2 ? 10 : 0);
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(cw, horizonY + 40);
+    ctx.lineTo(cw, ch);
+    ctx.lineTo(0, ch);
+    ctx.closePath();
+    ctx.fill();
+
+    const grass = ctx.createLinearGradient(0, horizonY, 0, ch);
+    grass.addColorStop(0, '#2f9b4b');
+    grass.addColorStop(1, '#1b6b35');
+    ctx.fillStyle = grass;
+    ctx.fillRect(0, horizonY, cw, ch - horizonY);
+
+    const distM = state.x * 1000;
+    const segLenM = CFG.VISIBLE_DISTANCE_M / CFG.SEGMENTS;
+
+    for (let i=0; i<CFG.SEGMENTS; i++){
+      const z0 = (i / CFG.SEGMENTS) * CFG.VISIBLE_DISTANCE_M;
+      const z1 = ((i+1) / CFG.SEGMENTS) * CFG.VISIBLE_DISTANCE_M;
+
+      const p0 = project(z0, horizonY, ch);
+      const p1 = project(z1, horizonY, ch);
+
+      const worldIndex = Math.floor((distM + z0) / segLenM);
+      const alt = (worldIndex % 2 === 0);
+
+      ctx.fillStyle = alt ? 'rgba(35, 35, 42, 0.98)' : 'rgba(28, 28, 34, 0.98)';
+
+      const x0L = centerX - p0.w * 0.5;
+      const x0R = centerX + p0.w * 0.5;
+      const x1L = centerX - p1.w * 0.5;
+      const x1R = centerX + p1.w * 0.5;
+
+      ctx.beginPath();
+      ctx.moveTo(x0L, p0.y);
+      ctx.lineTo(x0R, p0.y);
+      ctx.lineTo(x1R, p1.y);
+      ctx.lineTo(x1L, p1.y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(245,245,245,0.7)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x0L, p0.y); ctx.lineTo(x1L, p1.y);
+      ctx.moveTo(x0R, p0.y); ctx.lineTo(x1R, p1.y);
+      ctx.stroke();
+
+      const dashWorld = Math.floor((distM + z0) / 18);
+      if (dashWorld % 2 === 0){
+        const lineW0 = Math.max(2, p0.w * 0.02);
+        const lineW1 = Math.max(1, p1.w * 0.02);
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.beginPath();
+        ctx.moveTo(centerX - lineW0/2, p0.y);
+        ctx.lineTo(centerX + lineW0/2, p0.y);
+        ctx.lineTo(centerX + lineW1/2, p1.y);
+        ctx.lineTo(centerX - lineW1/2, p1.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      if (i % 6 === 0 && i > 4){
+        const seed = Math.floor((distM + z0) / 45);
+        const r = hash01(seed);
+        const side = (r < 0.5) ? -1 : 1;
+        const kind = (hash01(seed + 2) < 0.6) ? 'tree' : 'building';
+        const scale = p0.t;
+        const baseX = centerX + side * (p0.w * 0.55 + 40);
+        const baseY = p0.y;
+
+        if (kind === 'tree'){
+          const h = 30 + 120 * scale;
+          ctx.fillStyle = 'rgba(25, 110, 60, 0.9)';
+          ctx.beginPath();
+          ctx.moveTo(baseX, baseY - h);
+          ctx.lineTo(baseX - (10 + 18*scale), baseY);
+          ctx.lineTo(baseX + (10 + 18*scale), baseY);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = 'rgba(90,60,30,0.9)';
+          ctx.fillRect(baseX - 2*scale, baseY - 6*scale, 4*scale, 10*scale);
+        } else {
+          const w = 20 + 80 * scale;
+          const h = 30 + 160 * scale;
+          ctx.fillStyle = 'rgba(25, 40, 70, 0.85)';
+          ctx.fillRect(baseX - w/2, baseY - h, w, h);
+          ctx.fillStyle = 'rgba(255, 230, 160, 0.35)';
+          ctx.fillRect(baseX - w/3, baseY - h*0.7, w*0.18, h*0.18);
+        }
+      }
+    }
+
+    if (state.cityMode && state.light){
+      const distToLightM = (state.light.distKm - state.x) * 1000;
+      if (distToLightM > 0 && distToLightM < CFG.LIGHT_VISIBLE_M){
+        const p = project(distToLightM, horizonY, ch);
+        const xL = centerX - p.w * 0.5;
+        const xR = centerX + p.w * 0.5;
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = Math.max(1, 2 * p.t);
+        ctx.beginPath();
+        ctx.moveTo(xL, p.y); ctx.lineTo(xR, p.y);
+        ctx.stroke();
+
+        const c = lightColor(state.light, state.t);
+        const poleX = centerX + p.w * 0.55 + 20;
+        const poleY = p.y;
+        const poleH = 60 + 140 * p.t;
+
+        ctx.strokeStyle = 'rgba(40,40,45,0.95)';
+        ctx.lineWidth = Math.max(2, 4 * p.t);
+        ctx.beginPath();
+        ctx.moveTo(poleX, poleY);
+        ctx.lineTo(poleX, poleY - poleH);
+        ctx.stroke();
+
+        const boxW = 18 + 20 * p.t;
+        const boxH = 46 + 40 * p.t;
+        ctx.fillStyle = 'rgba(20,20,24,0.95)';
+        ctx.fillRect(poleX - boxW/2, poleY - poleH - boxH, boxW, boxH);
+
+        const bulbR = 4 + 5 * p.t;
+        const bx = poleX;
+        const by = poleY - poleH - boxH + bulbR*2.2;
+        const colors = { GREEN:'#3bf37c', YELLOW:'#ffd166', RED:'#ff5c5c' };
+        const off = 'rgba(255,255,255,0.12)';
+        const bulb = (yy, on, col) => {
+          ctx.fillStyle = on ? col : off;
+          ctx.beginPath();
+          ctx.arc(bx, yy, bulbR, 0, Math.PI*2);
+          ctx.fill();
+        };
+        bulb(by, c==='RED', colors.RED);
+        bulb(by + bulbR*2.7, c==='YELLOW', colors.YELLOW);
+        bulb(by + bulbR*5.4, c==='GREEN', colors.GREEN);
+      }
+    }
+
+    if (state.cityMode && state.checkpoint){
+      const distToCPM = (state.checkpoint.distKm - state.x) * 1000;
+      if (distToCPM > 0 && distToCPM < CFG.CHECKPOINT_VISIBLE_M){
+        const p = project(distToCPM, horizonY, ch);
+        const xL = centerX - p.w * 0.5;
+        const xR = centerX + p.w * 0.5;
+
+        ctx.strokeStyle = state.checkpoint.cleared ? 'rgba(124,243,160,0.95)' : 'rgba(255,207,90,0.95)';
+        ctx.lineWidth = Math.max(1, 3 * p.t);
+        ctx.beginPath();
+        ctx.moveTo(xL, p.y); ctx.lineTo(xR, p.y);
+        ctx.stroke();
+      }
+    }
+
+    drawBike(centerX, ch - 42);
+    drawHudOverlay(horizonY);
+    drawSpeedGraph(cw - 340, ch - 130, 330, 120);
+  }
+
+  let lastT = performance.now();
+  function loop(now){
+    const rawDt = (now - lastT) / 1000;
+    lastT = now;
+    const dt = Math.min(0.1, Math.max(0, rawDt));
+
+    if (!state.paused) update(dt);
+    render();
+
+    state._uiAcc += dt;
+    if (state._uiAcc >= 1/15){
+      state._uiAcc = 0;
+      updateUI();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  resizeCanvas();
+  resetAll();
+  updateUI();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

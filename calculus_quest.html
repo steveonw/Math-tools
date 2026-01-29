@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculus Quest — Adaptive Learning Engine</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --terminal: #0d1117;
+  --border: #21262d;
+  --text: #c9d1d9;
+  --dim: #6e7681;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d29922;
+  --blue: #58a6ff;
+  --purple: #a371f7;
+  --cyan: #39c5cf;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Berkeley Mono', 'SF Mono', 'Consolas', 'Monaco', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  width: 100%;
+  max-width: 900px;
+}
+
+header {
+  text-align: center;
+  padding: 20px 0 15px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 15px;
+}
+
+h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--cyan);
+  letter-spacing: 0.05em;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: var(--dim);
+  margin-top: 5px;
+}
+
+/* Terminal */
+.terminal {
+  background: var(--terminal);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.terminal-header {
+  background: var(--border);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.terminal-dot.red { background: #ff5f56; }
+.terminal-dot.yellow { background: #ffbd2e; }
+.terminal-dot.green { background: #27ca40; }
+
+.terminal-title {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--dim);
+}
+
+.terminal-body {
+  padding: 16px;
+  min-height: 400px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.output-line {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.output-line.narrative { color: var(--text); }
+.output-line.system { color: var(--dim); font-size: 0.85rem; }
+.output-line.problem { color: var(--cyan); }
+.output-line.success { color: var(--green); }
+.output-line.error { color: var(--red); }
+.output-line.hint { color: var(--yellow); }
+.output-line.info { color: var(--purple); }
+
+.math {
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--cyan);
+}
+
+/* Input area */
+.input-area {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.2);
+}
+
+.prompt-symbol {
+  color: var(--green);
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+#commandInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+#commandInput::placeholder {
+  color: var(--dim);
+}
+
+/* Status bar */
+.status-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.status-card {
+  background: var(--terminal);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.status-label {
+  font-size: 0.7rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.status-value {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.mastery-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.mastery-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.mastery-fill.low { background: var(--red); }
+.mastery-fill.mid { background: var(--yellow); }
+.mastery-fill.high { background: var(--green); }
+
+/* Save code display */
+.save-section {
+  margin-top: 15px;
+  background: var(--terminal);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.save-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.save-label {
+  font-size: 0.7rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.save-code {
+  font-size: 1.1rem;
+  color: var(--purple);
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  text-align: center;
+  padding: 8px;
+  background: rgba(163, 113, 247, 0.1);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-code:hover {
+  background: rgba(163, 113, 247, 0.2);
+}
+
+.save-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.save-buttons button {
+  flex: 1;
+  padding: 8px;
+  background: var(--border);
+  border: 1px solid var(--dim);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-buttons button:hover {
+  background: var(--dim);
+  color: var(--bg);
+}
+
+/* Load modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal.visible { display: flex; }
+
+.modal-content {
+  background: var(--terminal);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-title {
+  font-size: 1rem;
+  color: var(--cyan);
+  margin-bottom: 12px;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.modal-buttons .primary {
+  background: var(--cyan);
+  color: var(--bg);
+}
+
+.modal-buttons .secondary {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* Help panel */
+.help-panel {
+  margin-top: 15px;
+  font-size: 0.75rem;
+  color: var(--dim);
+  text-align: center;
+}
+
+.help-panel code {
+  background: var(--border);
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: var(--text);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>⚔️ CALCULUS QUEST</h1>
+    <p class="subtitle">Adaptive Learning Engine • Infinite Problems • Shareable Progress</p>
+  </header>
+
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="terminal-dot red"></div>
+      <div class="terminal-dot yellow"></div>
+      <div class="terminal-dot green"></div>
+      <span class="terminal-title">quest://calculus/adventure</span>
+    </div>
+    <div class="terminal-body" id="output"></div>
+    <div class="input-area">
+      <span class="prompt-symbol">▶</span>
+      <input type="text" id="commandInput" placeholder="Type answer, command, or 'help'" autocomplete="off" autofocus>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-card">
+      <div class="status-label">📍 Current Room</div>
+      <div class="status-value" id="roomDisplay">Entrance Hall</div>
+    </div>
+    <div class="status-card">
+      <div class="status-label">🎯 Derivatives</div>
+      <div class="status-value" id="derivMastery">0%</div>
+      <div class="mastery-bar"><div class="mastery-fill low" id="derivBar" style="width:0%"></div></div>
+    </div>
+    <div class="status-card">
+      <div class="status-label">∫ Integrals</div>
+      <div class="status-value" id="intMastery">0%</div>
+      <div class="mastery-bar"><div class="mastery-fill low" id="intBar" style="width:0%"></div></div>
+    </div>
+    <div class="status-card">
+      <div class="status-label">📊 Taylor</div>
+      <div class="status-value" id="taylorMastery">0%</div>
+      <div class="mastery-bar"><div class="mastery-fill low" id="taylorBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="save-section">
+    <div class="save-header">
+      <span class="save-label">🔑 Your Save Code (click to copy)</span>
+    </div>
+    <div class="save-code" id="saveCode" title="Click to copy">————————</div>
+    <div class="save-buttons">
+      <button onclick="copyCode()">📋 Copy Code</button>
+      <button onclick="showLoadModal()">📂 Load Code</button>
+      <button onclick="shareCode()">🔗 Share</button>
+    </div>
+  </div>
+
+  <div class="help-panel">
+    Commands: <code>help</code> <code>look</code> <code>go [room]</code> <code>hint</code> <code>skip</code> <code>stats</code> <code>reset</code>
+  </div>
+</div>
+
+<!-- Load Modal -->
+<div class="modal" id="loadModal">
+  <div class="modal-content">
+    <div class="modal-title">📂 Load Save Code</div>
+    <input type="text" class="modal-input" id="loadInput" placeholder="XXXX-XXXX-XXXX">
+    <div class="modal-buttons">
+      <button class="secondary" onclick="closeLoadModal()">Cancel</button>
+      <button class="primary" onclick="loadCode()">Load</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   CALCULUS QUEST — Adaptive Learning Engine
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRNG — Deterministic random from seed
+// ─────────────────────────────────────────────────────────────────────────────
+function xorshift32(seed) {
+  let x = seed >>> 0;
+  return function() {
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
+    return (x >>> 0) / 4294967296;
+  };
+}
+
+function fnv1a(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRAPH DATABASE — Functions with their derivatives/integrals
+// ─────────────────────────────────────────────────────────────────────────────
+const GRAPHS = {
+  // Polynomials
+  x2: {
+    id: 'x2', label: 'x²', 
+    f: x => x*x, 
+    df: x => 2*x,
+    F: x => x*x*x/3,
+    taylor: (a, k) => {
+      // Taylor coefficients at a
+      if (k === 0) return a*a;
+      if (k === 1) return 2*a;
+      if (k === 2) return 1;
+      return 0;
+    },
+    domain: [-5, 5]
+  },
+  x3: {
+    id: 'x3', label: 'x³',
+    f: x => x*x*x,
+    df: x => 3*x*x,
+    F: x => x*x*x*x/4,
+    taylor: (a, k) => {
+      if (k === 0) return a*a*a;
+      if (k === 1) return 3*a*a;
+      if (k === 2) return 3*a;
+      if (k === 3) return 1;
+      return 0;
+    },
+    domain: [-3, 3]
+  },
+  x3_2x: {
+    id: 'x3_2x', label: 'x³ − 2x',
+    f: x => x*x*x - 2*x,
+    df: x => 3*x*x - 2,
+    F: x => x*x*x*x/4 - x*x,
+    domain: [-3, 3]
+  },
+  // Trig
+  sin: {
+    id: 'sin', label: 'sin(x)',
+    f: Math.sin,
+    df: Math.cos,
+    F: x => -Math.cos(x),
+    taylor: (a, k) => {
+      // Taylor at a=0
+      if (a !== 0) return null;
+      const signs = [0, 1, 0, -1];
+      const factorials = [1, 1, 2, 6, 24, 120];
+      if (k >= 6) return 0;
+      return signs[k % 4] / (factorials[k] || 1);
+    },
+    domain: [-Math.PI, Math.PI]
+  },
+  cos: {
+    id: 'cos', label: 'cos(x)',
+    f: Math.cos,
+    df: x => -Math.sin(x),
+    F: Math.sin,
+    domain: [-Math.PI, Math.PI]
+  },
+  // Exponential
+  exp: {
+    id: 'exp', label: 'eˣ',
+    f: Math.exp,
+    df: Math.exp,
+    F: Math.exp,
+    taylor: (a, k) => {
+      if (a !== 0) return null;
+      const factorials = [1, 1, 2, 6, 24, 120];
+      return 1 / (factorials[k] || 1);
+    },
+    domain: [-3, 3]
+  },
+  // Logarithm
+  ln: {
+    id: 'ln', label: 'ln(x)',
+    f: Math.log,
+    df: x => 1/x,
+    F: x => x * Math.log(x) - x,
+    domain: [0.1, 5]
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROOMS — Different challenge types
+// ─────────────────────────────────────────────────────────────────────────────
+const ROOMS = {
+  entrance: {
+    id: 'entrance',
+    name: 'Entrance Hall',
+    category: null,
+    description: `You stand in the grand Entrance Hall of the Calculus Citadel.
+    
+Three passages lead deeper into the fortress:
+  • NORTH → The Derivative Dungeon (slopes, rates, tangents)
+  • EAST  → The Integral Caverns (areas, antiderivatives)
+  • WEST  → The Taylor Tower (series, approximations)
+
+Type 'go north', 'go east', or 'go west' to begin your quest.`,
+    exits: { north: 'derivative', east: 'integral', west: 'taylor' }
+  },
+  
+  derivative: {
+    id: 'derivative',
+    name: 'Derivative Dungeon',
+    category: 'derivative',
+    description: `The Derivative Dungeon echoes with whispers of slopes and rates.
+    
+A stone guardian blocks your path. It speaks:
+"Find the instantaneous rate of change, and you may pass."`,
+    exits: { south: 'entrance', deeper: 'derivative' },
+    graphs: ['x2', 'x3', 'x3_2x', 'sin', 'cos', 'exp'],
+    generateProblem: (rng, difficulty, graph) => {
+      const [xmin, xmax] = graph.domain;
+      const steps = difficulty === 'easy' ? 1 : difficulty === 'med' ? 0.5 : 0.1;
+      const range = xmax - xmin;
+      let a = xmin + Math.floor(rng() * (range / steps)) * steps;
+      a = Math.round(a * 10) / 10;
+      if (Math.abs(a) < 0.01) a = steps;
+      
+      const answer = graph.df(a);
+      const yVal = graph.f(a);
+      
+      return {
+        text: `Find f'(${a}) where f(x) = ${graph.label}`,
+        answer: answer,
+        confusers: { yValue: yVal, negAnswer: -answer },
+        graph: graph,
+        point: a
+      };
+    }
+  },
+  
+  integral: {
+    id: 'integral',
+    name: 'Integral Caverns',
+    category: 'integral',
+    description: `The Integral Caverns drip with accumulated areas.
+    
+An ancient door is sealed with a puzzle:
+"Compute the area under the curve to release the lock."`,
+    exits: { west: 'entrance', deeper: 'integral' },
+    graphs: ['x2', 'x3', 'sin', 'cos', 'exp'],
+    generateProblem: (rng, difficulty, graph) => {
+      let a = Math.floor(rng() * 3);
+      let b = a + 1 + Math.floor(rng() * 2);
+      if (graph.id === 'sin' || graph.id === 'cos') {
+        a = 0;
+        b = Math.round(rng() * 2 + 1) * Math.PI / 2;
+      }
+      
+      const answer = graph.F(b) - graph.F(a);
+      
+      return {
+        text: `Find ∫[${fmtNum(a)} to ${fmtNum(b)}] ${graph.label} dx`,
+        answer: answer,
+        graph: graph,
+        bounds: [a, b]
+      };
+    }
+  },
+  
+  taylor: {
+    id: 'taylor',
+    name: 'Taylor Tower',
+    category: 'taylor',
+    description: `The Taylor Tower spirals upward, each level an approximation.
+    
+A shimmering portal demands:
+"What is the coefficient of the nth term in my expansion?"`,
+    exits: { east: 'entrance', higher: 'taylor' },
+    graphs: ['x2', 'x3', 'sin', 'exp'],
+    generateProblem: (rng, difficulty, graph) => {
+      if (!graph.taylor) return null;
+      const k = Math.floor(rng() * 4); // 0 to 3
+      const a = 0; // centered at 0 for now
+      const coeff = graph.taylor(a, k);
+      
+      if (coeff === null) return null;
+      
+      const ordinal = ['0th', '1st', '2nd', '3rd'][k];
+      
+      return {
+        text: `Taylor series of ${graph.label} at a=0: What is the ${ordinal} coefficient (c_${k})?`,
+        answer: coeff,
+        graph: graph,
+        degree: k
+      };
+    }
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let gameState = {
+  seed: Date.now(),
+  room: 'entrance',
+  mastery: {
+    derivative: 0,
+    integral: 0,
+    taylor: 0
+  },
+  problemsSolved: 0,
+  streak: 0,
+  currentProblem: null,
+  difficulty: 'med',
+  history: []
+};
+
+let rng = xorshift32(gameState.seed);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE CODE SYSTEM — Encode/Decode state to shareable string
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Encode state to base36 save code
+function encodeState(state) {
+  // Pack: seed (32 bits) + room (4 bits) + mastery×3 (7 bits each = 21) + solved (16 bits)
+  // Total: ~73 bits → ~15 base36 chars
+  
+  const roomIndex = ['entrance', 'derivative', 'integral', 'taylor'].indexOf(state.room);
+  const mastD = Math.min(127, Math.round(state.mastery.derivative * 127));
+  const mastI = Math.min(127, Math.round(state.mastery.integral * 127));
+  const mastT = Math.min(127, Math.round(state.mastery.taylor * 127));
+  const solved = Math.min(65535, state.problemsSolved);
+  
+  // Build bigint
+  let n = BigInt(state.seed >>> 0);
+  n = (n << 4n) | BigInt(roomIndex & 0xF);
+  n = (n << 7n) | BigInt(mastD);
+  n = (n << 7n) | BigInt(mastI);
+  n = (n << 7n) | BigInt(mastT);
+  n = (n << 16n) | BigInt(solved);
+  
+  // Convert to base36
+  let code = n.toString(36).toUpperCase();
+  
+  // Format as XXXX-XXXX-XXXX
+  while (code.length < 12) code = '0' + code;
+  return code.slice(0, 4) + '-' + code.slice(4, 8) + '-' + code.slice(8, 12);
+}
+
+function decodeState(code) {
+  // Remove dashes and convert to bigint
+  const clean = code.replace(/-/g, '').toUpperCase();
+  let n = BigInt('0x0');
+  try {
+    n = BigInt(parseInt(clean, 36));
+  } catch (e) {
+    throw new Error('Invalid save code');
+  }
+  
+  // Unpack
+  const solved = Number(n & 0xFFFFn); n >>= 16n;
+  const mastT = Number(n & 0x7Fn); n >>= 7n;
+  const mastI = Number(n & 0x7Fn); n >>= 7n;
+  const mastD = Number(n & 0x7Fn); n >>= 7n;
+  const roomIndex = Number(n & 0xFn); n >>= 4n;
+  const seed = Number(n & 0xFFFFFFFFn);
+  
+  const rooms = ['entrance', 'derivative', 'integral', 'taylor'];
+  
+  return {
+    seed: seed,
+    room: rooms[roomIndex] || 'entrance',
+    mastery: {
+      derivative: mastD / 127,
+      integral: mastI / 127,
+      taylor: mastT / 127
+    },
+    problemsSolved: solved,
+    streak: 0,
+    currentProblem: null,
+    difficulty: 'med',
+    history: []
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+const output = document.getElementById('output');
+const input = document.getElementById('commandInput');
+
+function print(text, className = 'narrative') {
+  const line = document.createElement('div');
+  line.className = 'output-line ' + className;
+  line.innerHTML = text;
+  output.appendChild(line);
+  output.scrollTop = output.scrollHeight;
+}
+
+function clear() {
+  output.innerHTML = '';
+}
+
+function fmtNum(n) {
+  if (Math.abs(n - Math.PI) < 0.001) return 'π';
+  if (Math.abs(n - Math.PI/2) < 0.001) return 'π/2';
+  if (Math.abs(n - Math.PI*2) < 0.001) return '2π';
+  if (Number.isInteger(n)) return String(n);
+  return n.toFixed(3).replace(/\.?0+$/, '');
+}
+
+function updateUI() {
+  // Room
+  document.getElementById('roomDisplay').textContent = ROOMS[gameState.room]?.name || 'Unknown';
+  
+  // Mastery bars
+  ['deriv', 'int', 'taylor'].forEach((key, i) => {
+    const cats = ['derivative', 'integral', 'taylor'];
+    const pct = Math.round(gameState.mastery[cats[i]] * 100);
+    document.getElementById(key + 'Mastery').textContent = pct + '%';
+    const bar = document.getElementById(key + 'Bar');
+    bar.style.width = pct + '%';
+    bar.className = 'mastery-fill ' + (pct < 33 ? 'low' : pct < 66 ? 'mid' : 'high');
+  });
+  
+  // Save code
+  document.getElementById('saveCode').textContent = encodeState(gameState);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GAME LOGIC
+// ─────────────────────────────────────────────────────────────────────────────
+
+function generateProblem() {
+  const room = ROOMS[gameState.room];
+  if (!room.generateProblem) return null;
+  
+  // Pick graph based on seed + solved count
+  const subSeed = gameState.seed ^ (gameState.problemsSolved * 2654435761);
+  const localRng = xorshift32(subSeed);
+  
+  const graphId = room.graphs[Math.floor(localRng() * room.graphs.length)];
+  const graph = GRAPHS[graphId];
+  
+  // Adaptive difficulty based on mastery
+  const mastery = gameState.mastery[room.category] || 0;
+  let difficulty = 'easy';
+  if (mastery > 0.3) difficulty = 'med';
+  if (mastery > 0.6) difficulty = 'hard';
+  gameState.difficulty = difficulty;
+  
+  const problem = room.generateProblem(localRng, difficulty, graph);
+  if (!problem) return null;
+  
+  problem.id = subSeed;
+  return problem;
+}
+
+function presentProblem() {
+  const problem = generateProblem();
+  if (!problem) {
+    print("The room holds no challenges for you here.", 'system');
+    return;
+  }
+  
+  gameState.currentProblem = problem;
+  
+  print('');
+  print('━'.repeat(50), 'system');
+  print(`📜 CHALLENGE #${gameState.problemsSolved + 1} (${gameState.difficulty})`, 'info');
+  print('');
+  print(problem.text, 'problem');
+  print('');
+  print('Enter your answer (number), or type "hint" for help.', 'system');
+}
+
+function checkAnswer(input) {
+  if (!gameState.currentProblem) {
+    print("There's no active challenge. Type 'look' to see your surroundings.", 'system');
+    return;
+  }
+  
+  const answer = parseFloat(input);
+  if (isNaN(answer)) {
+    print("Please enter a number.", 'error');
+    return;
+  }
+  
+  const problem = gameState.currentProblem;
+  const correct = problem.answer;
+  const tolerance = 0.05;
+  
+  // Check for correct answer
+  if (Math.abs(answer - correct) < tolerance) {
+    print('');
+    print('✓ CORRECT!', 'success');
+    print(`The answer is ${fmtNum(correct)}`, 'success');
+    
+    // Update mastery
+    const room = ROOMS[gameState.room];
+    if (room.category) {
+      const gain = 0.05 * (gameState.difficulty === 'hard' ? 2 : gameState.difficulty === 'med' ? 1.5 : 1);
+      gameState.mastery[room.category] = Math.min(1, gameState.mastery[room.category] + gain);
+    }
+    
+    gameState.problemsSolved++;
+    gameState.streak++;
+    gameState.currentProblem = null;
+    
+    if (gameState.streak >= 3) {
+      print(`🔥 ${gameState.streak} streak! Your mastery grows stronger.`, 'info');
+    }
+    
+    updateUI();
+    
+    setTimeout(() => {
+      print('');
+      print('Type "look" to continue, or "go [direction]" to explore.', 'system');
+    }, 500);
+    
+  } else {
+    // Check for common mistakes
+    if (problem.confusers) {
+      if (Math.abs(answer - problem.confusers.yValue) < tolerance) {
+        print('');
+        print('✗ That\'s f(a), the y-value, not the slope!', 'error');
+        print('Remember: derivative = slope, not height.', 'hint');
+      } else if (Math.abs(answer - problem.confusers.negAnswer) < tolerance) {
+        print('');
+        print('✗ Sign error! You have the magnitude but wrong sign.', 'error');
+        print('Check if x is positive or negative.', 'hint');
+      } else {
+        print('');
+        print(`✗ Not quite. Try again or type "hint".`, 'error');
+      }
+    } else {
+      print('');
+      print(`✗ Not quite. Try again or type "hint".`, 'error');
+    }
+    
+    // Reduce mastery slightly
+    const room = ROOMS[gameState.room];
+    if (room.category) {
+      gameState.mastery[room.category] = Math.max(0, gameState.mastery[room.category] - 0.02);
+    }
+    gameState.streak = 0;
+    updateUI();
+  }
+}
+
+function giveHint() {
+  if (!gameState.currentProblem) {
+    print("No active challenge.", 'system');
+    return;
+  }
+  
+  const problem = gameState.currentProblem;
+  const room = ROOMS[gameState.room];
+  
+  if (room.category === 'derivative') {
+    print('');
+    print('💡 HINT: The derivative gives the slope at a point.', 'hint');
+    print(`For ${problem.graph.label}, think about the power rule.`, 'hint');
+    if (problem.graph.id === 'x2') print('d/dx[x²] = 2x', 'hint');
+    if (problem.graph.id === 'x3') print('d/dx[x³] = 3x²', 'hint');
+    if (problem.graph.id === 'sin') print('d/dx[sin(x)] = cos(x)', 'hint');
+    if (problem.graph.id === 'cos') print('d/dx[cos(x)] = -sin(x)', 'hint');
+    if (problem.graph.id === 'exp') print('d/dx[eˣ] = eˣ', 'hint');
+  } else if (room.category === 'integral') {
+    print('');
+    print('💡 HINT: Find the antiderivative, then evaluate at bounds.', 'hint');
+    print('∫[a to b] f(x)dx = F(b) - F(a)', 'hint');
+  } else if (room.category === 'taylor') {
+    print('');
+    print('💡 HINT: Taylor coefficients come from derivatives.', 'hint');
+    print('c_k = f^(k)(a) / k!', 'hint');
+  }
+}
+
+function look() {
+  const room = ROOMS[gameState.room];
+  print('');
+  print('═'.repeat(50), 'system');
+  print(`📍 ${room.name.toUpperCase()}`, 'info');
+  print('═'.repeat(50), 'system');
+  print('');
+  print(room.description, 'narrative');
+  
+  if (room.generateProblem && !gameState.currentProblem) {
+    print('');
+    print('A challenge awaits...', 'system');
+    setTimeout(presentProblem, 500);
+  }
+}
+
+function go(direction) {
+  const room = ROOMS[gameState.room];
+  if (!room.exits || !room.exits[direction]) {
+    print(`You can't go ${direction} from here.`, 'error');
+    if (room.exits) {
+      print(`Exits: ${Object.keys(room.exits).join(', ')}`, 'system');
+    }
+    return;
+  }
+  
+  gameState.room = room.exits[direction];
+  gameState.currentProblem = null;
+  updateUI();
+  
+  print('');
+  print(`You travel ${direction}...`, 'narrative');
+  setTimeout(look, 300);
+}
+
+function showStats() {
+  print('');
+  print('═'.repeat(50), 'system');
+  print('📊 YOUR STATS', 'info');
+  print('═'.repeat(50), 'system');
+  print(`Problems Solved: ${gameState.problemsSolved}`, 'narrative');
+  print(`Current Streak: ${gameState.streak}`, 'narrative');
+  print('', 'narrative');
+  print(`Derivative Mastery: ${Math.round(gameState.mastery.derivative * 100)}%`, 'narrative');
+  print(`Integral Mastery: ${Math.round(gameState.mastery.integral * 100)}%`, 'narrative');
+  print(`Taylor Mastery: ${Math.round(gameState.mastery.taylor * 100)}%`, 'narrative');
+  print('', 'narrative');
+  print(`Save Code: ${encodeState(gameState)}`, 'info');
+}
+
+function showHelp() {
+  print('');
+  print('═'.repeat(50), 'system');
+  print('📖 COMMANDS', 'info');
+  print('═'.repeat(50), 'system');
+  print('  look        — Describe your surroundings', 'narrative');
+  print('  go [dir]    — Move (north, south, east, west, deeper, higher)', 'narrative');
+  print('  hint        — Get a hint for the current challenge', 'narrative');
+  print('  skip        — Skip current problem (costs mastery)', 'narrative');
+  print('  stats       — View your progress', 'narrative');
+  print('  reset       — Start over with new seed', 'narrative');
+  print('  [number]    — Submit answer to current challenge', 'narrative');
+  print('');
+  print('Your save code lets you resume later or share your journey!', 'system');
+}
+
+function skip() {
+  if (!gameState.currentProblem) {
+    print("No challenge to skip.", 'system');
+    return;
+  }
+  
+  const problem = gameState.currentProblem;
+  print('');
+  print(`⏭ Skipped. The answer was: ${fmtNum(problem.answer)}`, 'hint');
+  
+  const room = ROOMS[gameState.room];
+  if (room.category) {
+    gameState.mastery[room.category] = Math.max(0, gameState.mastery[room.category] - 0.05);
+  }
+  
+  gameState.currentProblem = null;
+  gameState.streak = 0;
+  updateUI();
+  
+  setTimeout(() => {
+    print('');
+    print('Type "look" to try another challenge.', 'system');
+  }, 500);
+}
+
+function reset() {
+  gameState = {
+    seed: Date.now(),
+    room: 'entrance',
+    mastery: { derivative: 0, integral: 0, taylor: 0 },
+    problemsSolved: 0,
+    streak: 0,
+    currentProblem: null,
+    difficulty: 'med',
+    history: []
+  };
+  rng = xorshift32(gameState.seed);
+  clear();
+  updateUI();
+  intro();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMAND PARSER
+// ─────────────────────────────────────────────────────────────────────────────
+function processCommand(cmd) {
+  const trimmed = cmd.trim().toLowerCase();
+  const parts = trimmed.split(/\s+/);
+  const verb = parts[0];
+  const arg = parts.slice(1).join(' ');
+  
+  // Check if it's a number (answer submission)
+  const num = parseFloat(trimmed);
+  if (!isNaN(num) && trimmed.match(/^-?\d*\.?\d+$/)) {
+    checkAnswer(trimmed);
+    return;
+  }
+  
+  switch (verb) {
+    case 'help':
+    case '?':
+      showHelp();
+      break;
+    case 'look':
+    case 'l':
+      look();
+      break;
+    case 'go':
+    case 'move':
+    case 'walk':
+      if (arg) go(arg);
+      else print("Go where? (north, south, east, west, deeper, higher)", 'system');
+      break;
+    case 'north':
+    case 'n':
+      go('north');
+      break;
+    case 'south':
+    case 's':
+      go('south');
+      break;
+    case 'east':
+    case 'e':
+      go('east');
+      break;
+    case 'west':
+    case 'w':
+      go('west');
+      break;
+    case 'deeper':
+    case 'd':
+      go('deeper');
+      break;
+    case 'higher':
+    case 'up':
+    case 'u':
+      go('higher');
+      break;
+    case 'hint':
+    case 'h':
+      giveHint();
+      break;
+    case 'skip':
+      skip();
+      break;
+    case 'stats':
+    case 'score':
+      showStats();
+      break;
+    case 'reset':
+    case 'restart':
+      reset();
+      break;
+    default:
+      print(`Unknown command: "${verb}". Type "help" for options.`, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE CODE UI
+// ─────────────────────────────────────────────────────────────────────────────
+function copyCode() {
+  const code = encodeState(gameState);
+  navigator.clipboard.writeText(code).then(() => {
+    print('');
+    print('📋 Save code copied to clipboard!', 'success');
+  }).catch(() => {
+    print('');
+    print(`Save code: ${code}`, 'info');
+  });
+}
+
+function showLoadModal() {
+  document.getElementById('loadModal').classList.add('visible');
+  document.getElementById('loadInput').value = '';
+  document.getElementById('loadInput').focus();
+}
+
+function closeLoadModal() {
+  document.getElementById('loadModal').classList.remove('visible');
+  input.focus();
+}
+
+function loadCode() {
+  const code = document.getElementById('loadInput').value.trim();
+  if (!code) {
+    alert('Please enter a save code');
+    return;
+  }
+  
+  try {
+    const loaded = decodeState(code);
+    gameState = { ...gameState, ...loaded };
+    rng = xorshift32(gameState.seed);
+    closeLoadModal();
+    clear();
+    updateUI();
+    
+    print('');
+    print('═'.repeat(50), 'system');
+    print('✓ Save code loaded successfully!', 'success');
+    print('═'.repeat(50), 'system');
+    print('');
+    print(`Resumed: ${gameState.problemsSolved} problems solved`, 'info');
+    print(`Mastery — Deriv: ${Math.round(gameState.mastery.derivative*100)}% | Int: ${Math.round(gameState.mastery.integral*100)}% | Taylor: ${Math.round(gameState.mastery.taylor*100)}%`, 'info');
+    print('');
+    
+    look();
+  } catch (e) {
+    alert('Invalid save code. Please check and try again.');
+  }
+}
+
+function shareCode() {
+  const code = encodeState(gameState);
+  const text = `Check out my Calculus Quest progress! 🧮⚔️\n\nSave Code: ${code}\nProblems Solved: ${gameState.problemsSolved}\n\nTry it: [URL]`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'Calculus Quest Progress',
+      text: text
+    });
+  } else {
+    navigator.clipboard.writeText(code).then(() => {
+      print('');
+      print('📋 Save code copied! Share it with friends.', 'success');
+    });
+  }
+}
+
+// Modal keyboard handler
+document.getElementById('loadInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') loadCode();
+  if (e.key === 'Escape') closeLoadModal();
+});
+
+// Save code click to copy
+document.getElementById('saveCode').addEventListener('click', copyCode);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INPUT HANDLING
+// ─────────────────────────────────────────────────────────────────────────────
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const cmd = input.value;
+    if (cmd.trim()) {
+      print(`▶ ${cmd}`, 'system');
+      processCommand(cmd);
+    }
+    input.value = '';
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTRO & BOOT
+// ─────────────────────────────────────────────────────────────────────────────
+function intro() {
+  print('═'.repeat(50), 'system');
+  print('');
+  print('      ⚔️  CALCULUS QUEST  ⚔️', 'info');
+  print('');
+  print('  An Adaptive Learning Adventure', 'system');
+  print('');
+  print('═'.repeat(50), 'system');
+  print('');
+  print('Welcome, brave mathematician!', 'narrative');
+  print('');
+  print('The Calculus Citadel awaits. Each room holds', 'narrative');
+  print('challenges that adapt to your skill level.', 'narrative');
+  print('');
+  print('Your progress is encoded in a SAVE CODE that', 'narrative');
+  print('you can share with others or use to resume later.', 'narrative');
+  print('');
+  print('Type "help" for commands, or "look" to begin.', 'system');
+  print('');
+}
+
+// Check URL for save code
+function checkURLCode() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code) {
+    try {
+      const loaded = decodeState(code);
+      gameState = { ...gameState, ...loaded };
+      rng = xorshift32(gameState.seed);
+      print('');
+      print('✓ Loaded shared save code from URL!', 'success');
+    } catch (e) {
+      // Invalid code, ignore
+    }
+  }
+}
+
+// Boot
+checkURLCode();
+updateUI();
+intro();
+</script>
+</body>
+</html>

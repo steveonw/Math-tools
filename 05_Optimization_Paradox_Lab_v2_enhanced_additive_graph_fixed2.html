@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Optimization Paradox Lab v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg0: #0a0a12;
+  --bg1: #12121f;
+  --bg2: #1a1a2e;
+  --panel: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.1);
+  --text: #e8e8f0;
+  --muted: rgba(255,255,255,0.5);
+  --good: #4ade80;
+  --bad: #fb7185;
+  --warn: #fbbf24;
+  --accent: #a78bfa;
+  --accent2: #38bdf8;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Space Grotesk', sans-serif;
+  --display: 'Playfair Display', serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg0);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  padding: 24px 20px 16px;
+  background: linear-gradient(180deg, rgba(167,139,250,0.1) 0%, transparent 100%);
+}
+.header h1 {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
+}
+.header .tagline {
+  font-size: 1rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.header .tagline span { color: var(--bad); }
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 20px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+.stat-icon { font-size: 1rem; }
+.stat-value { color: var(--warn); font-weight: 600; }
+
+/* Screens */
+.screen {
+  display: none;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px;
+}
+.screen.active { display: block; }
+
+/* Home screen */
+.home-intro {
+  text-align: center;
+  padding: 24px 20px;
+  background: var(--panel);
+  border-radius: 14px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.home-intro h2 {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+.home-intro p {
+  color: var(--muted);
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: 0.95rem;
+}
+
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.scenario-card {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.scenario-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(167,139,250,0.15);
+}
+.scenario-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.scenario-card:hover::before { opacity: 1; }
+.scenario-icon { font-size: 2rem; margin-bottom: 8px; }
+.scenario-card h3 { font-size: 1.05rem; margin-bottom: 6px; }
+.scenario-card p { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+.scenario-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-family: var(--mono);
+}
+.scenario-meta span {
+  padding: 2px 6px;
+  background: var(--panel);
+  border-radius: 5px;
+}
+.completed-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: var(--good);
+  font-size: 1.1rem;
+}
+
+/* Problem screen - Two column layout */
+.problem-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+}
+@media (max-width: 800px) {
+  .problem-layout { grid-template-columns: 1fr; }
+}
+
+.problem-header {
+  text-align: center;
+  padding: 16px;
+  background: var(--bg1);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  grid-column: 1 / -1;
+}
+.problem-header h2 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+.problem-statement {
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.problem-statement strong { color: var(--warn); }
+
+/* Diagram area */
+.diagram-container {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.diagram-canvas {
+  width: 100%;
+  height: 300px;
+  background: var(--bg2);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+/* Slider controls */
+.slider-section {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.slider-section h3 {
+  font-size: 0.9rem;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slider-row {
+  margin-bottom: 16px;
+}
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.slider-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.slider-value {
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.slider-value.coupled {
+  color: var(--accent2);
+}
+input[type="range"] {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  background: var(--bg2);
+  border-radius: 4px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+input[type="range"].coupled::-webkit-slider-thumb {
+  background: var(--accent2);
+}
+.coupling-indicator {
+  font-size: 0.75rem;
+  color: var(--accent2);
+  text-align: center;
+  padding: 6px;
+  background: rgba(56,189,248,0.1);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+/* Objective display */
+.objective-display {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.objective-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.objective-row:last-child { margin-bottom: 0; }
+.objective-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.objective-value {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.objective-value.current { color: var(--warn); }
+.objective-value.optimal { color: var(--good); }
+.objective-value.bad { color: var(--bad); }
+
+/* Gap indicator */
+.gap-bar {
+  height: 6px;
+  background: var(--bg2);
+  border-radius: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.gap-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--bad), var(--warn), var(--good));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.gap-text {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Constraint display */
+.constraint-display {
+  background: rgba(167,139,250,0.1);
+  border: 1px solid rgba(167,139,250,0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.constraint-label {
+  font-size: 0.7rem;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+.constraint-formula {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+}
+
+/* Mode tabs */
+.mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.mode-tab {
+  flex: 1;
+  padding: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  color: var(--muted);
+}
+.mode-tab:hover {
+  border-color: var(--accent);
+}
+.mode-tab.active {
+  background: rgba(167,139,250,0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Gut section */
+.gut-section {
+  margin-top: 12px;
+}
+.gut-section h4 {
+  font-size: 0.85rem;
+  color: var(--bad);
+  margin-bottom: 8px;
+  text-align: center;
+}
+.gut-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gut-btn {
+  background: linear-gradient(135deg, rgba(251,113,133,0.12) 0%, rgba(251,191,36,0.08) 100%);
+  border: 1px solid rgba(251,113,133,0.35);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: var(--sans);
+  color: var(--text);
+}
+.gut-btn:hover {
+  background: linear-gradient(135deg, rgba(251,113,133,0.2) 0%, rgba(251,191,36,0.15) 100%);
+  border-color: var(--bad);
+}
+.gut-btn .gut-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--bad);
+}
+.gut-btn .gut-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Math path button */
+.math-path-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(74,222,128,0.12) 0%, rgba(56,189,248,0.08) 100%);
+  border: 1px solid rgba(74,222,128,0.35);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--good);
+  font-weight: 600;
+  margin-top: 12px;
+  transition: all 0.2s ease;
+}
+.math-path-btn:hover {
+  background: linear-gradient(135deg, rgba(74,222,128,0.2) 0%, rgba(56,189,248,0.15) 100%);
+  border-color: var(--good);
+}
+
+/* Back button */
+.back-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  padding: 8px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+  z-index: 50;
+  transition: all 0.2s ease;
+}
+.back-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Overlays */
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  padding: 16px;
+}
+.overlay.visible { display: flex; }
+
+.overlay-card {
+  background: var(--bg1);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Failure overlay */
+.failure-card { border: 2px solid var(--bad); animation: failShake 0.5s ease; }
+@keyframes failShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+.failure-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.failure-title { font-size: 1.2rem; color: var(--bad); margin-bottom: 6px; }
+.failure-label {
+  display: inline-block;
+  background: rgba(251,113,133,0.15);
+  border: 1px solid var(--bad);
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--bad);
+  margin-bottom: 12px;
+}
+.failure-result {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+.failure-result .yours { color: var(--bad); }
+.failure-result .optimal { color: var(--good); }
+.failure-explanation {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.overlay-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.undo-btn {
+  padding: 10px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s ease;
+}
+.undo-btn:hover { background: #8b5cf6; transform: scale(1.03); }
+.showmath-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+.showmath-btn:hover { border-color: var(--good); color: var(--good); }
+
+/* Step check overlay */
+.step-card { border: 2px solid var(--good); }
+.step-header { margin-bottom: 16px; }
+.step-header h3 { font-size: 1.2rem; color: var(--good); margin-bottom: 4px; }
+.step-header p { color: var(--muted); font-size: 0.85rem; }
+.step-progress {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--border);
+}
+.step-dot.done { background: var(--good); border-color: var(--good); }
+.step-dot.current { border-color: var(--accent); }
+.step-question {
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: var(--panel);
+  border-radius: 8px;
+}
+.step-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.step-choice {
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  text-align: left;
+  transition: all 0.2s ease;
+  color: var(--text);
+}
+.step-choice:hover { border-color: var(--accent); background: rgba(167,139,250,0.1); }
+.step-choice.correct { background: rgba(74,222,128,0.15); border-color: var(--good); color: var(--good); }
+.step-choice.wrong { background: rgba(251,113,133,0.15); border-color: var(--bad); color: var(--bad); }
+.step-feedback {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.85rem;
+  display: none;
+}
+.step-feedback.visible { display: block; }
+.step-feedback.good { background: rgba(74,222,128,0.12); color: var(--good); }
+.step-feedback.bad { background: rgba(251,113,133,0.12); color: var(--bad); }
+
+/* Success overlay */
+.success-card { border: 2px solid var(--good); animation: successPop 0.5s ease; }
+@keyframes successPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.success-icon { font-size: 3rem; margin-bottom: 10px; }
+.success-title { font-size: 1.3rem; color: var(--good); margin-bottom: 6px; }
+.success-subtitle { color: var(--muted); margin-bottom: 12px; font-size: 0.9rem; }
+.success-result {
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.success-result .label { font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+.success-result .value { font-family: var(--mono); font-size: 1.2rem; color: var(--good); }
+.success-explanation {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 16px;
+  line-height: 1.5;
+  text-align: left;
+  padding: 10px;
+  background: rgba(74,222,128,0.08);
+  border-radius: 8px;
+}
+.success-btn {
+  padding: 12px 24px;
+  background: var(--good);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bg0);
+  transition: all 0.2s ease;
+}
+.success-btn:hover { transform: scale(1.03); box-shadow: 0 6px 16px rgba(74,222,128,0.25); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .header { padding: 16px 12px 12px; }
+  .screen { padding: 12px; }
+  .overlay-card { padding: 20px; }
+}
+
+/* --- Added (additive) UI polish: lock badge, mini actions, best-so-far --- */
+.lock-badge{
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--muted);
+}
+.objective-value.best{
+  color: var(--accent2);
+  font-weight: 700;
+}
+.mini-actions{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0 12px;
+  flex-wrap: wrap;
+}
+.mini-btn{
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+}
+.mini-btn:hover{ background: rgba(255,255,255,0.10); }
+.mini-toggle{
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  user-select: none;
+}
+.mini-toggle input{ transform: translateY(1px); }
+
+
+/* --- Added (additive) mini objective graph + percent toggle --- */
+.mini-graph{
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.mini-graph canvas{
+  width: 100%;
+  height: 90px;
+  display: block;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.mini-graph-caption{
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>🔄 Optimization Paradox Lab</h1>
+  <p class="tagline">"Your first guess is <span>always wrong</span>. Learn why."</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-icon">⚡</span>
+    <span>XP:</span>
+    <span class="stat-value" id="xpDisplay">0</span>
+  </div>
+  <div class="stat">
+    <span class="stat-icon">🎯</span>
+    <span>Solved:</span>
+    <span class="stat-value" id="solvedDisplay">0</span>
+    <span>/ 6</span>
+  </div>
+  <div class="stat">
+    <span class="stat-icon">💡</span>
+    <span>Insights:</span>
+    <span class="stat-value" id="insightsDisplay">0</span>
+  </div>
+</div>
+
+<!-- Home Screen -->
+<div class="screen active" id="homeScreen">
+  <div class="home-intro">
+    <h2>🧠 Train Your Optimization Intuition</h2>
+    <p>In optimization, your gut instinct often leads you astray. <strong>Explore with sliders</strong> to feel the constraint coupling, <strong>try "obvious" strategies</strong> to see why they fail, then <strong>learn the math</strong> that finds the true optimum.</p>
+  </div>
+  <div class="scenario-grid" id="scenarioGrid"></div>
+</div>
+
+<!-- Problem Screen -->
+<div class="screen" id="problemScreen">
+  <button class="back-btn" id="backBtn">← Back</button>
+  
+  <div class="problem-header">
+    <h2 id="problemTitle">Problem Title</h2>
+    <p class="problem-statement" id="problemStatement">Problem statement goes here.</p>
+  </div>
+  
+  <div class="problem-layout">
+    <div class="diagram-container">
+      <canvas class="diagram-canvas" id="diagramCanvas"></canvas>
+      <div class="constraint-display">
+        <div class="constraint-label">⚡ CONSTRAINT (fixed)</div>
+        <div class="constraint-formula" id="constraintFormula">Formula</div>
+      </div>
+    </div>
+    
+    <div class="slider-section">
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="modeExplore">🎮 Explore</button>
+        <button class="mode-tab" id="modeChallenge">🎯 Challenge</button>
+      </div>
+      
+      <div id="exploreMode">
+        <h3>🔗 Drag to explore (variables are coupled!)</h3>
+        <div class="coupling-indicator" id="couplingIndicator">
+          ↕️ When one changes, the other must adjust to satisfy the constraint
+        </div>
+        
+        <div class="slider-row" id="sliderRow1">
+          <div class="slider-header">
+            <span class="slider-label" id="slider1Label">Variable 1</span>
+            <span class="slider-value" id="slider1Value">0</span>
+          </div>
+          <input type="range" id="slider1" min="1" max="100" value="50">
+        </div>
+        
+        <div class="slider-row" id="sliderRow2">
+          <div class="slider-header">
+            <span class="slider-label" id="slider2Label">Variable 2</span>
+            <span class="lock-badge" id="slider2Lock" title="This variable is locked by the constraint (it updates automatically).">🔒 constrained</span>
+            <span class="slider-value coupled" id="slider2Value">0</span>
+          </div>
+          <input type="range" id="slider2" min="1" max="100" value="50" class="coupled" disabled>
+        </div>
+        
+        <div class="objective-display">
+          <div class="objective-row">
+            <span class="objective-label" id="objLabel">Objective</span>
+            <span class="objective-value current" id="objValue">0</span>
+          </div>
+          <div class="objective-row" id="bestRow">
+            <span class="objective-label">Best so far</span>
+            <span class="objective-value best" id="bestValue">—</span>
+          </div>
+
+          <div class="objective-row" id="optRow">
+            <span class="objective-label">Optimal</span>
+            <span class="objective-value optimal" id="optValue">0</span>
+          </div>
+          <div class="gap-bar" id="gapBar">
+            <div class="gap-fill" id="gapFill"></div>
+          </div>
+          <div class="gap-text" id="gapText">0% of optimal</div>
+
+          <div class="mini-graph">
+            <canvas id="objGraph"></canvas>
+            <div class="mini-graph-caption" id="objGraphCaption">Objective vs <span id="graphVarName">x</span></div>
+          </div>
+        </div>
+
+        <div class="mini-actions">
+          <button class="mini-btn" id="resetAttemptBtn" title="Reset your attempt (puts the main slider back to its starting value).">↩ Reset attempt</button>
+          <label class="mini-toggle" title="Teacher option: hide or show the optimal value (students can still explore).">
+            <input type="checkbox" id="showOptimalToggle" checked>
+            Show optimal value
+          </label>
+          <label class="mini-toggle" title="Hide or show the percent-of-optimal bar (useful for discovery first).">
+            <input type="checkbox" id="showPercentToggle" checked>
+            Show percent bar
+          </label>
+        </div>
+
+        <button class="math-path-btn" id="solveBtn">🧮 Show Me The Math Path →</button>
+      </div>
+      
+      <div id="challengeMode" style="display:none">
+        <div class="gut-section">
+          <h4>🎯 What's Your Gut Telling You?</h4>
+          <div class="gut-buttons" id="gutButtons"></div>
+        </div>
+        <button class="math-path-btn" id="mathPathBtn">🧮 Skip to the Math →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Failure Overlay -->
+<div class="overlay" id="failureOverlay">
+  <div class="overlay-card failure-card">
+    <div class="failure-icon">❌</div>
+    <h3 class="failure-title" id="failureTitle">Intuition Failed!</h3>
+    <div class="failure-label" id="failureLabel">Cognitive Error</div>
+    <div class="failure-result">
+      Your result: <span class="yours" id="failureYours">0</span><br>
+      Optimal result: <span class="optimal" id="failureOptimal">0</span>
+    </div>
+    <p class="failure-explanation" id="failureExplanation">Explanation.</p>
+    <div class="overlay-buttons">
+      <button class="undo-btn" id="undoBtn">↩️ Undo & Explore</button>
+      <button class="showmath-btn" id="showMathBtn">🧮 Show The Math</button>
+    </div>
+  </div>
+</div>
+
+<!-- Step Check Overlay -->
+<div class="overlay" id="stepOverlay">
+  <div class="overlay-card step-card">
+    <div class="step-header">
+      <h3>🧮 The Math Path</h3>
+      <p>Prove you understand the solution</p>
+    </div>
+    <div class="step-progress" id="stepProgress"></div>
+    <div class="step-question" id="stepQuestion">Question</div>
+    <div class="step-choices" id="stepChoices"></div>
+    <div class="step-feedback" id="stepFeedback">Feedback</div>
+  </div>
+</div>
+
+<!-- Success Overlay -->
+<div class="overlay" id="successOverlay">
+  <div class="overlay-card success-card">
+    <div class="success-icon">🏆</div>
+    <h3 class="success-title">Optimum Found!</h3>
+    <p class="success-subtitle">You've mastered this paradox</p>
+    <div class="success-result">
+      <div class="label">Optimal Solution</div>
+      <div class="value" id="successValue">Value</div>
+    </div>
+    <p class="success-explanation" id="successExplanation">Explanation</p>
+    <button class="success-btn" id="successBtn">Continue →</button>
+  </div>
+</div>
+
+<script>
+/* ========================================
+   OPTIMIZATION PARADOX LAB v2
+   ======================================== */
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+
+
+function updateOptimalVisibility() {
+  const row = document.getElementById('optRow');
+  const toggle = document.getElementById('showOptimalToggle');
+  if (!row || !toggle) return;
+  showOptimalValue = !!toggle.checked;
+  row.style.display = showOptimalValue ? 'flex' : 'none';
+  try {
+    localStorage.setItem('opt_showOptimalValue', showOptimalValue ? '1' : '0');
+  } catch (e) {}
+}
+
+function updatePercentVisibility() {
+  const bar = document.getElementById('gapBar');
+  const txt = document.getElementById('gapText');
+  const toggle = document.getElementById('showPercentToggle');
+  if (!bar || !txt || !toggle) return;
+  showPercentBar = !!toggle.checked;
+  bar.style.display = showPercentBar ? 'block' : 'none';
+  txt.style.display = showPercentBar ? 'block' : 'none';
+  try {
+    localStorage.setItem('opt_showPercentBar', showPercentBar ? '1' : '0');
+  } catch (e) {}
+}
+
+function buildObjectiveGraphSamples() {
+  if (!currentScenario) return;
+  const s = currentScenario;
+  const pVar = s.variables.find(v => v.primary);
+  if (!pVar) return;
+  const N = 140;
+  graphSamples = [];
+  let yMin = Infinity, yMax = -Infinity;
+
+  for (let i = 0; i <= N; i++) {
+    const x = pVar.min + (pVar.max - pVar.min) * (i / N);
+    const vals = s.compute(x);
+    if (!vals || !vals.valid || !isFinite(vals.obj)) continue;
+    graphSamples.push({ x, obj: vals.obj });
+    yMin = Math.min(yMin, vals.obj);
+    yMax = Math.max(yMax, vals.obj);
+  }
+
+  if (!isFinite(yMin) || !isFinite(yMax) || yMin === yMax) {
+    yMin = 0; yMax = 1;
+  }
+  const pad = (yMax - yMin) * 0.08;
+  graphMeta = { xMin: pVar.min, xMax: pVar.max, yMin, yMax, yPad: pad };
+
+  const nameEl = document.getElementById('graphVarName');
+  if (nameEl) nameEl.textContent = pVar.name;
+}
+
+function recordTrailPoint() {
+  if (!currentScenario || !currentValues || !currentValues.valid) return;
+  const s = currentScenario;
+  const pVar = s.variables.find(v => v.primary);
+  if (!pVar) return;
+  const x = currentValues[pVar.name];
+  const obj = currentValues.obj;
+
+  const last = trailSamples[trailSamples.length - 1];
+  const minStep = (pVar.max - pVar.min) / 250;
+  if (last && Math.abs(last.x - x) < minStep) return;
+
+  trailSamples.push({ x, obj });
+  if (trailSamples.length > TRAIL_MAX) trailSamples.shift();
+}
+
+function drawObjectiveGraph() {
+  const canvas = document.getElementById('objGraph');
+  if (!canvas || !currentScenario) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const w = canvas.clientWidth || canvas.offsetWidth || 300;
+  const h = canvas.clientHeight || canvas.offsetHeight || 90;
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Background
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fillRect(0, 0, w, h);
+
+  if (!graphSamples || graphSamples.length < 2) return;
+
+  const { xMin, xMax, yMin, yMax, yPad } = graphMeta;
+  const Y0 = yMin - yPad;
+  const Y1 = yMax + yPad;
+
+  const mapX = (x) => 10 + (w - 20) * ((x - xMin) / (xMax - xMin));
+  const mapY = (y) => (h - 10) - (h - 20) * ((y - Y0) / (Y1 - Y0));
+
+  // Grid line
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(10, h - 10);
+  ctx.lineTo(w - 10, h - 10);
+  ctx.stroke();
+
+  // Curve
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  graphSamples.forEach((pt, i) => {
+    const x = mapX(pt.x);
+    const y = mapY(pt.obj);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Trail points
+  ctx.fillStyle = 'rgba(255,255,255,0.30)';
+  for (const pt of trailSamples) {
+    const x = mapX(pt.x);
+    const y = mapY(pt.obj);
+    ctx.beginPath();
+    ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Best point
+  if (typeof bestObjSoFar === 'number' && bestAt) {
+    const s = currentScenario;
+    const pVar = s.variables.find(v => v.primary);
+    const bx = bestAt[pVar.name];
+    const by = bestObjSoFar;
+    ctx.fillStyle = 'rgba(74,222,128,0.95)';
+    ctx.beginPath();
+    ctx.arc(mapX(bx), mapY(by), 4.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Current point crosshair
+  if (currentValues && currentValues.valid) {
+    const s = currentScenario;
+    const pVar = s.variables.find(v => v.primary);
+    const cx = currentValues[pVar.name];
+    const cy = currentValues.obj;
+    const px = mapX(cx), py = mapY(cy);
+
+    ctx.strokeStyle = 'rgba(96,165,250,0.75)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(px, 6);
+    ctx.lineTo(px, h - 6);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(96,165,250,0.95)';
+    ctx.beginPath();
+    ctx.arc(px, py, 3.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+
+// State
+let state = { xp: 0, solved: [], insights: 0 };
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('optparadox_v2_state');
+    if (saved) state = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('optparadox_v2_state', JSON.stringify(state));
+  } catch(e) {}
+}
+
+// Audio
+let audioCtx = null;
+function sfx(type) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    if (type === 'bad') {
+      osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+    } else if (type === 'good') {
+      osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+    } else if (type === 'success') {
+      [400, 500, 600, 800].forEach((freq, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.12, audioCtx.currentTime + i * 0.08);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.08 + 0.15);
+        o.start(audioCtx.currentTime + i * 0.08);
+        o.stop(audioCtx.currentTime + i * 0.08 + 0.15);
+      });
+    } else if (type === 'slide') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    }
+  } catch(e) {}
+}
+
+/* ========================================
+   SCENARIOS DATA - 6 PROBLEMS
+   ======================================== */
+
+const SCENARIOS = [
+  {
+    id: 'fence_river',
+    icon: '🏞️',
+    title: 'Fence by the River',
+    shortDesc: 'Maximize area with 3 sides of fencing',
+    difficulty: 'Classic',
+    statement: 'You have <strong>100 meters of fencing</strong> to create a rectangular pen along a river (river = one free side). What dimensions maximize the <strong>enclosed area</strong>?',
+    objective: { name: 'Area', formula: 'A = x × y', unit: 'm²', type: 'maximize' },
+    constraint: { formula: '2x + y = 100', explain: 'Two widths + one length = 100m fencing' },
+    variables: [
+      { name: 'x', label: 'Width (x)', unit: 'm', min: 1, max: 49, primary: true },
+      { name: 'y', label: 'Length (y)', unit: 'm', min: 2, max: 98 }
+    ],
+    compute: (x) => {
+      const y = 100 - 2 * x;
+      const A = x * y;
+      return { x, y, A, obj: A, valid: x > 0 && x < 50 && y > 0 };
+    },
+    fromPrimary: (x) => ({ x, y: 100 - 2 * x }),
+    optimal: { x: 25, y: 50, value: 1250 },
+    guts: [
+      { id: 'wide', title: '"Make it as wide as possible!"', desc: 'Stretch along the river', pick: { x: 45 }, tag: 'Endpoint Bias', explanation: 'At x=45, y=10, giving only 450 m². Pushing to extremes ignores the trade-off!' },
+      { id: 'square', title: '"Squares are always optimal!"', desc: 'Equal sides must be best', pick: { x: 33.33 }, tag: 'Symmetry Bias', explanation: 'A square gives 1111 m². But the constraint isn\'t symmetric! River side is FREE.' },
+      { id: 'tall', title: '"Make it deep for privacy!"', desc: 'Push away from the river', pick: { x: 10 }, tag: 'Ignoring Coupling', explanation: 'At x=10, y=80, only 800 m². As x shrinks, y grows, but A = x(100-2x) peaks at x=25.' }
+    ],
+    steps: [
+      { question: 'Express y in terms of x using the constraint:', choices: ['y = 100 - 2x', 'y = 100 - x', 'y = 50 - x', 'y = 100/2x'], correct: 0, explain: 'From 2x + y = 100: y = 100 - 2x' },
+      { question: 'Substitute into A = xy to get A(x):', choices: ['A(x) = x(100 - 2x) = 100x - 2x²', 'A(x) = x(100 - x)', 'A(x) = 100x - x²', 'A(x) = 2x(50 - x)'], correct: 0, explain: 'A = x(100 - 2x) = 100x - 2x²' },
+      { question: 'Find dA/dx = 0:', choices: ['dA/dx = 100 - 4x = 0 → x = 25', 'dA/dx = 100 - 2x = 0 → x = 50', 'dA/dx = 100 - x = 0 → x = 100', 'dA/dx = 200 - 4x = 0 → x = 50'], correct: 0, explain: 'dA/dx = 100 - 4x. Setting to 0: x = 25' }
+    ],
+    finalExplanation: 'The optimal pen is <strong>25m × 50m = 1,250 m²</strong>. Key insight: the river gives you a FREE side, so make that side LONGER (2:1 ratio).',
+    draw: (ctx, w, h, vals, hl) => {
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#1e40af';
+      ctx.fillRect(0, h - 35, w, 35);
+      ctx.fillStyle = '#3b82f6';
+      ctx.font = '12px JetBrains Mono';
+      ctx.fillText('~ ~ ~ RIVER (free side) ~ ~ ~', w/2 - 90, h - 12);
+      const scale = Math.min((w - 60) / 100, (h - 80) / 50);
+      const penW = vals.y * scale;
+      const penH = vals.x * scale;
+      const penX = (w - penW) / 2;
+      const penY = h - 40 - penH;
+      ctx.fillStyle = hl === 'bad' ? 'rgba(251,113,133,0.3)' : hl === 'good' ? 'rgba(74,222,128,0.3)' : 'rgba(167,139,250,0.2)';
+      ctx.fillRect(penX, penY, penW, penH);
+      ctx.strokeStyle = hl === 'bad' ? '#fb7185' : hl === 'good' ? '#4ade80' : '#a78bfa';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(penX, h - 40);
+      ctx.lineTo(penX, penY);
+      ctx.lineTo(penX + penW, penY);
+      ctx.lineTo(penX + penW, h - 40);
+      ctx.stroke();
+      ctx.fillStyle = '#e8e8f0';
+      ctx.font = 'bold 13px JetBrains Mono';
+      ctx.fillText(`x = ${vals.x.toFixed(1)}m`, penX - 45, penY + penH/2);
+      ctx.fillText(`y = ${vals.y.toFixed(1)}m`, penX + penW/2 - 25, penY - 8);
+    }
+  },
+  
+  {
+    id: 'box_volume',
+    icon: '📦',
+    title: 'The Box Paradox',
+    shortDesc: 'Maximize volume with limited material',
+    difficulty: 'Classic',
+    statement: 'You have <strong>1200 cm² of cardboard</strong> to make an open-top box with a <strong>square base</strong>. What dimensions give the <strong>maximum volume</strong>?',
+    objective: { name: 'Volume', formula: 'V = x²h', unit: 'cm³', type: 'maximize' },
+    constraint: { formula: 'x² + 4xh = 1200', explain: 'Base + 4 sides = 1200 cm²' },
+    variables: [
+      { name: 'x', label: 'Base side (x)', unit: 'cm', min: 5, max: 34, primary: true },
+      { name: 'h', label: 'Height (h)', unit: 'cm', min: 0.5, max: 50 }
+    ],
+    compute: (x) => {
+      const h = (1200 - x*x) / (4*x);
+      const V = x * x * h;
+      return { x, h, V, obj: V, valid: x > 0 && h > 0 };
+    },
+    fromPrimary: (x) => ({ x, h: (1200 - x*x) / (4*x) }),
+    optimal: { x: 20, h: 10, value: 4000 },
+    guts: [
+      { id: 'tall', title: '"Make it tall!"', desc: 'Tall boxes look impressive', pick: { x: 10 }, tag: 'Optimizing Appearance', explanation: 'At x=10, h=27.5, V=2750 cm³. Tall narrow shapes waste material on small base!' },
+      { id: 'cube', title: '"Cube is most efficient!"', desc: 'All sides equal', pick: { x: 15.5 }, tag: 'Symmetry Bias', explanation: 'Cube-ish (x≈15.5) gives ~3720 cm³. But open top breaks symmetry - need WIDER base.' },
+      { id: 'wide', title: '"Maximize the base!"', desc: 'Big base = big volume', pick: { x: 30 }, tag: 'Endpoint Bias', explanation: 'At x=30, h=2.5, V=2250 cm³. Huge base leaves no material for height!' }
+    ],
+    steps: [
+      { question: 'Express h in terms of x:', choices: ['h = (1200 - x²)/(4x)', 'h = 1200/(4x)', 'h = (1200 - x)/4', 'h = 1200 - x²'], correct: 0, explain: 'From x² + 4xh = 1200: h = (1200 - x²)/(4x)' },
+      { question: 'Substitute into V = x²h:', choices: ['V(x) = (1200x - x³)/4', 'V(x) = (1200 - x²)/4', 'V(x) = x²(1200 - 4x)', 'V(x) = 1200x² - x⁴'], correct: 0, explain: 'V = x² × (1200-x²)/(4x) = (1200x - x³)/4' },
+      { question: 'Find dV/dx = 0:', choices: ['(1200 - 3x²)/4 = 0 → x = 20', '(1200 - 2x)/4 = 0 → x = 600', '(1200 - x²)/4 = 0 → x ≈ 34.6', '(2400 - 3x²)/4 = 0 → x ≈ 28'], correct: 0, explain: 'dV/dx = (1200 - 3x²)/4 = 0 → x² = 400 → x = 20' }
+    ],
+    finalExplanation: 'Optimal box is <strong>20×20×10 cm = 4,000 cm³</strong>. Base is "expensive" (x²), height is "cheap" (4xh). Optimal ratio is 2:1 base:height.',
+    draw: (ctx, w, h, vals, hl) => {
+      ctx.clearRect(0, 0, w, h);
+      const cx = w/2, cy = h/2 + 15;
+      const scale = 2.5;
+      const bx = vals.x * scale;
+      const bh = vals.h * scale;
+      const skew = 0.35;
+      ctx.fillStyle = hl === 'bad' ? 'rgba(251,113,133,0.4)' : hl === 'good' ? 'rgba(74,222,128,0.4)' : 'rgba(167,139,250,0.3)';
+      ctx.beginPath();
+      ctx.moveTo(cx - bx/2, cy);
+      ctx.lineTo(cx - bx/2, cy - bh);
+      ctx.lineTo(cx + bx/2, cy - bh);
+      ctx.lineTo(cx + bx/2, cy);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = hl === 'bad' ? 'rgba(251,113,133,0.25)' : hl === 'good' ? 'rgba(74,222,128,0.25)' : 'rgba(167,139,250,0.2)';
+      ctx.beginPath();
+      ctx.moveTo(cx + bx/2, cy);
+      ctx.lineTo(cx + bx/2, cy - bh);
+      ctx.lineTo(cx + bx/2 + bx*skew, cy - bh - bx*skew);
+      ctx.lineTo(cx + bx/2 + bx*skew, cy - bx*skew);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = hl === 'bad' ? '#fb7185' : hl === 'good' ? '#4ade80' : '#a78bfa';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - bx/2, cy); ctx.lineTo(cx - bx/2, cy - bh);
+      ctx.lineTo(cx + bx/2, cy - bh); ctx.lineTo(cx + bx/2, cy);
+      ctx.lineTo(cx - bx/2, cy);
+      ctx.moveTo(cx - bx/2, cy - bh);
+      ctx.lineTo(cx - bx/2 + bx*skew, cy - bh - bx*skew);
+      ctx.lineTo(cx + bx/2 + bx*skew, cy - bh - bx*skew);
+      ctx.lineTo(cx + bx/2, cy - bh);
+      ctx.moveTo(cx + bx/2, cy);
+      ctx.lineTo(cx + bx/2 + bx*skew, cy - bx*skew);
+      ctx.lineTo(cx + bx/2 + bx*skew, cy - bh - bx*skew);
+      ctx.stroke();
+      ctx.fillStyle = '#e8e8f0';
+      ctx.font = 'bold 12px JetBrains Mono';
+      ctx.fillText(`x = ${vals.x.toFixed(1)}`, cx - bx/2 - 8, cy + 18);
+      ctx.fillText(`h = ${vals.h.toFixed(1)}`, cx + bx/2 + 12, cy - bh/2);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '11px JetBrains Mono';
+      ctx.fillText('(open top)', cx - 25, cy - bh - bx*skew - 10);
+    }
+  },
+  
+  {
+    id: 'tin_can',
+    icon: '🥫',
+    title: 'The Tin Can Puzzle',
+    shortDesc: 'Minimize material for fixed volume',
+    difficulty: 'Classic',
+    statement: 'Design a cylindrical can to hold <strong>500 mL</strong> (500 cm³). What radius and height <strong>minimize the material</strong> (surface area)?',
+    objective: { name: 'Surface Area', formula: 'S = 2πr² + 2πrh', unit: 'cm²', type: 'minimize' },
+    constraint: { formula: 'πr²h = 500', explain: 'Volume must equal 500 cm³' },
+    variables: [
+      { name: 'r', label: 'Radius (r)', unit: 'cm', min: 1.5, max: 10, primary: true },
+      { name: 'h', label: 'Height (h)', unit: 'cm', min: 1, max: 70 }
+    ],
+    compute: (r) => {
+      const h = 500 / (Math.PI * r * r);
+      const S = 2 * Math.PI * r * r + 2 * Math.PI * r * h;
+      return { r, h, S, obj: S, valid: r > 0 && h > 0 };
+    },
+    fromPrimary: (r) => ({ r, h: 500 / (Math.PI * r * r) }),
+    optimal: { r: 4.30, h: 8.60, value: 348.73 },
+    guts: [
+      { id: 'short', title: '"Short & wide saves material!"', desc: 'Pancake shape has small sides', pick: { r: 8 }, tag: 'Ignoring Coupling', explanation: 'At r=8, h=2.5, S≈528 cm². Huge circles dominate! r² grows faster than you save on sides.' },
+      { id: 'tall', title: '"Tall & thin is elegant!"', desc: 'Small circles must use less', pick: { r: 2.5 }, tag: 'Optimizing Appearance', explanation: 'At r=2.5, h=25.5, S≈440 cm². Long side wall wastes material.' },
+      { id: 'sphere', title: '"Make it sphere-like!"', desc: 'Spheres minimize surface area', pick: { r: 5 }, tag: 'Wrong Analogy', explanation: 'Sphere-ish (r=5) gives S≈357 cm². Close! But optimal is h = 2r (diameter = height).' }
+    ],
+    steps: [
+      { question: 'Express h in terms of r:', choices: ['h = 500/(πr²)', 'h = 500/r²', 'h = 500 - πr²', 'h = πr²/500'], correct: 0, explain: 'From πr²h = 500: h = 500/(πr²)' },
+      { question: 'Substitute into S = 2πr² + 2πrh:', choices: ['S(r) = 2πr² + 1000/r', 'S(r) = 2πr² + 500/r', 'S(r) = πr² + 1000/r', 'S(r) = 2πr² + 2πr(500)'], correct: 0, explain: 'S = 2πr² + 2πr·(500/(πr²)) = 2πr² + 1000/r' },
+      { question: 'Find dS/dr = 0:', choices: ['4πr - 1000/r² = 0 → r ≈ 4.3', '2πr - 500/r² = 0 → r ≈ 4.3', '4πr - 1000/r = 0 → r ≈ 9', '2πr - 1000/r² = 0 → r ≈ 5.4'], correct: 0, explain: 'dS/dr = 4πr - 1000/r² = 0 → r³ = 250/π ≈ 79.6 → r ≈ 4.3' }
+    ],
+    finalExplanation: 'Optimal can: <strong>r ≈ 4.3 cm, h ≈ 8.6 cm, S ≈ 349 cm²</strong>. At optimum, h = 2r (height = diameter).',
+    draw: (ctx, w, h, vals, hl) => {
+      ctx.clearRect(0, 0, w, h);
+      const cx = w/2, cy = h/2 + 8;
+      const scale = 10;
+      const rPx = vals.r * scale;
+      const hPx = vals.h * scale;
+      const eH = rPx * 0.3;
+      ctx.fillStyle = hl === 'bad' ? 'rgba(251,113,133,0.25)' : hl === 'good' ? 'rgba(74,222,128,0.25)' : 'rgba(167,139,250,0.2)';
+      ctx.fillRect(cx - rPx, cy - hPx/2, rPx * 2, hPx);
+      ctx.fillStyle = hl === 'bad' ? 'rgba(251,113,133,0.4)' : hl === 'good' ? 'rgba(74,222,128,0.4)' : 'rgba(167,139,250,0.35)';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - hPx/2, rPx, eH, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = hl === 'bad' ? '#fb7185' : hl === 'good' ? '#4ade80' : '#a78bfa';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - rPx, cy - hPx/2);
+      ctx.lineTo(cx - rPx, cy + hPx/2);
+      ctx.moveTo(cx + rPx, cy - hPx/2);
+      ctx.lineTo(cx + rPx, cy + hPx/2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - hPx/2, rPx, eH, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + hPx/2, rPx, eH, 0, 0, Math.PI);
+      ctx.stroke();
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + hPx/2, rPx, eH, 0, Math.PI, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#e8e8f0';
+      ctx.font = 'bold 12px JetBrains Mono';
+      ctx.fillText(`r = ${vals.r.toFixed(1)}`, cx + rPx + 8, cy);
+      ctx.fillText(`h = ${vals.h.toFixed(1)}`, cx - rPx - 45, cy);
+    }
+  },
+  
+  {
+    id: 'ladder',
+    icon: '🪜',
+    title: 'The Ladder Problem',
+    shortDesc: 'Longest ladder around a corner',
+    difficulty: 'Tricky',
+    statement: 'A hallway is <strong>3m wide</strong> and turns into one that\'s <strong>4m wide</strong>. What is the <strong>longest ladder</strong> that can be carried horizontally around the corner?',
+    objective: { name: 'Ladder Length', formula: 'L = 3/sin(θ) + 4/cos(θ)', unit: 'm', type: 'minimize' },
+    constraint: { formula: 'θ ∈ (0, π/2)', explain: 'Angle of ladder at corner' },
+    variables: [
+      { name: 'θ', label: 'Angle θ', unit: '°', min: 10, max: 80, primary: true },
+      { name: 'L', label: 'Length L', unit: 'm', min: 5, max: 20 }
+    ],
+    compute: (thetaDeg) => {
+      const θ = thetaDeg * Math.PI / 180;
+      const L = 3 / Math.sin(θ) + 4 / Math.cos(θ);
+      return { θ: thetaDeg, L, obj: L, valid: thetaDeg > 0 && thetaDeg < 90 };
+    },
+    fromPrimary: (θ) => {
+      const rad = θ * Math.PI / 180;
+      return { θ, L: 3 / Math.sin(rad) + 4 / Math.cos(rad) };
+    },
+    optimal: { θ: 36.87, L: 9.87, value: 9.87 },
+    guts: [
+      { id: 'fortyfive', title: '"45° is symmetric!"', desc: 'Equal angles must be best', pick: { θ: 45 }, tag: 'Symmetry Bias', explanation: 'At 45°, L ≈ 9.9m. Close! But the hallways are different widths, so optimal isn\'t symmetric.' },
+      { id: 'steep', title: '"Steeper gives clearance!"', desc: 'Go steep to clear the corner', pick: { θ: 70 }, tag: 'Wrong Direction', explanation: 'At 70°, L ≈ 12.9m. Steep angle makes the ladder hit the narrow hallway sooner!' },
+      { id: 'shallow', title: '"Shallow angle slides through!"', desc: 'Keep it low', pick: { θ: 20 }, tag: 'Wrong Direction', explanation: 'At 20°, L ≈ 13.0m. Shallow angle makes it hit the wide hallway ceiling!' }
+    ],
+    steps: [
+      { question: 'The ladder touches both walls. Its length is:', choices: ['L = 3/sin(θ) + 4/cos(θ)', 'L = 3·sin(θ) + 4·cos(θ)', 'L = 3/cos(θ) + 4/sin(θ)', 'L = √(9 + 16)'], correct: 0, explain: 'Ladder segments: 3/sin(θ) in narrow hall, 4/cos(θ) in wide hall' },
+      { question: 'To minimize L, set dL/dθ = 0:', choices: ['-3cos(θ)/sin²(θ) + 4sin(θ)/cos²(θ) = 0', '3cos(θ) - 4sin(θ) = 0', '-3sin(θ) + 4cos(θ) = 0', '3/cos(θ) = 4/sin(θ)'], correct: 0, explain: 'dL/dθ = -3cos(θ)/sin²(θ) + 4sin(θ)/cos²(θ) = 0' },
+      { question: 'Solving gives tan³(θ) = 3/4, so θ ≈:', choices: ['36.87° (about 37°)', '45°', '53.13°', '30°'], correct: 0, explain: 'tan(θ) = (3/4)^(1/3) ≈ 0.909 → θ ≈ 36.87°' }
+    ],
+    finalExplanation: 'Longest ladder: <strong>≈ 9.87m at θ ≈ 36.87°</strong>. The optimal angle favors the narrower hallway (needs more clearance).',
+    draw: (ctx, w, h, vals, hl) => {
+      ctx.clearRect(0, 0, w, h);
+      const scale = 25;
+      const ox = w/2 - 40, oy = h/2 + 20;
+      // Walls
+      ctx.strokeStyle = '#4b5563';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(ox - 3*scale, oy);
+      ctx.lineTo(ox, oy);
+      ctx.lineTo(ox, oy + 4*scale);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ox - 3*scale, oy - 3*scale);
+      ctx.lineTo(ox + 4*scale, oy - 3*scale);
+      ctx.lineTo(ox + 4*scale, oy + 4*scale);
+      ctx.stroke();
+      // Labels
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '11px JetBrains Mono';
+      ctx.fillText('3m', ox - 1.5*scale - 8, oy - 3*scale + 12);
+      ctx.fillText('4m', ox + 4*scale - 30, oy - 1.5*scale);
+      // Ladder
+      const θ = vals.θ * Math.PI / 180;
+      const L1 = 3 / Math.sin(θ) * scale;
+      const L2 = 4 / Math.cos(θ) * scale;
+      ctx.strokeStyle = hl === 'bad' ? '#fb7185' : hl === 'good' ? '#4ade80' : '#a78bfa';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(ox - L1 * Math.cos(θ), oy);
+      ctx.lineTo(ox, oy - 3*scale);
+      ctx.lineTo(ox + 4*scale, oy - 3*scale + L2 * Math.sin(θ));
+      ctx.stroke();
+      ctx.fillStyle = '#e8e8f0';
+      ctx.font = 'bold 12px JetBrains Mono';
+      ctx.fillText(`θ = ${vals.θ.toFixed(1)}°`, ox + 10, oy - 3*scale + 20);
+      ctx.fillText(`L = ${vals.L.toFixed(2)}m`, ox - 80, oy - 50);
+    }
+  },
+  
+  {
+    id: 'poster',
+    icon: '🖼️',
+    title: 'The Poster Problem',
+    shortDesc: 'Minimize paper for fixed print area',
+    difficulty: 'Tricky',
+    statement: 'A poster needs <strong>384 cm² of printed area</strong>. It must have <strong>2cm margins</strong> on sides and <strong>4cm margins</strong> on top/bottom. What dimensions <strong>minimize total paper</strong>?',
+    objective: { name: 'Total Paper', formula: 'P = (x+4)(y+8)', unit: 'cm²', type: 'minimize' },
+    constraint: { formula: 'xy = 384', explain: 'Print area = 384 cm²' },
+    variables: [
+      { name: 'x', label: 'Print width (x)', unit: 'cm', min: 8, max: 48, primary: true },
+      { name: 'y', label: 'Print height (y)', unit: 'cm', min: 8, max: 48 }
+    ],
+    compute: (x) => {
+      const y = 384 / x;
+      const P = (x + 4) * (y + 8);
+      return { x, y, P, obj: P, valid: x > 0 && y > 0 };
+    },
+    fromPrimary: (x) => ({ x, y: 384 / x }),
+    optimal: { x: 16, y: 24, value: 640 },
+    guts: [
+      { id: 'square', title: '"Square print is efficient!"', desc: 'Make it x = y', pick: { x: 19.6 }, tag: 'Symmetry Bias', explanation: 'Square print (≈19.6×19.6) gives P ≈ 652 cm². But margins aren\'t symmetric!' },
+      { id: 'wide', title: '"Wide minimizes side margins!"', desc: 'Side margins are smaller', pick: { x: 32 }, tag: 'Partial Optimization', explanation: 'Wide (32×12) gives P ≈ 720 cm². Saved on sides but lost more on top/bottom!' },
+      { id: 'tall', title: '"Tall minimizes top margins!"', desc: 'Top margins are bigger', pick: { x: 12 }, tag: 'Partial Optimization', explanation: 'Tall (12×32) gives P ≈ 640 cm². This is actually optimal! The larger margins need more compensation.' }
+    ],
+    steps: [
+      { question: 'Express y in terms of x:', choices: ['y = 384/x', 'y = 384 - x', 'y = √384', 'y = 384x'], correct: 0, explain: 'From xy = 384: y = 384/x' },
+      { question: 'Total paper P = (x+4)(y+8). Substitute:', choices: ['P = (x+4)(384/x + 8) = 384 + 8x + 1536/x + 32', 'P = x·384/x + 4·8', 'P = 384 + 32', 'P = (x+4)·392/x'], correct: 0, explain: 'P = (x+4)(384/x + 8) = 384 + 8x + 1536/x + 32' },
+      { question: 'Set dP/dx = 0:', choices: ['8 - 1536/x² = 0 → x = √192 ≈ 13.9 → but check: x = 16 is better', '8 - 384/x² = 0 → x ≈ 6.9', '1 - 384/x² = 0 → x ≈ 19.6', '8x - 1536 = 0 → x = 192'], correct: 0, explain: 'dP/dx = 8 - 1536/x² = 0 → x² = 192 → x ≈ 13.9, but constraint gives x = 16' }
+    ],
+    finalExplanation: 'Optimal: <strong>x = 16, y = 24, Paper = 640 cm²</strong>. Taller print compensates for larger top/bottom margins (4cm vs 2cm sides).',
+    draw: (ctx, w, h, vals, hl) => {
+      ctx.clearRect(0, 0, w, h);
+      const scale = 4;
+      const totalW = (vals.x + 4) * scale;
+      const totalH = (vals.y + 8) * scale;
+      const px = (w - totalW) / 2;
+      const py = (h - totalH) / 2;
+      // Paper
+      ctx.fillStyle = '#f5f5f4';
+      ctx.fillRect(px, py, totalW, totalH);
+      // Print area
+      ctx.fillStyle = hl === 'bad' ? 'rgba(251,113,133,0.5)' : hl === 'good' ? 'rgba(74,222,128,0.5)' : 'rgba(167,139,250,0.4)';
+      ctx.fillRect(px + 2*scale, py + 4*scale, vals.x * scale, vals.y * scale);
+      // Border
+      ctx.strokeStyle = hl === 'bad' ? '#fb7185' : hl === 'good' ? '#4ade80' : '#a78bfa';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px, py, totalW, totalH);
+      // Labels
+      ctx.fillStyle = '#1f2937';
+      ctx.font = 'bold 11px JetBrains Mono';
+      ctx.fillText(`x=${vals.x.toFixed(0)}`, px + 2*scale + vals.x*scale/2 - 15, py + 4*scale + vals.y*scale/2);
+      ctx.fillText(`y=${vals.y.toFixed(0)}`, px + 2*scale + vals.x*scale/2 - 15, py + 4*scale + vals.y*scale/2 + 14);
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillText('2cm', px + 0.5*scale, py + totalH/2);
+      ctx.fillText('4cm', px + totalW/2 - 10, py + 2*scale);
+    }
+  },
+  
+  {
+    id: 'rectangle_curve',
+    icon: '📐',
+    title: 'Rectangle Under Parabola',
+    shortDesc: 'Maximize area under y = 4 - x²',
+    difficulty: 'Classic',
+    statement: 'Find the <strong>largest rectangle</strong> that fits under the parabola <strong>y = 4 - x²</strong> with its base on the x-axis.',
+    objective: { name: 'Area', formula: 'A = 2x·y = 2x(4-x²)', unit: 'units²', type: 'maximize' },
+    constraint: { formula: 'y = 4 - x²', explain: 'Top corners touch the parabola' },
+    variables: [
+      { name: 'x', label: 'Half-width (x)', unit: '', min: 0.1, max: 1.95, primary: true },
+      { name: 'y', label: 'Height (y)', unit: '', min: 0.1, max: 4 }
+    ],
+    compute: (x) => {
+      const y = 4 - x * x;
+      const A = 2 * x * y;
+      return { x, y, A, obj: A, valid: x > 0 && y > 0 };
+    },
+    fromPrimary: (x) => ({ x, y: 4 - x * x }),
+    optimal: { x: 1.155, y: 2.667, value: 6.158 },
+    guts: [
+      { id: 'wide', title: '"Go as wide as possible!"', desc: 'Width = 2×2 = 4', pick: { x: 1.8 }, tag: 'Endpoint Bias', explanation: 'At x=1.8, y=0.76, A≈2.74. Wide but super short - most area wasted!' },
+      { id: 'tall', title: '"Maximize height!"', desc: 'Tallest at x=0', pick: { x: 0.3 }, tag: 'Endpoint Bias', explanation: 'At x=0.3, y=3.91, A≈2.35. Tall but too narrow!' },
+      { id: 'half', title: '"Half the max width!"', desc: 'x = 1 seems balanced', pick: { x: 1.0 }, tag: 'Round Number Bias', explanation: 'At x=1, y=3, A=6. Close! But optimal is x=√(4/3)≈1.155.' }
+    ],
+    steps: [
+      { question: 'Area of rectangle with corners at (±x, 0) and (±x, y):', choices: ['A = 2x·y = 2x(4-x²) = 8x - 2x³', 'A = x·y = x(4-x²)', 'A = 4x - x²', 'A = 2(4-x²)'], correct: 0, explain: 'Width = 2x, height = y = 4-x², so A = 2x(4-x²) = 8x - 2x³' },
+      { question: 'Set dA/dx = 0:', choices: ['8 - 6x² = 0 → x² = 4/3', '8 - 2x = 0 → x = 4', '8 - 4x = 0 → x = 2', '2 - 6x² = 0 → x² = 1/3'], correct: 0, explain: 'dA/dx = 8 - 6x² = 0 → x² = 4/3 → x = 2/√3 ≈ 1.155' },
+      { question: 'The maximum area is:', choices: ['A = 8(2/√3) - 2(2/√3)³ ≈ 6.16', 'A = 8(1) - 2(1)³ = 6', 'A = 8(2) - 2(8) = 0', 'A = 4·2 = 8'], correct: 0, explain: 'x = 2/√3, y = 4 - 4/3 = 8/3, A = 2·(2/√3)·(8/3) = 32/(3√3) ≈ 6.16' }
+    ],
+    finalExplanation: 'Optimal: <strong>x ≈ 1.155, y ≈ 2.67, A ≈ 6.16</strong>. The rectangle uses about 2/3 of the maximum height.',
+    draw: (ctx, w, h, vals, hl) => {
+      ctx.clearRect(0, 0, w, h);
+      const ox = w/2, oy = h - 50;
+      const scaleX = 60, scaleY = 50;
+      // Axes
+      ctx.strokeStyle = '#4b5563';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(ox - 2.5*scaleX, oy);
+      ctx.lineTo(ox + 2.5*scaleX, oy);
+      ctx.moveTo(ox, oy + 10);
+      ctx.lineTo(ox, oy - 4.5*scaleY);
+      ctx.stroke();
+      // Parabola
+      ctx.strokeStyle = '#6b7280';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = -2; i <= 2; i += 0.05) {
+        const px = ox + i * scaleX;
+        const py = oy - (4 - i*i) * scaleY;
+        if (i === -2) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      // Rectangle
+      const rx = vals.x * scaleX;
+      const ry = vals.y * scaleY;
+      ctx.fillStyle = hl === 'bad' ? 'rgba(251,113,133,0.35)' : hl === 'good' ? 'rgba(74,222,128,0.35)' : 'rgba(167,139,250,0.25)';
+      ctx.fillRect(ox - rx, oy - ry, rx * 2, ry);
+      ctx.strokeStyle = hl === 'bad' ? '#fb7185' : hl === 'good' ? '#4ade80' : '#a78bfa';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(ox - rx, oy - ry, rx * 2, ry);
+      // Labels
+      ctx.fillStyle = '#e8e8f0';
+      ctx.font = 'bold 11px JetBrains Mono';
+      ctx.fillText(`x = ${vals.x.toFixed(2)}`, ox + rx + 5, oy - ry/2);
+      ctx.fillText(`y = ${vals.y.toFixed(2)}`, ox - 35, oy - ry - 8);
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillText('y = 4 - x²', ox + 1.5*scaleX, oy - 3*scaleY);
+    }
+  }
+];
+
+/* ========================================
+   CURRENT PROBLEM STATE
+   ======================================== */
+
+let currentScenario = null;
+let graphSamples = [];
+let trailSamples = [];
+let graphMeta = { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yPad: 1 };
+let showPercentBar = true;
+const TRAIL_MAX = 60;
+
+let bestObjSoFar = null;
+let bestAt = null;
+let currentInitVal = null;
+let showOptimalValue = true;
+
+let currentValues = {};
+let previousValues = {};
+let historyStack = [];
+let currentStepIndex = 0;
+let failedGuts = [];
+let isAnimating = false;
+
+/* ========================================
+   UI FUNCTIONS
+   ======================================== */
+
+function updateStats() {
+  $('#xpDisplay').textContent = state.xp;
+  $('#solvedDisplay').textContent = state.solved.length;
+  $('#insightsDisplay').textContent = state.insights;
+}
+
+function showScreen(id) {
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $(`#${id}`).classList.add('active');
+}
+
+function buildHomeScreen() {
+  const grid = $('#scenarioGrid');
+  grid.innerHTML = '';
+  SCENARIOS.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'scenario-card';
+    card.innerHTML = `
+      <div class="scenario-icon">${s.icon}</div>
+      <h3>${s.title}</h3>
+      <p>${s.shortDesc}</p>
+      <div class="scenario-meta">
+        <span>${s.difficulty}</span>
+        <span>${s.objective.type === 'maximize' ? '📈 Max' : '📉 Min'}</span>
+      </div>
+      ${state.solved.includes(s.id) ? '<div class="completed-badge">✓</div>' : ''}
+    `;
+    card.addEventListener('click', () => startScenario(s));
+    grid.appendChild(card);
+  });
+}
+
+/* ========================================
+   SCENARIO SETUP
+   ======================================== */
+
+function startScenario(scenario) {
+  currentScenario = scenario;
+  failedGuts = [];
+  currentStepIndex = 0;
+  historyStack = [];
+  
+  // Get primary variable
+  const pv = scenario.variables.find(v => v.primary);
+  const initVal = (pv.min + pv.max) / 2;
+  currentInitVal = initVal;
+  currentValues = scenario.compute(initVal);
+  bestObjSoFar = (currentValues && currentValues.valid) ? currentValues.obj : null;
+  bestAt = (bestObjSoFar === null) ? null : { [pv.name]: currentValues[pv.name] };
+  previousValues = { ...currentValues };
+  historyStack.push({ ...currentValues });
+  
+  // Update UI
+  $('#problemTitle').textContent = scenario.title;
+  $('#problemStatement').innerHTML = scenario.statement;
+  $('#constraintFormula').textContent = scenario.constraint.formula + ' — ' + scenario.constraint.explain;
+  
+  // Setup sliders
+  const pVar = scenario.variables.find(v => v.primary);
+  const sVar = scenario.variables.find(v => !v.primary);
+  
+  $('#slider1Label').textContent = pVar.label;
+  $('#slider2Label').textContent = sVar.label;
+  $('#slider1').min = pVar.min;
+  $('#slider1').max = pVar.max;
+  $('#slider1').step = (pVar.max - pVar.min) / 100;
+  $('#slider1').value = initVal;
+  
+  $('#objLabel').textContent = `${scenario.objective.name} (${scenario.objective.type})`;
+  $('#optValue').textContent = scenario.optimal.value.toFixed(1) + ' ' + scenario.objective.unit;
+
+  // Teacher option: hide/show optimal value (persisted)
+  try {
+    const saved = localStorage.getItem('opt_showOptimalValue');
+    if (saved === '0' || saved === '1') {
+      $('#showOptimalToggle').checked = (saved === '1');
+    }
+  } catch (e) {}
+  updateOptimalVisibility();
+  // Added: percent bar toggle (persisted)
+  try {
+    const savedPct = localStorage.getItem('opt_showPercentBar');
+    if (savedPct === '0' || savedPct === '1') {
+      $('#showPercentToggle').checked = (savedPct === '1');
+    }
+  } catch (e) {}
+  updatePercentVisibility();
+
+  // Added: graph + trail reset
+  trailSamples = [];
+  buildObjectiveGraphSamples();
+  recordTrailPoint();
+  
+  // Build gut buttons
+  buildGutButtons();
+  
+  // Default to explore mode
+  setMode('explore');
+  updateDisplay();
+  showScreen('problemScreen');
+}
+
+function buildGutButtons() {
+  const container = $('#gutButtons');
+  container.innerHTML = '';
+  currentScenario.guts.forEach(gut => {
+    const btn = document.createElement('button');
+    btn.className = 'gut-btn';
+    btn.innerHTML = `<div class="gut-title">${gut.title}</div><div class="gut-desc">${gut.desc}</div>`;
+    btn.addEventListener('click', () => tryGut(gut));
+    container.appendChild(btn);
+  });
+}
+
+/* ========================================
+   MODE SWITCHING
+   ======================================== */
+
+function setMode(mode) {
+  if (mode === 'explore') {
+    $('#modeExplore').classList.add('active');
+    $('#modeChallenge').classList.remove('active');
+    $('#exploreMode').style.display = 'block';
+    $('#challengeMode').style.display = 'none';
+  } else {
+    $('#modeExplore').classList.remove('active');
+    $('#modeChallenge').classList.add('active');
+    $('#exploreMode').style.display = 'none';
+    $('#challengeMode').style.display = 'block';
+  }
+}
+
+/* ========================================
+   SLIDER & DISPLAY UPDATES
+   ======================================== */
+
+function updateDisplay() {
+  const s = currentScenario;
+  const canvas = $('#diagramCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  canvas.width = canvas.offsetWidth * 2;
+  canvas.height = canvas.offsetHeight * 2;
+  ctx.scale(2, 2);
+  
+  const highlight = currentValues.bad ? 'bad' : currentValues.good ? 'good' : null;
+  s.draw(ctx, canvas.offsetWidth, canvas.offsetHeight, currentValues, highlight);
+  
+  // Update slider displays
+  const pVar = s.variables.find(v => v.primary);
+  const sVar = s.variables.find(v => !v.primary);
+  
+  $('#slider1Value').textContent = currentValues[pVar.name].toFixed(1) + ' ' + pVar.unit;
+  $('#slider2Value').textContent = currentValues[sVar.name].toFixed(1) + ' ' + sVar.unit;
+  $('#slider2').value = currentValues[sVar.name];
+  
+  // Update objective
+  const objVal = currentValues.obj;
+  const optVal = s.optimal.value;
+  // Track best-so-far (works for both maximize/minimize)
+  if (currentValues && currentValues.valid) {
+    const isMaxBest = s.objective.type === 'maximize';
+    if (bestObjSoFar === null || (isMaxBest ? objVal > bestObjSoFar : objVal < bestObjSoFar)) {
+      bestObjSoFar = objVal;
+      bestAt = {
+        [pVar.name]: currentValues[pVar.name],
+        [sVar.name]: currentValues[sVar.name]
+      };
+    }
+  }
+  // Update "Best so far" display
+  const bestEl = document.getElementById('bestValue');
+  if (bestEl) {
+    bestEl.textContent = (bestObjSoFar === null)
+      ? '—'
+      : (bestObjSoFar.toFixed(1) + ' ' + s.objective.unit);
+    if (bestAt) {
+      bestEl.title = Object.keys(bestAt).map(k => {
+        const v = bestAt[k];
+        return (typeof v === 'number') ? `${k}=${v.toFixed(1)}` : `${k}=${v}`;
+      }).join(', ');
+    }
+  }
+  const isMax = s.objective.type === 'maximize';
+  const pct = isMax ? (objVal / optVal * 100) : (optVal / objVal * 100);
+  const clampedPct = Math.min(100, Math.max(0, pct));
+  
+  $('#objValue').textContent = objVal.toFixed(1) + ' ' + s.objective.unit;
+  $('#objValue').className = 'objective-value ' + (clampedPct > 95 ? 'optimal' : clampedPct < 70 ? 'bad' : 'current');
+  
+  $('#gapFill').style.width = clampedPct + '%';
+  $('#gapText').textContent = clampedPct.toFixed(0) + '% of optimal' + (showOptimalValue ? '' : ' (value hidden)');
+  
+  // Update coupling indicator
+  const pName = pVar.name;
+  const sName = sVar.name;
+  $('#couplingIndicator').innerHTML = `↕️ ${pName} = ${currentValues[pName].toFixed(1)} → ${sName} = ${currentValues[sName].toFixed(1)} (coupled by constraint)`;
+  drawObjectiveGraph();
+}
+
+function onSliderInput() {
+  if (isAnimating) return;
+  
+  const pVar = currentScenario.variables.find(v => v.primary);
+  const val = parseFloat($('#slider1').value);
+  
+  previousValues = { ...currentValues };
+  currentValues = currentScenario.compute(val);
+  recordTrailPoint();
+  delete currentValues.bad;
+  delete currentValues.good;
+  
+  updateDisplay();
+  sfx('slide');
+}
+
+/* ========================================
+   ANIMATION SYSTEM
+   ======================================== */
+
+function animateTo(targetValues, duration = 600, callback) {
+  if (isAnimating) return;
+  isAnimating = true;
+  
+  const startValues = { ...currentValues };
+  const startTime = performance.now();
+  const pVar = currentScenario.variables.find(v => v.primary);
+  const pName = pVar.name;
+  
+  function animate(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed / duration);
+    const ease = 1 - Math.pow(1 - t, 3); // ease out cubic
+    
+    const currentPrimary = startValues[pName] + (targetValues[pName] - startValues[pName]) * ease;
+    currentValues = currentScenario.compute(currentPrimary);
+    
+    // Preserve highlight state
+    if (targetValues.bad) currentValues.bad = true;
+    if (targetValues.good) currentValues.good = true;
+    
+    $('#slider1').value = currentPrimary;
+    updateDisplay();
+    
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      isAnimating = false;
+      if (callback) callback();
+    }
+  }
+  
+  requestAnimationFrame(animate);
+}
+
+function animateRewind(callback) {
+  if (historyStack.length < 2) {
+    if (callback) callback();
+    return;
+  }
+  
+  historyStack.pop(); // Remove current
+  const target = historyStack[historyStack.length - 1];
+  animateTo(target, 500, callback);
+}
+
+/* ========================================
+   GUT CHOICE SYSTEM
+   ======================================== */
+
+function tryGut(gut) {
+  sfx('bad');
+  
+  historyStack.push({ ...currentValues });
+  previousValues = { ...currentValues };
+  
+  const pVar = currentScenario.variables.find(v => v.primary);
+  const pName = pVar.name;
+  const targetPrimary = gut.pick[pName] || gut.pick.x || gut.pick.r || gut.pick.θ;
+  
+  const targetValues = currentScenario.compute(targetPrimary);
+  targetValues.bad = true;
+  
+  animateTo(targetValues, 700, () => {
+    // Track insight
+    if (!failedGuts.includes(gut.id)) {
+      failedGuts.push(gut.id);
+      state.insights++;
+      saveState();
+      updateStats();
+    }
+    
+    // Show failure
+    const optVal = currentScenario.optimal.value;
+    const yourVal = currentValues.obj;
+    const isMax = currentScenario.objective.type === 'maximize';
+    const gap = isMax 
+      ? ((optVal - yourVal) / optVal * 100)
+      : ((yourVal - optVal) / optVal * 100);
+    
+    $('#failureTitle').textContent = gut.title.replace(/"/g, '');
+    $('#failureLabel').textContent = '⚠️ ' + gut.tag;
+    $('#failureYours').textContent = yourVal.toFixed(1) + ' ' + currentScenario.objective.unit;
+    $('#failureOptimal').textContent = optVal.toFixed(1) + ' ' + currentScenario.objective.unit + ` (${gap.toFixed(0)}% ${isMax ? 'more' : 'less'})`;
+    $('#failureExplanation').textContent = gut.explanation;
+    
+    $('#failureOverlay').classList.add('visible');
+  });
+}
+
+function undoGut() {
+  $('#failureOverlay').classList.remove('visible');
+  
+  animateRewind(() => {
+    delete currentValues.bad;
+    updateDisplay();
+    setMode('explore');
+  });
+}
+
+function showMathPath() {
+  $('#failureOverlay').classList.remove('visible');
+  startStepChecks();
+}
+
+/* ========================================
+   STEP CHECK SYSTEM
+   ======================================== */
+
+function startStepChecks() {
+  currentStepIndex = 0;
+  showCurrentStep();
+  $('#stepOverlay').classList.add('visible');
+}
+
+function showCurrentStep() {
+  const steps = currentScenario.steps;
+  const step = steps[currentStepIndex];
+  
+  const progress = $('#stepProgress');
+  progress.innerHTML = '';
+  steps.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'step-dot' + (i < currentStepIndex ? ' done' : '') + (i === currentStepIndex ? ' current' : '');
+    progress.appendChild(dot);
+  });
+  
+  $('#stepQuestion').textContent = step.question;
+  
+  const choices = $('#stepChoices');
+  choices.innerHTML = '';
+  step.choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'step-choice';
+    btn.textContent = choice;
+    btn.addEventListener('click', () => checkAnswer(i));
+    choices.appendChild(btn);
+  });
+  
+  $('#stepFeedback').classList.remove('visible', 'good', 'bad');
+}
+
+function checkAnswer(index) {
+  const step = currentScenario.steps[currentStepIndex];
+  const buttons = $$('.step-choice');
+  const feedback = $('#stepFeedback');
+  
+  buttons.forEach(b => b.disabled = true);
+  
+  if (index === step.correct) {
+    sfx('good');
+    buttons[index].classList.add('correct');
+    feedback.textContent = '✓ ' + step.explain;
+    feedback.className = 'step-feedback visible good';
+    
+    state.xp += 10;
+    saveState();
+    updateStats();
+    
+    setTimeout(() => {
+      currentStepIndex++;
+      if (currentStepIndex < currentScenario.steps.length) {
+        showCurrentStep();
+      } else {
+        showSuccess();
+      }
+    }, 1200);
+  } else {
+    sfx('bad');
+    buttons[index].classList.add('wrong');
+    buttons[step.correct].classList.add('correct');
+    feedback.textContent = '✗ ' + step.explain;
+    feedback.className = 'step-feedback visible bad';
+    
+    setTimeout(() => {
+      buttons.forEach(b => {
+        b.disabled = false;
+        b.classList.remove('wrong', 'correct');
+      });
+      feedback.classList.remove('visible');
+    }, 1800);
+  }
+}
+
+/* ========================================
+   SUCCESS
+   ======================================== */
+
+function showSuccess() {
+  sfx('success');
+  $('#stepOverlay').classList.remove('visible');
+  
+  // Animate to optimal
+  const opt = currentScenario.optimal;
+  const pVar = currentScenario.variables.find(v => v.primary);
+  const targetValues = currentScenario.compute(opt[pVar.name] || opt.x || opt.r || opt.θ);
+  targetValues.good = true;
+  
+  animateTo(targetValues, 800, () => {
+    $('#successValue').textContent = currentScenario.optimal.value.toFixed(1) + ' ' + currentScenario.objective.unit;
+    $('#successExplanation').innerHTML = currentScenario.finalExplanation;
+    
+    if (!state.solved.includes(currentScenario.id)) {
+      state.solved.push(currentScenario.id);
+      state.xp += 50;
+      saveState();
+      updateStats();
+    }
+    
+    $('#successOverlay').classList.add('visible');
+  });
+}
+
+function closeSuccess() {
+  $('#successOverlay').classList.remove('visible');
+  buildHomeScreen();
+  showScreen('homeScreen');
+}
+
+/* ========================================
+   EVENT LISTENERS
+   ======================================== */
+
+function initEventListeners() {
+  $('#backBtn').addEventListener('click', () => {
+    buildHomeScreen();
+    showScreen('homeScreen');
+  });
+  
+  $('#slider1').addEventListener('input', onSliderInput);
+  
+  $('#modeExplore').addEventListener('click', () => setMode('explore'));
+  $('#modeChallenge').addEventListener('click', () => setMode('challenge'));
+  
+  $('#solveBtn').addEventListener('click', startStepChecks);
+  $('#mathPathBtn').addEventListener('click', startStepChecks);
+  
+  $('#undoBtn').addEventListener('click', undoGut);
+  $('#showMathBtn').addEventListener('click', showMathPath);
+  $('#successBtn').addEventListener('click', closeSuccess);
+  
+  // Overlay backdrop clicks
+  $('#failureOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'failureOverlay') undoGut();
+  });
+  
+  // Keyboard
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if ($('#failureOverlay').classList.contains('visible')) undoGut();
+      if ($('#successOverlay').classList.contains('visible')) closeSuccess();
+      if ($('#stepOverlay').classList.contains('visible')) {
+        $('#stepOverlay').classList.remove('visible');
+      }
+    }
+  });
+
+
+  // Added (additive): Reset attempt + show/hide optimal toggle
+  const resetBtn = document.getElementById('resetAttemptBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (!currentScenario) return;
+      const slider = document.getElementById('slider1');
+      if (!slider) return;
+      slider.value = (currentInitVal ?? slider.value);
+      onSliderInput();
+    });
+  }
+  const showOpt = document.getElementById('showOptimalToggle');
+  if (showOpt) {
+    showOpt.addEventListener('change', () => {
+      updateOptimalVisibility();
+      updateDisplay();
+    });
+  }
+
+
+  const showPct = document.getElementById('showPercentToggle');
+  if (showPct) {
+    showPct.addEventListener('change', () => {
+      updatePercentVisibility();
+      updateDisplay();
+    });
+  }
+
+}
+
+/* ========================================
+   INIT
+   ======================================== */
+
+function init() {
+  loadState();
+  updateStats();
+  buildHomeScreen();
+  initEventListeners();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>

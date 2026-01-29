@@ -1,0 +1,2061 @@
+<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Close Enough — Taylor Journey</title>
+<style>
+  :root{
+    --panel: rgba(20, 24, 40, 0.90);
+    --text:#e8eefc;
+    --muted: rgba(232,238,252,.72);
+    --border: rgba(232,238,252,.14);
+    --accent:#7cf3a0;
+    --accent2:#54d6ff;
+    --warn:#ffcf5a;
+    --bad:#ff6b6b;
+    --good:#7cf3a0;
+    --purple:#b58cff;
+    --shadow: 0 14px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background: radial-gradient(circle at 30% 10%, #18224a, #05070f 72%);
+    color:var(--text);
+    font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    min-height:100vh;
+  }
+  header{
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10, 14, 28, 0.75);
+    backdrop-filter: blur(8px);
+    display:flex; justify-content: space-between; align-items: center;
+    gap:12px; flex-wrap: wrap;
+  }
+  header h1{ font-size: 1.05rem; letter-spacing:.2px; }
+  header h1 span{ color: var(--accent); }
+  header .sub{ color:var(--muted); font-size: .82rem; }
+
+  #wrap{ max-width: 1280px; margin: 0 auto; padding: 12px; }
+  .topbar{
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    margin-bottom: 10px;
+  }
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .tabbtn{
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 9px 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 90ms ease, background 140ms ease, border-color 140ms ease;
+    font-weight: 850;
+  }
+  .tabbtn:hover{ background: rgba(255,255,255,0.1); border-color: rgba(124,243,160,.35); }
+  .tabbtn.active{ background: rgba(124,243,160,0.16); border-color: rgba(124,243,160,0.35); color: var(--accent); }
+  .tabbtn.locked{ opacity: .55; filter: grayscale(.15); }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding: 2px 10px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.25);
+    color: var(--muted); font-size: 12px;
+  }
+  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; font-variant-numeric: tabular-nums; }
+
+  main{ display:grid; grid-template-columns: minmax(340px, 1fr) 400px; gap: 12px; }
+  @media (max-width: 980px){ main{ grid-template-columns: 1fr; } }
+
+  .card{ background: var(--panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow:hidden; }
+  .cardHeader{
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    display:flex; align-items: center; justify-content: space-between; gap:10px;
+    background: rgba(255,255,255,0.03);
+  }
+  .cardHeader h2{ font-size: .78rem; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+  .cardBody{ padding: 12px; }
+
+  canvas{
+    width:100%; height: 420px; display:block;
+    background: rgba(0,0,0,0.25);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .kpi{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .kpi .box{ background: rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 10px; }
+  .box .label{ color: var(--muted); font-size:.72rem; text-transform: uppercase; letter-spacing:.6px; }
+  .box .val{ margin-top:4px; font-size: 1.1rem; font-weight: 900; }
+  .val.good{ color: var(--good); } .val.warn{ color: var(--warn); } .val.bad{ color: var(--bad); }
+  .val.accent2{ color: var(--accent2); } .val.purple{ color: var(--purple); }
+
+  .controls{ display:flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+  button{
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 90ms ease, background 140ms ease, border-color 140ms ease;
+    font-weight: 850;
+  }
+  button:hover{ background: rgba(255,255,255,0.1); border-color: rgba(124,243,160,.35); }
+  button:active{ transform: translateY(1px); }
+  button.primary{ background: rgba(124,243,160,0.16); border-color: rgba(124,243,160,0.35); color: var(--accent); }
+  button.danger{ background: rgba(255,107,107,0.12); border-color: rgba(255,107,107,0.35); color: var(--bad); }
+  button.ghost{ background: rgba(255,255,255,0.04); }
+  button.small{ padding: 7px 10px; border-radius: 10px; font-weight: 800; font-size: 12px; }
+
+  .sliderRow{
+    display:flex; gap: 10px; align-items: center; margin-top: 10px;
+    padding: 10px; border-radius: 12px;
+    background: rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.08);
+  }
+  input[type="range"]{ width: 100%; accent-color: var(--accent2); }
+  select, input[type="number"], input[type="text"]{
+    border:1px solid rgba(255,255,255,0.14);
+    background: rgba(0,0,0,0.20);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 10px;
+    outline: none;
+  }
+  .legend{ display:flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .dot{ width:10px; height:10px; border-radius: 999px; display:inline-block; }
+  .dot.true{ background: var(--accent); } .dot.approx{ background: var(--accent2); } .dot.window{ background: var(--warn); } .dot.a{ background: var(--purple); } .dot.alt{ background: rgba(255,255,255,.35); } .dot.error{ background: var(--bad); opacity: 0.6; }
+  .hint{ color: var(--muted); font-size: .88rem; margin-top: 10px; line-height: 1.45; }
+
+  details{ margin-top: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(0,0,0,0.18); overflow: hidden; }
+  summary{ cursor:pointer; padding: 10px 12px; color: var(--text); font-weight: 900; list-style: none; }
+  summary::-webkit-details-marker{ display:none; }
+  details .inner{ padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.08); color: var(--muted); font-size: .88rem; line-height: 1.45; }
+
+  #toast{
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    background: rgba(10, 14, 28, 0.92);
+    border: 1px solid rgba(124,243,160,0.25);
+    color: var(--text);
+    padding: 10px 12px; border-radius: 14px; box-shadow: var(--shadow);
+    max-width: min(920px, calc(100vw - 24px));
+    display:none; z-index: 9999;
+  }
+  #toast strong{ color: var(--accent); }
+
+  /* Modal */
+  #modalOverlay{
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    display:none; align-items:center; justify-content:center;
+    z-index: 10000; padding: 16px;
+  }
+  #modal{
+    width: min(880px, 100%);
+    background: rgba(10, 14, 28, 0.96);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  #modalHeader{
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+    display:flex; justify-content: space-between; align-items:center; gap:10px;
+  }
+  #modalHeader h3{ font-size: .85rem; letter-spacing:.9px; text-transform: uppercase; color: var(--muted); }
+  #modalBody{ padding: 14px; }
+  .analysisGrid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  @media (max-width: 720px){ .analysisGrid{ grid-template-columns: 1fr; } }
+  .panelMini{
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+  .panelMini .t{ color: var(--muted); font-size: .74rem; text-transform: uppercase; letter-spacing:.7px; }
+  .panelMini .b{ margin-top:6px; font-weight:900; }
+  .panelMini .b small{ color: var(--muted); font-weight:700; }
+  .emph{ color: var(--accent); font-weight: 900; }
+
+  /* Teacher drawer */
+  #teacherDrawer{
+    position: fixed; right: 16px; top: 76px;
+    width: min(360px, calc(100vw - 32px));
+    background: rgba(10, 14, 28, 0.96);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    display:none;
+    z-index: 10001;
+  }
+  #teacherDrawer .head{
+    padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.10);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  #teacherDrawer .head b{ color: var(--warn); letter-spacing: .6px; text-transform: uppercase; font-size: 12px; }
+  #teacherDrawer .body{ padding: 10px 12px; display:grid; gap: 8px; }
+  .row{ display:flex; gap: 8px; align-items:center; justify-content:space-between; }
+  .row label{ color: var(--muted); font-size: 12px; }
+  .switch{ display:flex; gap: 8px; align-items:center; }
+  input[type="checkbox"]{ transform: translateY(1px); }
+  .hr{ height:1px; background: rgba(255,255,255,0.10); margin: 4px 0; }
+  .tiny{ color: var(--muted); font-size: 12px; }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🚗 <span>Close Enough</span> <span class="mono" style="opacity:.6;font-weight:800">v0.9</span></h1>
+    <div class="sub">Play → discover → unlock the shortcut → duel → sandbox</div>
+  </div>
+  <div class="pill mono" id="statusPill">Loading…</div>
+</header>
+
+<div id="wrap">
+  <div class="topbar">
+    <div class="tabs">
+      <button class="tabbtn active" id="tabContracts">Contracts</button>
+      <button class="tabbtn locked" id="tabDuel">Duel</button>
+      <button class="tabbtn locked" id="tabSandbox">Sandbox</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span class="pill mono" id="phasePill">Phase: —</span>
+      <span class="pill mono" id="hintPill">Tip: Press N for new buyer</span>
+      <button class="tabbtn" id="btnRestart" style="display:none;background:rgba(255,107,107,0.12);border-color:rgba(255,107,107,0.35);color:#ff6b6b;font-size:12px;padding:6px 10px;">🔄 Start Over</button>
+    </div>
+  </div>
+
+  <!-- Contracts View -->
+  <div id="viewContracts">
+    <main>
+      <section class="card">
+        <div class="cardHeader">
+          <h2>Buyer’s Curve vs Your Local Model</h2>
+          <div class="pill mono" id="degreePill">k = 1 (linear)</div>
+        </div>
+        <div class="cardBody">
+          <canvas id="plot" width="980" height="420"></canvas>
+          <div class="legend">
+            <span class="pill"><span class="dot true"></span> Truth</span>
+            <span class="pill"><span class="dot approx"></span> Your model</span>
+            <span class="pill"><span class="dot window"></span> Matters window</span>
+            <span class="pill"><span class="dot a"></span> Center a</span>
+          </div>
+          <div class="hint" id="hintText"></div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="cardHeader">
+          <h2>Deal Desk</h2>
+          <div class="pill mono" id="buyerMood">Mood: —</div>
+        </div>
+        <div class="cardBody">
+          <div class="kpi">
+            <div class="box">
+              <div class="label">Profit</div>
+              <div class="val warn mono" id="profitVal">$0</div>
+            </div>
+            <div class="box">
+              <div class="label">Revenue</div>
+              <div class="val accent2 mono" id="revenueVal">$0</div>
+            </div>
+            <div class="box">
+              <div class="label">Build Cost</div>
+              <div class="val purple mono" id="costVal">$0</div>
+            </div>
+            <div class="box">
+              <div class="label">Complaints</div>
+              <div class="val bad mono" id="complaintVal">$0</div>
+            </div>
+          </div>
+
+          <div class="sliderRow">
+            <div style="min-width: 150px;">
+              <div class="mono" style="font-weight:950; font-size: 1.05rem;" id="kLabel">k = 1</div>
+              <div class="tiny mono" id="bestKLabel">Hint: —</div>
+              <div class="tiny mono" id="errLabel">err: —</div>
+            </div>
+            <input id="kSlider" type="range" min="0" max="8" step="1" value="1"/>
+          </div>
+
+          <div class="controls">
+            <button class="primary" id="btnSubmit">✅ Submit deal</button>
+            <button id="btnUpgrade">+ Add term</button>
+            <button id="btnDowngrade">− Remove term</button>
+            <button class="ghost" id="btnHint">🤖 Hint</button>
+            <button class="ghost" id="btnDist">📊 k-spread</button>
+            <button class="danger" id="btnNew">🎲 New buyer</button>
+          </div>
+
+          <details>
+            <summary>What’s going on?</summary>
+            <div class="inner">
+              You’re choosing a <strong>local polynomial model</strong> near <span class="mono">a</span>.
+              More terms usually reduce error (fewer complaints) but increase build cost.
+              The yellow window is where the buyer actually cares.
+              <div style="margin-top:8px" class="mono">k=0 constant · k=1 linear · k=2 quadratic · …</div>
+            </div>
+          </details>
+
+          <details>
+            <summary>Keyboard</summary>
+            <div class="inner">
+              <div class="mono">↑ / + add term, ↓ / − remove term</div>
+              <div class="mono">Enter submit, N new buyer, H hint, D k-spread</div>
+              <div class="mono tiny">Teacher/skip: hold Shift+~ (or Shift+`) for 2s</div>
+            </div>
+          </details>
+
+          <div class="hint tiny" id="footerHint">
+            Before you submit, the truth is dim outside the window. After you submit, it reveals globally.
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Duel View -->
+  <div id="viewDuel" class="hidden">
+    <main>
+      <section class="card">
+        <div class="cardHeader">
+          <h2>The Duel: Taylor vs Least Squares</h2>
+          <div class="pill mono" id="duelPill">Locked</div>
+        </div>
+        <div class="cardBody">
+          <canvas id="plotDuel" width="980" height="420"></canvas>
+          <div class="legend">
+            <span class="pill"><span class="dot true"></span> Truth</span>
+            <span class="pill"><span class="dot approx"></span> Chosen method</span>
+            <span class="pill"><span class="dot alt"></span> Other method</span>
+            <span class="pill"><span class="dot window"></span> Window</span>
+          </div>
+          <div class="hint" id="duelHint"></div>
+        </div>
+      </section>
+      <aside class="card">
+        <div class="cardHeader">
+          <h2>Duel Controls</h2>
+          <div class="pill mono" id="duelStatus">—</div>
+        </div>
+        <div class="cardBody">
+          <div class="row">
+            <label>Method</label>
+            <select id="duelMethod">
+              <option value="taylor">Taylor</option>
+              <option value="lsq">Least Squares</option>
+            </select>
+          </div>
+
+          <div class="sliderRow" style="margin-top:10px">
+            <div style="min-width: 150px;">
+              <div class="mono" style="font-weight:950; font-size: 1.05rem;" id="duelKLabel">k = 2</div>
+              <div class="tiny mono" id="duelErr">err: —</div>
+            </div>
+            <input id="duelK" type="range" min="0" max="8" step="1" value="2"/>
+          </div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="label">Chosen Profit</div>
+              <div class="val warn mono" id="duelProfit">$0</div>
+            </div>
+            <div class="box">
+              <div class="label">Other Profit</div>
+              <div class="val mono" id="duelOtherProfit">$0</div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="primary" id="btnDuelSubmit">⚔️ Submit duel</button>
+            <button class="danger" id="btnDuelNew">🎲 New duel</button>
+          </div>
+
+          <details>
+            <summary>What’s the difference?</summary>
+            <div class="inner">
+              <strong>Taylor:</strong> matches value/slope/curvature… at one point <span class="mono">a</span> (derivatives).<br/>
+              <strong>Least Squares:</strong> chooses coefficients to minimize average error over the whole window.<br/><br/>
+              Same degree <span class="mono">k</span>, different coefficients, different behavior.
+            </div>
+          </details>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Sandbox View -->
+  <div id="viewSandbox" class="hidden">
+    <main>
+      <section class="card">
+        <div class="cardHeader">
+          <h2>Approximation Workshop</h2>
+          <div class="pill mono" id="sandboxPill">Locked</div>
+        </div>
+        <div class="cardBody">
+          <canvas id="plotSandbox" width="980" height="420"></canvas>
+          <div class="legend">
+            <span class="pill"><span class="dot true"></span> f(x)</span>
+            <span class="pill"><span class="dot approx"></span> Polynomial T_k(x)</span>
+            <span class="pill"><span class="dot error"></span> Error R_k(x)</span>
+            <span class="pill"><span class="dot window"></span> Window</span>
+            <span class="pill"><span class="dot a"></span> Center a</span>
+          </div>
+          <div class="hint" id="sandboxHint"></div>
+        </div>
+      </section>
+      <aside class="card">
+        <div class="cardHeader">
+          <h2>Workshop Controls</h2>
+          <div class="pill mono" id="sandboxStatus">—</div>
+        </div>
+        <div class="cardBody">
+          <div class="row">
+            <label>Function</label>
+            <select id="sbFunc"></select>
+          </div>
+          <div class="row">
+            <label>Center a</label>
+            <input id="sbA" type="number" step="0.1" value="0"/>
+          </div>
+          <div class="row">
+            <label>Window w</label>
+            <input id="sbW" type="number" step="0.1" value="0.7"/>
+          </div>
+          <div class="row">
+            <label>Mode</label>
+            <select id="sbMode">
+              <option value="taylor">Taylor (derivatives at a)</option>
+              <option value="lsq">Least Squares (fit over window)</option>
+            </select>
+          </div>
+
+          <div class="sliderRow" style="margin-top:10px">
+            <div style="min-width: 180px;">
+              <div class="mono" style="font-weight:950; font-size: 1.05rem;" id="sbKLabel">k = 3</div>
+              <div class="tiny mono" id="sbErr">err: —</div>
+              <div class="tiny mono" id="sbMaxErr" style="color:var(--bad)">max |R_k|: —</div>
+            </div>
+            <input id="sbK" type="range" min="0" max="12" step="1" value="3"/>
+          </div>
+
+          <div class="controls">
+            <button class="ghost" id="btnSBReset">Reset</button>
+            <button class="ghost" id="btnSBShowFormula">Show Taylor form</button>
+          </div>
+
+          <details>
+            <summary>Taylor form</summary>
+            <div class="inner mono" id="sbFormula">
+              T_k(x) = Σ (f^(n)(a)/n!) (x-a)^n
+            </div>
+          </details>
+
+          <details>
+            <summary>Coefficient breakdown</summary>
+            <div class="inner" id="sbCoeffs">
+              <div class="mono" style="font-size:11px;line-height:1.6" id="coeffList">
+                c₀ = f(a) = ...<br>
+                c₁ = f'(a) = ...<br>
+                c₂ = f''(a)/2! = ...
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>Common Taylor Series (memorize!)</summary>
+            <div class="inner">
+              <div class="mono" style="font-size:11px;line-height:1.7">
+                <strong style="color:var(--accent)">eˣ</strong> = 1 + x + x²/2! + x³/3! + ... <span class="tiny">(all x)</span><br>
+                <strong style="color:var(--accent)">sin x</strong> = x − x³/3! + x⁵/5! − ... <span class="tiny">(all x)</span><br>
+                <strong style="color:var(--accent)">cos x</strong> = 1 − x²/2! + x⁴/4! − ... <span class="tiny">(all x)</span><br>
+                <strong style="color:var(--accent)">ln(1+x)</strong> = x − x²/2 + x³/3 − ... <span class="tiny">(|x| < 1)</span><br>
+                <strong style="color:var(--accent)">1/(1−x)</strong> = 1 + x + x² + x³ + ... <span class="tiny">(|x| < 1)</span><br>
+                <strong style="color:var(--accent)">arctan x</strong> = x − x³/3 + x⁵/5 − ... <span class="tiny">(|x| ≤ 1)</span>
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>Error Bound (Remainder Theorem)</summary>
+            <div class="inner">
+              <div class="mono" style="font-size:11px;line-height:1.7">
+                <strong style="color:var(--bad)">R_n(x)</strong> = f(x) − T_n(x)<br><br>
+                <strong>Lagrange form:</strong><br>
+                |R_n(x)| ≤ <span style="color:var(--accent)">M</span>·|x−a|<sup>n+1</sup> / (n+1)!<br><br>
+                where <span style="color:var(--accent)">M</span> = max|f<sup>(n+1)</sup>(c)| for c between a and x<br><br>
+                <span class="tiny" style="color:var(--muted)">Key insight: Error shrinks with more terms AND when x is closer to a</span>
+              </div>
+            </div>
+          </details>
+
+          <div class="hint tiny" id="sbConvergenceWarn" style="display:none;color:var(--bad);margin-top:8px">
+            ⚠️ Warning: This function has limited convergence radius!
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="modalOverlay" role="dialog" aria-modal="true">
+  <div id="modal">
+    <div id="modalHeader">
+      <h3 id="modalTitle">Modal</h3>
+      <button id="btnCloseModal" class="ghost">Close</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Teacher drawer (hidden) -->
+<div id="teacherDrawer">
+  <div class="head">
+    <b>Teacher / Resume</b>
+    <button class="small ghost" id="btnTeacherClose">Close</button>
+  </div>
+  <div class="body">
+    <div class="tiny">Hold <span class="mono">Shift+~</span> again to open.</div>
+    <div class="hr"></div>
+    <div class="row">
+      <label>Phase (0–5)</label>
+      <input id="tPhase" type="number" step="1" min="0" max="5" value="0" style="width:110px"/>
+    </div>
+    <div class="row">
+      <label>Unlock Duel</label>
+      <div class="switch"><input id="tUnlockDuel" type="checkbox"/></div>
+    </div>
+    <div class="row">
+      <label>Unlock Sandbox</label>
+      <div class="switch"><input id="tUnlockSandbox" type="checkbox"/></div>
+    </div>
+    <div class="row">
+      <label>Freeze Buyer</label>
+      <div class="switch"><input id="tFreezeBuyer" type="checkbox"/></div>
+    </div>
+    <div class="row">
+      <label>Lock y-scale</label>
+      <div class="switch"><input id="tLockScale" type="checkbox" checked/></div>
+    </div>
+    <div class="row">
+      <label>Skip to Reveal (Phase 4)</label>
+      <button class="small primary" id="tSkipReveal">Skip</button>
+    </div>
+    <div class="hr"></div>
+    <div class="row">
+      <label>Reset progress</label>
+      <button class="small danger" id="tReset">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // =========================================================
+  // State + persistence
+  // =========================================================
+  const STORAGE_KEY = "closeEnough_v09_state";
+  const defaultState = {
+    phase: 0,               // 0..5 (discovery arc)
+    contractCount: 0,
+    totalProfit: 0,
+    revealSeen: false,      // after phase 4
+    duelUnlocked: false,
+    sandboxUnlocked: false,
+    teacher: { freezeBuyer:false, lockScale:true },
+    frozenScenario: null,   // serialized scenario seed-ish
+    lastTab: "contracts"
+  };
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return structuredClone(defaultState);
+      const s = JSON.parse(raw);
+      return {...structuredClone(defaultState), ...s, teacher: {...defaultState.teacher, ...(s.teacher||{})}};
+    }catch(e){
+      return structuredClone(defaultState);
+    }
+  }
+  function saveState(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }catch(e){}
+  }
+  function resetState(){
+    appState = structuredClone(defaultState);
+    saveState();
+  }
+  let appState = loadState();
+
+  // Phase map (contracts are 1-indexed for display)
+  function phaseFromContracts(n){
+    // 0: 1–6   Zoom & Guess
+    // 1: 7–10  Tangents rule
+    // 2: 11–14 Curvature bites
+    // 3: 15–18 Pain point
+    // 4: 19–20 Reveal Taylor
+    // 5: post  Duel + Sandbox focus
+    if(n <= 6) return 0;
+    if(n <= 10) return 1;
+    if(n <= 14) return 2;
+    if(n <= 18) return 3;
+    if(n <= 20) return 4;
+    return 5;
+  }
+  const phaseNames = [
+    "Zoom & Guess",
+    "Tangents Rule",
+    "Curvature Bites",
+    "The Pain Point",
+    "The Shortcut (Taylor)",
+    "Aftermath (Duel + Workshop)"
+  ];
+
+  // =========================================================
+  // Utils
+  // =========================================================
+  const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+  const lerp = (a,b,t)=>a+(b-a)*t;
+  const rand = (a,b)=>a+Math.random()*(b-a);
+  const pick = (arr)=>arr[Math.floor(Math.random()*arr.length)];
+
+  function fmtMoney(x){
+    const s = Math.round(x);
+    const sign = s<0 ? "-" : "";
+    const v = Math.abs(s);
+    return sign + "$" + v.toString().replace(/\\B(?=(\\d{3})+(?!\\d))/g, ",");
+  }
+  function toast(msg, ms=2400){
+    const el = document.getElementById('toast');
+    el.innerHTML = msg;
+    el.style.display = 'block';
+    clearTimeout(el._t);
+    el._t = setTimeout(()=>{ el.style.display='none'; }, ms);
+  }
+
+  // Modal helpers
+  const modalOverlay=document.getElementById('modalOverlay');
+  const modalBody=document.getElementById('modalBody');
+  const modalTitle=document.getElementById('modalTitle');
+  function openModal(title, html){
+    modalTitle.textContent = title;
+    modalBody.innerHTML = html;
+    modalOverlay.style.display='flex';
+  }
+  function closeModal(){ modalOverlay.style.display='none'; }
+  document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e)=>{ if(e.target===modalOverlay) closeModal(); });
+
+  // =========================================================
+  // Curve families (frozen per scenario)
+  // =========================================================
+  const CURVE_BUILDERS = [
+    () => { const A=rand(0.7,1.8), B=rand(0.6,1.6), C=rand(-1,1);
+      return { name: `${A.toFixed(2)}·e^{${B.toFixed(2)}x}${C>=0?"+":""}${C.toFixed(2)}`,
+        flavor:"Exponential torque build (curvature can grow fast).",
+        f:(x)=>A*Math.exp(B*x)+C, safeA:()=>rand(-0.9,0.9),
+        safeDomain:(a,w)=>({xMin:a-2.4*w, xMax:a+2.4*w}) }; },
+    () => { const s=rand(0.7,2.6);
+      return { name:`e^{-(x^2)/${s.toFixed(2)}}`,
+        flavor:"Bell-curve response (high curvature near center).",
+        f:(x)=>Math.exp(-(x*x)/s), safeA:()=>rand(-0.9,0.9),
+        safeDomain:(a,w)=>({xMin:a-2.4*w, xMax:a+2.4*w}) }; },
+    () => { const A=rand(0.6,1.6), B=rand(0.4,1.4), C=rand(-0.8,0.8);
+      return { name:`${A.toFixed(2)}·sin(${B.toFixed(2)}x)${C>=0?"+":""}${C.toFixed(2)}`,
+        flavor:"Smooth oscillation handling (watch local shape).",
+        f:(x)=>A*Math.sin(B*x)+C, safeA:()=>rand(-1.1,1.1),
+        safeDomain:(a,w)=>({xMin:a-2.4*w, xMax:a+2.4*w}) }; },
+    () => { const d=rand(0.2,1.0), w=rand(1.5,4.0);
+      return { name:`e^{-${d.toFixed(2)}x}·sin(${w.toFixed(2)}x)`,
+        flavor:"Damped oscillation (local fit can be tricky).",
+        f:(x)=>Math.exp(-d*x)*Math.sin(w*x), safeA:()=>rand(0.1,1.6),
+        safeDomain:(a,W)=>({xMin:Math.max(a-2.4*W,-0.2), xMax:a+2.4*W}) }; },
+    () => ({ name:"ln(1+x)",
+      flavor:"Diminishing returns (domain matters).",
+      f:(x)=>Math.log(1+x), safeA:()=>rand(-0.75,0.8),
+      safeDomain:(a,w)=>({xMin:Math.max(a-2.4*w,-0.98), xMax:a+2.4*w}) }),
+    () => ({ name:"1/(1−x)",
+      flavor:"Responsive feel (avoid the pole near x=1).",
+      f:(x)=>1/(1-x), safeA:()=>rand(-0.9,0.65),
+      safeDomain:(a,w)=>({xMin:a-2.4*w, xMax:Math.min(a+2.4*w,0.97)}) }),
+    () => ({ name:"1/(1+x²)",
+      flavor:"Bounded rational response (nice but not polynomial).",
+      f:(x)=>1/(1+x*x), safeA:()=>rand(-1.3,1.3),
+      safeDomain:(a,w)=>({xMin:a-2.4*w, xMax:a+2.4*w}) }),
+    () => { const B=rand(0.6,2.0);
+      return { name:`arctan(${B.toFixed(2)}x)`,
+        flavor:"Bounded steering response (S-curve saturation).",
+        f:(x)=>Math.atan(B*x), safeA:()=>rand(-1.2,1.2),
+        safeDomain:(a,w)=>({xMin:a-2.4*w, xMax:a+2.4*w}) }; },
+    () => ({ name:"x·e^{-x}",
+      flavor:"Peaks then decays (damped linear response).",
+      f:(x)=>x*Math.exp(-x), safeA:()=>rand(0.1,2.0),
+      safeDomain:(a,w)=>({xMin:Math.max(a-2.4*w,-0.2), xMax:a+2.4*w}) }),
+  ];
+
+  // =========================================================
+  // Polynomial helpers: LSQ local fit + Taylor (numerical derivatives)
+  // =========================================================
+  function gaussianSolve(A,b){
+    const n=b.length;
+    const M=A.map((row,i)=>row.slice().concat([b[i]]));
+    for(let col=0; col<n; col++){
+      let piv=col;
+      for(let r=col+1;r<n;r++) if(Math.abs(M[r][col])>Math.abs(M[piv][col])) piv=r;
+      if(Math.abs(M[piv][col])<1e-12) return Array(n).fill(0);
+      if(piv!==col){ const tmp=M[col]; M[col]=M[piv]; M[piv]=tmp; }
+      const div=M[col][col];
+      for(let j=col;j<=n;j++) M[col][j]/=div;
+      for(let r=0;r<n;r++){
+        if(r===col) continue;
+        const factor=M[r][col];
+        for(let j=col;j<=n;j++) M[r][j]-=factor*M[col][j];
+      }
+    }
+    return M.map(row=>row[n]);
+  }
+
+  // Fit polynomial in dx=(x-a): y ≈ Σ c_k dx^k (least squares around a)
+  function localPolyCoeffs(f,a,N){
+    const M=Math.max(2*N+7,31);
+    const span=0.035*(N+4)*(1+Math.abs(a));
+    const ATA=Array.from({length:N+1},()=>Array(N+1).fill(0));
+    const ATy=Array(N+1).fill(0);
+    for(let i=0;i<M;i++){
+      const t=(i/(M-1))*2-1;
+      const x=a+t*span;
+      const y=f(x);
+      const dx=x-a;
+      const pow=Array(N+1).fill(1);
+      for(let k=1;k<=N;k++) pow[k]=pow[k-1]*dx;
+      for(let r=0;r<=N;r++){
+        ATy[r]+=pow[r]*y;
+        for(let c=0;c<=N;c++) ATA[r][c]+=pow[r]*pow[c];
+      }
+    }
+    return gaussianSolve(ATA,ATy);
+  }
+
+  function evalPoly(c,dx){
+    let s=0,p=1;
+    for(let k=0;k<c.length;k++){ s+=c[k]*p; p*=dx; }
+    return s;
+  }
+  function factorial(n){ let r=1; for(let i=2;i<=n;i++) r*=i; return r; }
+
+  // Numerical derivatives using central differences (reasonable for smooth funcs)
+  function nthDeriv(f,a,n){
+    if(n===0) return f(a);
+    const h = 1e-3 * (1 + Math.abs(a)); // scale step
+    // Use recursive central difference (not super high-accuracy but stable enough up to ~10)
+    // D^n f(a) ≈ Σ (-1)^k * C(n,k) f(a + (n-2k)h) / ( (2h)^n )
+    // We'll use the symmetric formula with binomial coefficients.
+    // For n odd/even it's fine, but might be noisy for large n; we cap sandbox at 12.
+    let sum = 0;
+    for(let k=0;k<=n;k++){
+      const coeff = binom(n,k) * ((k%2===0)?1:-1);
+      const x = a + (n - 2*k)*h;
+      sum += coeff * f(x);
+    }
+    return sum / Math.pow(2*h, n);
+  }
+  function binom(n,k){
+    if(k<0||k>n) return 0;
+    k=Math.min(k,n-k);
+    let num=1, den=1;
+    for(let i=1;i<=k;i++){
+      num *= (n - (k - i));
+      den *= i;
+    }
+    return num/den;
+  }
+  function taylorCoeffs(f,a,K){
+    const c=[];
+    for(let n=0;n<=K;n++){
+      const d = nthDeriv(f,a,n);
+      c.push(d / factorial(n));
+    }
+    return c;
+  }
+
+  // =========================================================
+  // Scoring engine (shared)
+  // =========================================================
+  function costForK(k,s){
+    if(k<=0) return 0;
+    const bump=(k<=2)?40*k:(40*2+75*(k-2));
+    return s.costBase*s.costJitter*Math.pow(k,s.costPow)+bump;
+  }
+
+  function weightedErrorForK_withCoeffs(k, coeffs, s){
+    const N=180, a=s.a, w=s.w;
+    const left=a-w, right=a+w;
+    let err2=0, wsum=0;
+    const ck=coeffs.slice(0,k+1);
+    for(let i=0;i<N;i++){
+      const x=lerp(left,right,i/(N-1));
+      const dx=x-a;
+      const truth=s.truthFn(x);
+      const approx=evalPoly(ck,dx);
+      const z=Math.abs(dx)/w;
+      const wt=Math.exp(-s.weightSharpness*z*z);
+      const d=truth-approx;
+      err2+=wt*d*d;
+      wsum+=wt;
+    }
+    return Math.sqrt(err2/(wsum||1));
+  }
+
+  function revenueForError(err,s){
+    const fit=1/(1+2.0*err);
+    return s.baseRevenue*(0.76+0.24*fit)+(s.baseRevenue*s.revenueSlope)*Math.sqrt(fit);
+  }
+  function complaintsForError(err,s){
+    return (s.pickiness*780)*Math.pow(err,1.22);
+  }
+  function scoreForK_withCoeffs(k, coeffs, s){
+    const err=weightedErrorForK_withCoeffs(k, coeffs, s);
+    const revenue=revenueForError(err,s);
+    const complaints=complaintsForError(err,s);
+    const cost=costForK(k,s);
+    const profit=revenue-complaints-cost;
+    return {k,err,revenue,complaints,cost,profit};
+  }
+
+  function bestKForScenario(s, coeffs){
+    let best=null;
+    for(let k=0;k<=s.maxK;k++){
+      const sc=scoreForK_withCoeffs(k, coeffs, s);
+      if(!best||sc.profit>best.profit) best=sc;
+    }
+    return best;
+  }
+
+  function moodFromProfit(p){
+    if(p>900) return "Buyer’s smiling";
+    if(p>350) return "Buyer’s fine";
+    if(p>0) return "Buyer’s grumpy";
+    return "Buyer’s furious";
+  }
+
+  // =========================================================
+  // Scenario generation (contracts)
+  // =========================================================
+  let scenario=null;
+  let revealed=false;
+
+  function makeScenario(){
+    // Phase influences difficulty + curve pool
+    const upcomingContract = appState.contractCount + 1;
+    const phase = appState.phase;
+
+    // curve family gating (more types later)
+    const maxCurves = phase<=0 ? 3 : phase===1 ? 4 : phase===2 ? 6 : phase===3 ? 8 : 9;
+    const builder = pick(CURVE_BUILDERS.slice(0, maxCurves))();
+
+    // window + a ranges shift with phase
+    const w = (phase<=0) ? rand(0.25,0.95)
+            : (phase===1) ? rand(0.22,0.85)
+            : (phase===2) ? rand(0.35,1.35)
+            : (phase===3) ? rand(0.45,1.85)
+            : rand(0.35,1.65);
+
+    const a = builder.safeA();
+    const dom = builder.safeDomain(a,w);
+    const xMin=dom.xMin, xMax=dom.xMax;
+
+    const maxK=8;
+
+    const pickiness = (phase<=0) ? rand(0.45,2.1)
+                    : (phase===1) ? rand(0.55,2.3)
+                    : (phase===2) ? rand(0.7,3.1)
+                    : (phase===3) ? rand(0.9,3.4)
+                    : rand(0.7,3.2);
+
+    const baseRevenue = rand(900,2600);
+    const revenueSlope = rand(0.05,0.45);
+
+    const costBase = rand(55,120);
+    const costPow  = rand(1.35,2.25);
+    const costJitter = rand(0.85,1.15);
+
+    const weightSharpness = rand(0.6,3.0);
+
+    // Rare Taylor-made twist for spice (never dominates)
+    const isTaylorMade = Math.random() < 0.03;
+    let truthFn = builder.f;
+    if(isTaylorMade){
+      const trueDegree = 4 + Math.floor(Math.random()*4); // 4..7
+      const truthCoeffs = localPolyCoeffs(builder.f, a, trueDegree);
+      truthFn = (x)=>evalPoly(truthCoeffs, x-a);
+    }
+
+    // Student model default: LSQ local fit (pre-reveal)
+    // After reveal, we can optionally use Taylor coefficients for "Taylor mode" teaching later (sandbox/duel handles that).
+    const approxCoeffs = localPolyCoeffs(truthFn, a, maxK);
+
+    let mood="Balanced";
+    if(pickiness>2.4) mood="Picky";
+    if(pickiness<1.1) mood="Chill";
+
+    const scenarioName = `${builder.name} @ a=${a.toFixed(2)} · window ±${w.toFixed(2)} · ${mood}${isTaylorMade?" · (twist)":""}`;
+
+    return {
+      curve:{name:builder.name, flavor:builder.flavor},
+      a,w,xMin,xMax,
+      pickiness,baseRevenue,revenueSlope,
+      costBase,costPow,costJitter,
+      weightSharpness,
+      isTaylorMade,
+      truthFn,
+      approxCoeffs,
+      maxK,
+      scenarioName,
+      // For lock-scale
+      yRange:null
+    };
+  }
+
+  function serializeScenario(s){
+    // Basic serialization (good enough for freezing): store curve index + sample parameters by re-generating with seed isn't implemented.
+    // We'll store the coefficients directly for truth, plus the scenario values.
+    // truthFn can't serialize; so for freeze we store approxCoeffs and sample truth values for plotting + error.
+    // For simplicity, "freeze buyer" will freeze the generated scenario in-memory during session; across reload, we won't restore.
+    return null;
+  }
+
+  // =========================================================
+  // Plotting (contracts + duel + sandbox)
+  // =========================================================
+  function roundRect(ctx,x,y,w,h,r){
+    const rr=Math.min(r,w/2,h/2);
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+  }
+
+  function computeYRange(s, coeffsForK, k){
+    const N=420;
+    let yMin=Infinity, yMax=-Infinity;
+    for(let i=0;i<N;i++){
+      const x=lerp(s.xMin,s.xMax,i/(N-1));
+      const truth=s.truthFn(x);
+      const approx=evalPoly(coeffsForK.slice(0,k+1), x-s.a);
+      yMin=Math.min(yMin,truth,approx);
+      yMax=Math.max(yMax,truth,approx);
+    }
+    const pad=0.12*(yMax-yMin||1);
+    return {yMin:yMin-pad, yMax:yMax+pad};
+  }
+
+  function drawContractsPlot(canvas, k, s, coeffs, showAlt){
+    const ctx=canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.clearRect(0,0,W,H);
+
+    const xToPx=(x)=> (x-s.xMin)/(s.xMax-s.xMin)*(W-40)+20;
+
+    // y-scale
+    let yr;
+    const lockScale = document.getElementById('tLockScale')?.checked ?? appState.teacher.lockScale;
+    if(lockScale){
+      if(!s.yRange){
+        s.yRange = computeYRange(s, coeffs, k);
+      }
+      yr = s.yRange;
+    }else{
+      yr = computeYRange(s, coeffs, k);
+    }
+    const yMin=yr.yMin, yMax=yr.yMax;
+    const yToPy=(y)=> (1-(y-yMin)/(yMax-yMin))*(H-40)+20;
+
+    // grid
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,0.06)";
+    ctx.lineWidth=1;
+    for(let gx=0;gx<=10;gx++){
+      const x=lerp(20,W-20,gx/10);
+      ctx.beginPath(); ctx.moveTo(x,20); ctx.lineTo(x,H-20); ctx.stroke();
+    }
+    for(let gy=0;gy<=8;gy++){
+      const y=lerp(20,H-20,gy/8);
+      ctx.beginPath(); ctx.moveTo(20,y); ctx.lineTo(W-20,y); ctx.stroke();
+    }
+    ctx.restore();
+
+    // window shading + don't-care
+    const xL=xToPx(s.a-s.w), xR=xToPx(s.a+s.w);
+    ctx.save();
+    ctx.fillStyle="rgba(255,207,90,0.09)";
+    ctx.fillRect(xL,20,xR-xL,H-40);
+    ctx.fillStyle="rgba(255,255,255,0.02)";
+    ctx.fillRect(20,20,xL-20,H-40);
+    ctx.fillRect(xR,20,(W-20)-xR,H-40);
+    ctx.restore();
+
+    // error area (within window) between truth and approx
+    ctx.save();
+    ctx.fillStyle="rgba(255,107,107,0.12)";
+    ctx.beginPath();
+    const N=420;
+    for(let i=0;i<N;i++){
+      const x=lerp(s.a-s.w,s.a+s.w,i/(N-1));
+      const y=s.truthFn(x);
+      const px=xToPx(x), py=yToPy(y);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    for(let i=N-1;i>=0;i--){
+      const x=lerp(s.a-s.w,s.a+s.w,i/(N-1));
+      const y=evalPoly(coeffs.slice(0,k+1), x-s.a);
+      const px=xToPx(x), py=yToPy(y);
+      ctx.lineTo(px,py);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // truth curve: full if revealed else dim outside window
+    ctx.save();
+    ctx.strokeStyle="#7cf3a0";
+    ctx.lineWidth=2.5;
+    const drawCurve=(fn, x0, x1, alpha=1)=>{
+      ctx.save(); ctx.globalAlpha=alpha;
+      ctx.beginPath();
+      for(let i=0;i<N;i++){
+        const x=lerp(x0,x1,i/(N-1));
+        const y=fn(x);
+        const px=xToPx(x), py=yToPy(y);
+        if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.stroke(); ctx.restore();
+    };
+    if(revealed){
+      drawCurve(s.truthFn, s.xMin, s.xMax, 1);
+    }else{
+      drawCurve(s.truthFn, s.xMin, s.a-s.w, 0.18);
+      drawCurve(s.truthFn, s.a+s.w, s.xMax, 0.18);
+      drawCurve(s.truthFn, s.a-s.w, s.a+s.w, 1);
+    }
+    ctx.restore();
+
+    // approx curve full (dashed)
+    ctx.save();
+    ctx.strokeStyle="#54d6ff";
+    ctx.lineWidth=2.5;
+    ctx.setLineDash([10,7]);
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const x=lerp(s.xMin,s.xMax,i/(N-1));
+      const y=evalPoly(coeffs.slice(0,k+1), x-s.a);
+      const px=xToPx(x), py=yToPy(y);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // center a line
+    const ax=xToPx(s.a);
+    ctx.save();
+    ctx.strokeStyle="rgba(181,140,255,0.85)";
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(ax,20); ctx.lineTo(ax,H-20); ctx.stroke();
+    ctx.restore();
+
+    // tags
+    ctx.save();
+    ctx.fillStyle="rgba(0,0,0,0.55)";
+    ctx.strokeStyle="rgba(255,255,255,0.10)";
+    ctx.lineWidth=1;
+    ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Courier New', monospace";
+    const tag=(x,y,text,color)=>{
+      const pad=6;
+      const w=ctx.measureText(text).width+pad*2;
+      ctx.beginPath(); roundRect(ctx,x,y,w,22,10);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle=color; ctx.fillText(text,x+pad,y+15);
+      ctx.fillStyle="rgba(0,0,0,0.55)";
+    };
+    tag(26,26,`Truth: ${s.curve.name}${s.isTaylorMade?" (twist)":""}`,"#7cf3a0");
+    tag(26,54,`Model: degree k=${k}`,"#54d6ff");
+    tag(26,82,`a=${s.a.toFixed(2)} · window ±${s.w.toFixed(2)}`,"#ffcf5a");
+    tag(W-280,26, revealed ? "Global revealed" : "Local view (pre-submit)", revealed ? "#7cf3a0" : "#ffcf5a");
+    ctx.restore();
+  }
+
+  // =========================================================
+  // Contracts UI wiring
+  // =========================================================
+  const plot=document.getElementById('plot');
+  const kSlider=document.getElementById('kSlider');
+  const kLabel=document.getElementById('kLabel');
+  const degreePill=document.getElementById('degreePill');
+  const profitVal=document.getElementById('profitVal');
+  const revenueVal=document.getElementById('revenueVal');
+  const costVal=document.getElementById('costVal');
+  const complaintVal=document.getElementById('complaintVal');
+  const buyerMood=document.getElementById('buyerMood');
+  const bestKLabel=document.getElementById('bestKLabel');
+  const errLabel=document.getElementById('errLabel');
+  const statusPill=document.getElementById('statusPill');
+  const phasePill=document.getElementById('phasePill');
+  const hintText=document.getElementById('hintText');
+  const hintPill=document.getElementById('hintPill');
+
+  function colorProfit(p){ return (p>650)?"good":(p>0)?"warn":"bad"; }
+
+  function updateStatusPills(){
+    const c = appState.contractCount;
+    statusPill.textContent = `Contract #${c+1} · Total ${fmtMoney(appState.totalProfit)}`;
+    phasePill.textContent = `Phase: ${appState.phase} · ${phaseNames[appState.phase]}`;
+  }
+
+  function updateUnlocks(){
+    const duelBtn=document.getElementById('tabDuel');
+    const sbBtn=document.getElementById('tabSandbox');
+    const restartBtn=document.getElementById('btnRestart');
+    const duelUnlocked = appState.duelUnlocked || appState.phase>=5;
+    const sbUnlocked = appState.sandboxUnlocked || appState.phase>=5;
+    duelBtn.classList.toggle('locked', !duelUnlocked);
+    sbBtn.classList.toggle('locked', !sbUnlocked);
+    document.getElementById('duelPill').textContent = duelUnlocked ? "Unlocked" : "Locked";
+    document.getElementById('sandboxPill').textContent = sbUnlocked ? "Unlocked" : "Locked";
+    
+    // Show restart button after completing the journey (phase 5 or seen reveal)
+    if(restartBtn){
+      restartBtn.style.display = (appState.phase >= 5 || appState.revealSeen) ? 'block' : 'none';
+    }
+  }
+
+  function phaseTip(phase){
+    if(phase===0) return "Tip: Try k=0..2 first. Don’t overpay for precision.";
+    if(phase===1) return "Tip: Many curves look almost straight near a.";
+    if(phase===2) return "Tip: When the curve bends, k=2 often pays off.";
+    if(phase===3) return "Tip: You don’t have time to brute force forever—look for patterns.";
+    if(phase===4) return "Tip: Something big is coming… keep playing.";
+    return "Tip: Try Duel + Sandbox to compare methods.";
+  }
+
+  function updateHintPill(){ hintPill.textContent = phaseTip(appState.phase); }
+
+  function updateAllContracts(){
+    const k=parseInt(kSlider.value,10);
+    const s=scenario;
+
+    const sc = scoreForK_withCoeffs(k, s.approxCoeffs, s);
+    const best = bestKForScenario(s, s.approxCoeffs);
+
+    kLabel.textContent=`k = ${k}`;
+    const label=(k===0?"constant":k===1?"linear":k===2?"quadratic":k===3?"cubic":`degree ${k}`);
+    degreePill.textContent=`k = ${k} (${label})`;
+
+    profitVal.textContent=fmtMoney(sc.profit);
+    profitVal.className=`val mono ${colorProfit(sc.profit)}`;
+    revenueVal.textContent=fmtMoney(sc.revenue);
+    costVal.textContent=fmtMoney(sc.cost);
+    complaintVal.textContent=fmtMoney(sc.complaints);
+
+    buyerMood.textContent=`Mood: ${moodFromProfit(sc.profit)}`;
+    errLabel.textContent=`err: ${sc.err.toFixed(4)} (window)`;
+
+    // During phases 0–2, keep hint subtle. After phase 3, show the AI hint button meaningfully.
+    bestKLabel.textContent = (appState.phase<=1)
+      ? "Hint: Try a small k first"
+      : `Hint: best k tends to be ~${best.k} (profit ${fmtMoney(best.profit)})`;
+
+    hintText.textContent = s.curve.flavor + " Red fill = error inside the window. The buyer ignores outside.";
+
+    drawContractsPlot(plot, k, s, s.approxCoeffs);
+  }
+
+  function curateScenario(){
+    for(let tries=0; tries<10; tries++){
+      const s = makeScenario();
+      const best = bestKForScenario(s, s.approxCoeffs);
+      if(best.k !== 0 || Math.random()<0.12) return s;
+    }
+    return makeScenario();
+  }
+
+  function newBuyer(){
+    // Teacher freeze (session-only)
+    if(appState.teacher.freezeBuyer && scenario){
+      revealed=false;
+      kSlider.value=1;
+      toast("🧊 Buyer frozen (Teacher setting).", 2000);
+      updateAllContracts();
+      return;
+    }
+
+    scenario = curateScenario();
+    revealed=false;
+
+    kSlider.max=scenario.maxK;
+    kSlider.value=1;
+
+    updateStatusPills();
+    updateHintPill();
+    saveState();
+    toast(`New buyer loaded. <strong>Goal:</strong> maximize profit, not perfection.`, 2400);
+    updateAllContracts();
+  }
+
+  function bumpK(delta){
+    const k=parseInt(kSlider.value,10);
+    const nk=clamp(k+delta,0,parseInt(kSlider.max,10));
+    kSlider.value=nk;
+    updateAllContracts();
+  }
+
+  function hint(){
+    const best=bestKForScenario(scenario, scenario.approxCoeffs);
+    toast(`<strong>Hint:</strong> Try k=${best.k}. (But don’t blindly follow.)`, 2800);
+  }
+
+  function revealTaylorModal(){
+    openModal("The Shortcut Appears (1712)",
+`<div style="font-size:1.02rem;font-weight:950">You’ve been approximating curves like people did for centuries.</div>
+<div class="tiny" style="margin-top:8px;line-height:1.45">
+They used straight lines when they could, curvature when they had to, and they kept re-solving coefficients from scratch.<br/><br/>
+In 1712, Brook Taylor noticed a shortcut: if you know how a curve behaves at the center point <span class="mono">a</span> (value, slope, curvature, …), then the coefficients are forced.<br/><br/>
+<div class="mono" style="padding:10px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(0,0,0,.22)">
+T<sub>k</sub>(x) = Σ<sub>n=0..k</sub> ( f<sup>(n)</sup>(a) / n! ) (x-a)<sup>n</sup>
+</div>
+<br/>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+  <div style="padding:8px;background:rgba(124,243,160,0.1);border-radius:8px">
+    <strong style="color:var(--accent)">c₀ = f(a)</strong><br/>value at center
+  </div>
+  <div style="padding:8px;background:rgba(124,243,160,0.1);border-radius:8px">
+    <strong style="color:var(--accent)">c₁ = f’(a)</strong><br/>slope at center
+  </div>
+  <div style="padding:8px;background:rgba(124,243,160,0.1);border-radius:8px">
+    <strong style="color:var(--accent)">c₂ = f’’(a)/2!</strong><br/>curvature
+  </div>
+  <div style="padding:8px;background:rgba(124,243,160,0.1);border-radius:8px">
+    <strong style="color:var(--accent)">c₃ = f’’’(a)/3!</strong><br/>rate of curvature change
+  </div>
+</div>
+<br/>
+Taylor didn’t invent approximation. <strong>He invented a way to stop guessing.</strong><br/><br/>
+<span style="color:var(--muted);font-size:10px">⚠️ But watch out: some series only converge near <span class="mono">a</span> (check the Workshop for convergence warnings)</span>
+</div>
+<div class="controls" style="margin-top:12px">
+  <button class="primary" id="btnGoDuel">Go to Duel</button>
+  <button class="ghost" id="btnGoSandbox">Open Workshop</button>
+</div>`);
+    // bind modal buttons
+    setTimeout(()=>{
+      document.getElementById('btnGoDuel')?.addEventListener('click', ()=>{ closeModal(); switchTab('duel'); });
+      document.getElementById('btnGoSandbox')?.addEventListener('click', ()=>{ closeModal(); switchTab('sandbox'); });
+    }, 0);
+  }
+
+  function submitDeal(){
+    const k=parseInt(kSlider.value,10);
+    const s=scenario;
+    const chosen = scoreForK_withCoeffs(k, s.approxCoeffs, s);
+    const best = bestKForScenario(s, s.approxCoeffs);
+
+    revealed=true;
+    updateAllContracts();
+
+    // Save progress
+    appState.contractCount++;
+    appState.totalProfit += chosen.profit;
+    const newPhase = clamp(phaseFromContracts(appState.contractCount+1), 0, 5); // next contract determines phase display
+    const prevPhase = appState.phase;
+    appState.phase = newPhase;
+
+    // Unlocks at phase 5 (after 20)
+    if(appState.phase>=5){
+      appState.duelUnlocked = true;
+      appState.sandboxUnlocked = true;
+    }
+    // "Reveal seen" at phase >=4
+    if(!appState.revealSeen && (appState.contractCount>=19 || appState.phase>=4)){
+      appState.revealSeen = true;
+      appState.duelUnlocked = true; // unlock Duel at reveal
+    }
+
+    saveState();
+    updateStatusPills();
+    updateHintPill();
+    updateUnlocks();
+
+    // neighbor comparison (diminishing returns)
+    const kUp = Math.min(k+1, s.maxK);
+    const up = scoreForK_withCoeffs(kUp, s.approxCoeffs, s);
+    const deltaUpProfit = up.profit - chosen.profit;
+    const deltaUpErr = chosen.err - up.err;
+
+    const whyLines = [];
+    if(chosen.complaints > chosen.revenue) whyLines.push("Complaints ate the revenue (too inaccurate in the window).");
+    if(chosen.cost > chosen.revenue*0.35) whyLines.push("Build cost was heavy (over-engineered for what the buyer cares about).");
+    if(chosen.err > 0.45) whyLines.push("Model missed the curve shape in the window (try higher k).");
+    if(k>=5 && best.k<=2) whyLines.push("Likely overfit: extra terms reduced error, but didn’t pay for complexity.");
+    if(whyLines.length===0) whyLines.push("You balanced cost vs error well. The remaining error wasn’t worth extra terms.");
+
+    openModal("Deal Analysis",
+`<div class="mono">Contract #${appState.contractCount} · Total profit: <span class="emph">${fmtMoney(appState.totalProfit)}</span></div>
+<div style="margin-top:10px;font-size:1.0rem;font-weight:950">You chose k=${k}. Best this round was k=${best.k}.</div>
+
+<div class="analysisGrid">
+  <div class="panelMini">
+    <div class="t">Your deal</div>
+    <div class="b">
+      Profit <span class="${chosen.profit>0?'good':'bad'}">${fmtMoney(chosen.profit)}</span><br/>
+      <small>Revenue ${fmtMoney(chosen.revenue)} · Complaints ${fmtMoney(chosen.complaints)} · Cost ${fmtMoney(chosen.cost)}</small><br/>
+      <small>Error (window) ${chosen.err.toFixed(4)}</small>
+    </div>
+  </div>
+  <div class="panelMini">
+    <div class="t">Best possible (this round)</div>
+    <div class="b">
+      Best k = <span class="emph">${best.k}</span><br/>
+      <small>Profit ${fmtMoney(best.profit)} · Error ${best.err.toFixed(4)} · Cost ${fmtMoney(best.cost)}</small><br/>
+      <small>You were ${fmtMoney(best.profit - chosen.profit)} away from optimal</small>
+    </div>
+  </div>
+</div>
+
+<div class="panelMini" style="margin-top:10px">
+  <div class="t">What just happened?</div>
+  <div class="b" style="font-weight:800">
+    If you went to k=${kUp}: error ${chosen.err.toFixed(3)} → ${up.err.toFixed(3)} (${(100*(deltaUpErr/Math.max(chosen.err,1e-9))).toFixed(0)}% better),
+    profit ${fmtMoney(chosen.profit)} → ${fmtMoney(up.profit)} (${deltaUpProfit>=0?"+":""}${fmtMoney(deltaUpProfit)}).
+    <br/><br/>
+    <span class="emph">Key insight:</span> more k can reduce error, but only errors in the window matter — and extra terms cost money.
+  </div>
+</div>
+
+<div class="panelMini" style="margin-top:10px">
+  <div class="t">Why your profit looked like that</div>
+  <div class="b" style="font-weight:800">${whyLines.map(x=>`• ${x}`).join("<br/>")}</div>
+</div>
+
+<div class="controls" style="margin-top:12px">
+  <button class="primary" id="btnNextContract">Next contract</button>
+  <button class="ghost" id="btnStay">Stay & experiment</button>
+</div>`);
+
+    setTimeout(()=>{
+      document.getElementById('btnNextContract')?.addEventListener('click', ()=>{
+        closeModal();
+        // reveal event at contract 19/20
+        if(!appState.revealSeen && appState.phase>=4){
+          revealTaylorModal();
+          return;
+        }
+        newBuyer();
+      });
+      document.getElementById('btnStay')?.addEventListener('click', ()=>{ closeModal(); /* keep revealed */ });
+    }, 0);
+
+    // Trigger reveal modal when entering phase 4 for first time (after 18 -> 19)
+    if(!appState.revealSeen && prevPhase < 4 && appState.phase >= 4){
+      // After they close analysis, we’ll show reveal on Next contract.
+      toast("<strong>Notice:</strong> Something big is coming soon…", 2600);
+    }
+  }
+
+  function testDistribution(trials=200){
+    const counts=Array(9).fill(0);
+    for(let i=0;i<trials;i++){
+      const s=curateScenario();
+      const best=bestKForScenario(s, s.approxCoeffs);
+      counts[best.k]++;
+    }
+    const lines=counts.map((c,k)=>{
+      const pct=(100*c/trials).toFixed(1);
+      const bar="█".repeat(Math.round(28*c/trials));
+      return `<div class="mono">k=${k}: ${bar} ${pct}%</div>`;
+    }).join("");
+    toast(`<strong>Optimal k spread</strong> (n=${trials})<div style="margin-top:6px">${lines}</div>`, 5600);
+  }
+
+  // Buttons
+  document.getElementById('btnNew').addEventListener('click', newBuyer);
+  document.getElementById('btnUpgrade').addEventListener('click', ()=>bumpK(+1));
+  document.getElementById('btnDowngrade').addEventListener('click', ()=>bumpK(-1));
+  document.getElementById('btnHint').addEventListener('click', hint);
+  document.getElementById('btnDist').addEventListener('click', ()=>testDistribution(200));
+  document.getElementById('btnSubmit').addEventListener('click', submitDeal);
+  kSlider.addEventListener('input', updateAllContracts);
+
+  // Restart button (visible after completing the journey)
+  document.getElementById('btnRestart').addEventListener('click', ()=>{
+    openModal("Start Over?",
+      `<div class="tiny" style="margin-bottom:12px">This will reset all your progress and start the journey from the beginning.</div>
+       <div style="margin-bottom:12px;padding:10px;background:rgba(255,207,90,0.1);border-radius:8px;font-size:13px">
+         <strong style="color:#fbbf24">Current Progress:</strong><br>
+         • Contracts completed: ${appState.contractCount}<br>
+         • Total profit: $${Math.round(appState.totalProfit).toLocaleString()}<br>
+         • Phase: ${appState.phase} (${phaseNames[appState.phase] || 'Complete'})
+       </div>
+       <div class="controls" style="margin-top:12px">
+         <button class="danger" id="btnConfirmRestart">🔄 Yes, Start Over</button>
+         <button class="ghost" id="btnCancelRestart">Cancel</button>
+       </div>`);
+    setTimeout(()=>{
+      document.getElementById('btnConfirmRestart')?.addEventListener('click', ()=>{
+        closeModal();
+        resetState();
+        location.reload();
+      });
+      document.getElementById('btnCancelRestart')?.addEventListener('click', closeModal);
+    }, 0);
+  });
+
+  // =========================================================
+  // Tabs
+  // =========================================================
+  const tabContracts=document.getElementById('tabContracts');
+  const tabDuel=document.getElementById('tabDuel');
+  const tabSandbox=document.getElementById('tabSandbox');
+  const viewContracts=document.getElementById('viewContracts');
+  const viewDuel=document.getElementById('viewDuel');
+  const viewSandbox=document.getElementById('viewSandbox');
+
+  function switchTab(which){
+    const duelUnlocked = appState.duelUnlocked || appState.phase>=5 || appState.revealSeen;
+    const sbUnlocked = appState.sandboxUnlocked || appState.phase>=5;
+
+    if(which==="duel" && !duelUnlocked){
+      toast("🔒 Duel locked. Reach the Taylor reveal (around contract 19) or use Teacher/Resume.", 2600);
+      return;
+    }
+    if(which==="sandbox" && !sbUnlocked){
+      toast("🔒 Workshop locked. Finish the reveal arc or use Teacher/Resume.", 2600);
+      return;
+    }
+
+    tabContracts.classList.toggle('active', which==="contracts");
+    tabDuel.classList.toggle('active', which==="duel");
+    tabSandbox.classList.toggle('active', which==="sandbox");
+
+    viewContracts.classList.toggle('hidden', which!=="contracts");
+    viewDuel.classList.toggle('hidden', which!=="duel");
+    viewSandbox.classList.toggle('hidden', which!=="sandbox");
+
+    appState.lastTab = which;
+    saveState();
+
+    if(which==="duel") initDuelIfNeeded();
+    if(which==="sandbox") initSandboxIfNeeded();
+  }
+
+  tabContracts.addEventListener('click', ()=>switchTab("contracts"));
+  tabDuel.addEventListener('click', ()=>switchTab("duel"));
+  tabSandbox.addEventListener('click', ()=>switchTab("sandbox"));
+
+  // =========================================================
+  // Duel mode (Taylor vs LSQ)
+  // =========================================================
+  const plotDuel=document.getElementById('plotDuel');
+  const duelMethod=document.getElementById('duelMethod');
+  const duelK=document.getElementById('duelK');
+  const duelKLabel=document.getElementById('duelKLabel');
+  const duelErr=document.getElementById('duelErr');
+  const duelProfit=document.getElementById('duelProfit');
+  const duelOtherProfit=document.getElementById('duelOtherProfit');
+  const duelHint=document.getElementById('duelHint');
+  const duelStatus=document.getElementById('duelStatus');
+
+  let duelScenario=null;
+  let duelInited=false;
+
+  function makeDuelScenario(){
+    // Build a scenario that highlights difference
+    const builder = pick(CURVE_BUILDERS)();
+    const a = builder.safeA();
+    // wider windows help LSQ shine sometimes; narrow windows favor Taylor
+    const w = rand(0.35, 1.55);
+    const dom = builder.safeDomain(a,w);
+    const xMin=dom.xMin, xMax=dom.xMax;
+
+    const s={
+      curve:{name:builder.name, flavor:builder.flavor},
+      a,w,xMin,xMax,
+      pickiness: rand(0.8, 3.2),
+      baseRevenue: rand(900, 2500),
+      revenueSlope: rand(0.05, 0.45),
+      costBase: rand(60, 120),
+      costPow: rand(1.35, 2.2),
+      costJitter: rand(0.9, 1.1),
+      weightSharpness: rand(0.6, 2.4),
+      truthFn: builder.f,
+      maxK: 8,
+      isTaylorMade: false,
+      scenarioName: `${builder.name} @ a=${a.toFixed(2)} · window ±${w.toFixed(2)}`,
+      yRange:null
+    };
+    // Coeffs
+    s.coeffsTaylor = taylorCoeffs(s.truthFn, s.a, s.maxK);
+    s.coeffsLSQ = localPolyCoeffs(s.truthFn, s.a, s.maxK);
+    return s;
+  }
+
+  function drawDuel(k, s, chosenMode){
+    const ctx=plotDuel.getContext('2d');
+    const W=plotDuel.width, H=plotDuel.height;
+    ctx.clearRect(0,0,W,H);
+
+    const xToPx=(x)=> (x-s.xMin)/(s.xMax-s.xMin)*(W-40)+20;
+
+    // lock scale
+    if(!s.yRange) s.yRange = computeYRange(s, s.coeffsTaylor, k);
+    // widen y-range to accommodate both methods
+    const yrT = computeYRange(s, s.coeffsTaylor, k);
+    const yrL = computeYRange(s, s.coeffsLSQ, k);
+    const yMin = Math.min(yrT.yMin, yrL.yMin);
+    const yMax = Math.max(yrT.yMax, yrL.yMax);
+    const yToPy=(y)=> (1-(y-yMin)/(yMax-yMin))*(H-40)+20;
+
+    // grid
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,0.06)";
+    ctx.lineWidth=1;
+    for(let gx=0;gx<=10;gx++){
+      const x=lerp(20,W-20,gx/10);
+      ctx.beginPath(); ctx.moveTo(x,20); ctx.lineTo(x,H-20); ctx.stroke();
+    }
+    for(let gy=0;gy<=8;gy++){
+      const y=lerp(20,H-20,gy/8);
+      ctx.beginPath(); ctx.moveTo(20,y); ctx.lineTo(W-20,y); ctx.stroke();
+    }
+    ctx.restore();
+
+    // window shading
+    const xL=xToPx(s.a-s.w), xR=xToPx(s.a+s.w);
+    ctx.save();
+    ctx.fillStyle="rgba(255,207,90,0.09)";
+    ctx.fillRect(xL,20,xR-xL,H-40);
+    ctx.restore();
+
+    // truth
+    const N=420;
+    ctx.save();
+    ctx.strokeStyle="#7cf3a0"; ctx.lineWidth=2.5;
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const x=lerp(s.xMin,s.xMax,i/(N-1));
+      const y=s.truthFn(x);
+      const px=xToPx(x), py=yToPy(y);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    const coeffChosen = (chosenMode==="taylor") ? s.coeffsTaylor : s.coeffsLSQ;
+    const coeffOther  = (chosenMode==="taylor") ? s.coeffsLSQ : s.coeffsTaylor;
+
+    // other method (thin)
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,0.35)";
+    ctx.lineWidth=2;
+    ctx.setLineDash([6,6]);
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const x=lerp(s.xMin,s.xMax,i/(N-1));
+      const y=evalPoly(coeffOther.slice(0,k+1), x-s.a);
+      const px=xToPx(x), py=yToPy(y);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // chosen (bright dashed)
+    ctx.save();
+    ctx.strokeStyle="#54d6ff";
+    ctx.lineWidth=2.8;
+    ctx.setLineDash([10,7]);
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const x=lerp(s.xMin,s.xMax,i/(N-1));
+      const y=evalPoly(coeffChosen.slice(0,k+1), x-s.a);
+      const px=xToPx(x), py=yToPy(y);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // center line
+    const ax=xToPx(s.a);
+    ctx.save();
+    ctx.strokeStyle="rgba(181,140,255,0.85)";
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(ax,20); ctx.lineTo(ax,H-20); ctx.stroke();
+    ctx.restore();
+  }
+
+  function updateDuel(){
+    if(!duelScenario) return;
+    const k=parseInt(duelK.value,10);
+    duelKLabel.textContent=`k = ${k}`;
+
+    const mode=duelMethod.value;
+    const coeffChosen = (mode==="taylor") ? duelScenario.coeffsTaylor : duelScenario.coeffsLSQ;
+    const coeffOther  = (mode==="taylor") ? duelScenario.coeffsLSQ : duelScenario.coeffsTaylor;
+
+    const chosen = scoreForK_withCoeffs(k, coeffChosen, duelScenario);
+    const other  = scoreForK_withCoeffs(k, coeffOther, duelScenario);
+
+    duelErr.textContent = `err(chosen): ${chosen.err.toFixed(4)}`;
+    duelProfit.textContent = fmtMoney(chosen.profit);
+    duelProfit.className = `val mono ${chosen.profit>0?'warn':'bad'}`;
+    duelOtherProfit.textContent = fmtMoney(other.profit);
+
+    duelHint.textContent = `Try switching methods at the same k. Who wins depends on whether the buyer cares more about the center or the whole window.`;
+    duelStatus.textContent = `a=${duelScenario.a.toFixed(2)} · w=${duelScenario.w.toFixed(2)}`;
+
+    drawDuel(k, duelScenario, mode);
+  }
+
+  function duelSubmit(){
+    const k=parseInt(duelK.value,10);
+    const mode=duelMethod.value;
+    const coeffChosen = (mode==="taylor") ? duelScenario.coeffsTaylor : duelScenario.coeffsLSQ;
+    const coeffOther  = (mode==="taylor") ? duelScenario.coeffsLSQ : duelScenario.coeffsTaylor;
+
+    const chosen = scoreForK_withCoeffs(k, coeffChosen, duelScenario);
+    const other  = scoreForK_withCoeffs(k, coeffOther, duelScenario);
+
+    const winner = chosen.profit >= other.profit ? "You picked the better tool." : "The other tool would have paid more.";
+    const why = (mode==="taylor")
+      ? "Taylor matches behavior at a, so it can shine in narrow windows — but it may ignore the rest."
+      : "Least squares spreads error across the window — great for region fit, but it may sacrifice perfection at a.";
+
+    openModal("Duel Result",
+`<div style="font-size:1.02rem;font-weight:950">${winner}</div>
+<div class="tiny" style="margin-top:8px;line-height:1.45">
+Chosen method: <span class="mono">${mode.toUpperCase()}</span> at k=${k}<br/>
+Chosen profit: <span class="mono">${fmtMoney(chosen.profit)}</span> (err ${chosen.err.toFixed(4)})<br/>
+Other profit: <span class="mono">${fmtMoney(other.profit)}</span> (err ${other.err.toFixed(4)})<br/><br/>
+<strong>Why:</strong> ${why}<br/><br/>
+Key idea: both are degree-k polynomials. The difference is how coefficients are chosen.
+</div>
+<div class="controls" style="margin-top:12px">
+  <button class="primary" id="btnDuelNext">Next duel</button>
+  <button class="ghost" id="btnDuelStay">Stay</button>
+</div>`);
+    setTimeout(()=>{
+      document.getElementById('btnDuelNext')?.addEventListener('click', ()=>{ closeModal(); newDuel(); });
+      document.getElementById('btnDuelStay')?.addEventListener('click', ()=>{ closeModal(); });
+    }, 0);
+  }
+
+  function newDuel(){
+    duelScenario = makeDuelScenario();
+    duelK.value = 2;
+    duelMethod.value = "taylor";
+    updateDuel();
+    toast("⚔️ New duel loaded. Try both methods at the same k.", 2400);
+  }
+
+  function initDuelIfNeeded(){
+    if(duelInited) return;
+    duelInited=true;
+    newDuel();
+    duelMethod.addEventListener('change', updateDuel);
+    duelK.addEventListener('input', updateDuel);
+    document.getElementById('btnDuelSubmit').addEventListener('click', duelSubmit);
+    document.getElementById('btnDuelNew').addEventListener('click', newDuel);
+  }
+
+  // =========================================================
+  // Sandbox (Workshop)
+  // =========================================================
+  const plotSandbox=document.getElementById('plotSandbox');
+  const sbFunc=document.getElementById('sbFunc');
+  const sbA=document.getElementById('sbA');
+  const sbW=document.getElementById('sbW');
+  const sbMode=document.getElementById('sbMode');
+  const sbK=document.getElementById('sbK');
+  const sbKLabel=document.getElementById('sbKLabel');
+  const sbErr=document.getElementById('sbErr');
+  const sbFormula=document.getElementById('sbFormula');
+  const sandboxHint=document.getElementById('sandboxHint');
+  const sandboxStatus=document.getElementById('sandboxStatus');
+
+  const SB_FUNCS = [
+    {name:"e^x", f:(x)=>Math.exp(x), domain: {min:-3,max:3}, convergence: {radius: Infinity, note: "Converges everywhere"}},
+    {name:"sin(x)", f:(x)=>Math.sin(x), domain: {min:-6.28,max:6.28}, convergence: {radius: Infinity, note: "Converges everywhere"}},
+    {name:"cos(x)", f:(x)=>Math.cos(x), domain: {min:-6.28,max:6.28}, convergence: {radius: Infinity, note: "Converges everywhere"}},
+    {name:"ln(1+x)", f:(x)=>Math.log(1+x), domain:{min:-0.95,max:3}, convergence: {radius: 1, note: "Converges only for |x-a| < 1+a (centered at 0: |x| < 1)"}},
+    {name:"1/(1-x)", f:(x)=>1/(1-x), domain:{min:-3,max:0.95}, convergence: {radius: 1, note: "Converges only for |x-a| < |1-a| (pole at x=1)"}},
+    {name:"arctan(x)", f:(x)=>Math.atan(x), domain:{min:-6,max:6}, convergence: {radius: 1, note: "Converges only for |x| ≤ 1 (centered at 0)"}},
+    {name:"1/(1+x²)", f:(x)=>1/(1+x*x), domain:{min:-6,max:6}, convergence: {radius: 1, note: "Converges only for |x| < 1 (poles at x=±i affect real convergence)"}},
+  ];
+
+  let sandboxInited=false;
+
+  function sbGetFunc(){
+    const idx=parseInt(sbFunc.value,10);
+    return SB_FUNCS[idx];
+  }
+
+  function drawSandbox(k, s, coeffs){
+    const ctx=plotSandbox.getContext('2d');
+    const W=plotSandbox.width, H=plotSandbox.height;
+    ctx.clearRect(0,0,W,H);
+
+    const xToPx=(x)=> (x-s.xMin)/(s.xMax-s.xMin)*(W-40)+20;
+    const yr = computeYRange(s, coeffs, k);
+    const yMin=yr.yMin, yMax=yr.yMax;
+    const yToPy=(y)=> (1-(y-yMin)/(yMax-yMin))*(H-40)+20;
+
+    // grid
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,0.06)";
+    ctx.lineWidth=1;
+    for(let gx=0;gx<=10;gx++){
+      const x=lerp(20,W-20,gx/10);
+      ctx.beginPath(); ctx.moveTo(x,20); ctx.lineTo(x,H-20); ctx.stroke();
+    }
+    for(let gy=0;gy<=8;gy++){
+      const y=lerp(20,H-20,gy/8);
+      ctx.beginPath(); ctx.moveTo(20,y); ctx.lineTo(W-20,y); ctx.stroke();
+    }
+    ctx.restore();
+
+    // window
+    const xL=xToPx(s.a-s.w), xR=xToPx(s.a+s.w);
+    ctx.save();
+    ctx.fillStyle="rgba(255,207,90,0.09)";
+    ctx.fillRect(xL,20,xR-xL,H-40);
+    ctx.restore();
+
+    const N=420;
+
+    // ERROR AREA within window (between truth and approx) - shows remainder R_n(x)
+    ctx.save();
+    ctx.fillStyle="rgba(255,107,107,0.18)";
+    ctx.beginPath();
+    const ck = coeffs.slice(0, k+1);
+    // truth forward within window
+    for(let i=0;i<N;i++){
+      const x=lerp(s.a-s.w, s.a+s.w, i/(N-1));
+      const y=s.truthFn(x);
+      const px=xToPx(x), py=yToPy(y);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    // approx backward within window
+    for(let i=N-1;i>=0;i--){
+      const x=lerp(s.a-s.w, s.a+s.w, i/(N-1));
+      const y=evalPoly(ck, x-s.a);
+      const px=xToPx(x), py=yToPy(y);
+      ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // truth
+    ctx.save();
+    ctx.strokeStyle="#7cf3a0"; ctx.lineWidth=2.5;
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const x=lerp(s.xMin,s.xMax,i/(N-1));
+      const y=s.truthFn(x);
+      const px=xToPx(x), py=yToPy(y);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // poly
+    ctx.save();
+    ctx.strokeStyle="#54d6ff"; ctx.lineWidth=2.8;
+    ctx.setLineDash([10,7]);
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const x=lerp(s.xMin,s.xMax,i/(N-1));
+      const y=evalPoly(coeffs.slice(0,k+1), x-s.a);
+      const px=xToPx(x), py=yToPy(y);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // center line
+    const ax=xToPx(s.a);
+    ctx.save();
+    ctx.strokeStyle="rgba(181,140,255,0.85)";
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(ax,20); ctx.lineTo(ax,H-20); ctx.stroke();
+    ctx.restore();
+  }
+
+  function updateSandbox(){
+    const f=sbGetFunc();
+    const a=parseFloat(sbA.value);
+    const w=Math.max(0.05, parseFloat(sbW.value));
+    const k=parseInt(sbK.value,10);
+    sbKLabel.textContent = `k = ${k}`;
+
+    // build a mini scenario (reuse scoring error metric)
+    // keep x-range broader than window
+    const xMin=Math.max(f.domain.min, a-2.4*w);
+    const xMax=Math.min(f.domain.max, a+2.4*w);
+
+    const s={
+      curve:{name:f.name, flavor:""},
+      a,w,xMin,xMax,
+      pickiness:1.6, baseRevenue:1500, revenueSlope:0.2,
+      costBase:80, costPow:1.6, costJitter:1.0,
+      weightSharpness:1.4,
+      truthFn:f.f,
+      maxK:12,
+      isTaylorMade:false,
+      scenarioName:`${f.name} @ a=${a.toFixed(2)} ±${w.toFixed(2)}`,
+      yRange:null
+    };
+
+    let coeffs;
+    if(sbMode.value==="taylor") coeffs = taylorCoeffs(f.f, a, 12);
+    else coeffs = localPolyCoeffs(f.f, a, 12);
+
+    const sc = scoreForK_withCoeffs(k, coeffs, s);
+    sbErr.textContent = `err: ${sc.err.toFixed(4)} (window)`;
+    sandboxStatus.textContent = s.scenarioName;
+
+    // Calculate max error (remainder) in window
+    const sbMaxErr = document.getElementById('sbMaxErr');
+    if(sbMaxErr){
+      let maxErr = 0;
+      const ck = coeffs.slice(0, k+1);
+      for(let i=0; i<100; i++){
+        const x = lerp(a-w, a+w, i/99);
+        const truth = f.f(x);
+        const approx = evalPoly(ck, x-a);
+        maxErr = Math.max(maxErr, Math.abs(truth - approx));
+      }
+      sbMaxErr.textContent = `max |R_${k}|: ${maxErr.toFixed(6)}`;
+    }
+
+    sandboxHint.textContent = (sbMode.value==="taylor")
+      ? "Taylor: coefficients come from derivatives at a. Try moving a to see how locality changes."
+      : "Least squares: coefficients minimize average error over the window. Try widening the window.";
+
+    // formula text (lightweight)
+    const parts = [];
+    for(let n=0;n<=Math.min(k,6);n++){
+      const cn = coeffs[n];
+      const term = n===0 ? `${cn.toFixed(4)}`
+        : n===1 ? `${cn.toFixed(4)}(x-a)`
+        : `${cn.toFixed(4)}(x-a)^${n}`;
+      parts.push(term);
+    }
+    const ell = k>6 ? " + …" : "";
+    sbFormula.textContent = `P_k(x) ≈ ${parts.join(" + ")}${ell}`;
+
+    // Coefficient breakdown (Taylor mode only)
+    const coeffList = document.getElementById('coeffList');
+    if(coeffList && sbMode.value==="taylor"){
+      const coeffLines = [];
+      const labels = ['f(a)', "f'(a)", "f''(a)/2!", "f'''(a)/3!", "f⁽⁴⁾(a)/4!", "f⁽⁵⁾(a)/5!", "f⁽⁶⁾(a)/6!"];
+      for(let n=0; n<=Math.min(k,6); n++){
+        const cn = coeffs[n];
+        const deriv = cn * factorial(n); // c_n = f^(n)(a)/n!, so f^(n)(a) = c_n * n!
+        coeffLines.push(`c${subscript(n)} = ${labels[n]} = ${deriv.toFixed(4)}/${n===0?'1':factorial(n)} = <strong>${cn.toFixed(4)}</strong>`);
+      }
+      if(k>6) coeffLines.push('...');
+      coeffList.innerHTML = coeffLines.join('<br>');
+    } else if(coeffList){
+      coeffList.innerHTML = '<span class="tiny">Switch to Taylor mode to see derivative breakdown</span>';
+    }
+
+    // Convergence warning
+    const convWarn = document.getElementById('sbConvergenceWarn');
+    if(convWarn && f.convergence){
+      if(f.convergence.radius < Infinity){
+        convWarn.style.display = 'block';
+        convWarn.innerHTML = `⚠️ <strong>Convergence warning:</strong> ${f.convergence.note}`;
+      } else {
+        convWarn.style.display = 'none';
+      }
+    }
+
+    drawSandbox(k, s, coeffs);
+  }
+
+  // Helper for subscript numbers
+  function subscript(n){
+    const subs = ['₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
+    return String(n).split('').map(d => subs[parseInt(d)]).join('');
+  }
+
+  function initSandboxIfNeeded(){
+    if(sandboxInited) return;
+    sandboxInited=true;
+    // populate
+    SB_FUNCS.forEach((o,i)=>{
+      const opt=document.createElement('option');
+      opt.value=String(i);
+      opt.textContent=o.name;
+      sbFunc.appendChild(opt);
+    });
+    sbFunc.value="0";
+    sbA.value="0";
+    sbW.value="0.7";
+    sbK.value="3";
+    sbMode.value="taylor";
+
+    const onChange=()=>updateSandbox();
+    sbFunc.addEventListener('change', onChange);
+    sbA.addEventListener('input', onChange);
+    sbW.addEventListener('input', onChange);
+    sbMode.addEventListener('change', onChange);
+    sbK.addEventListener('input', onChange);
+    document.getElementById('btnSBReset').addEventListener('click', ()=>{
+      sbFunc.value="0"; sbA.value="0"; sbW.value="0.7"; sbK.value="3"; sbMode.value="taylor"; updateSandbox();
+    });
+    document.getElementById('btnSBShowFormula').addEventListener('click', ()=>{
+      toast("<strong>Reminder:</strong> Taylor coefficients are f^(n)(a)/n!.", 2600);
+    });
+    updateSandbox();
+  }
+
+  // =========================================================
+  // Teacher drawer + skip shortcut (Shift+~ held)
+  // =========================================================
+  const teacherDrawer=document.getElementById('teacherDrawer');
+  const btnTeacherClose=document.getElementById('btnTeacherClose');
+  btnTeacherClose.addEventListener('click', ()=>{ teacherDrawer.style.display='none'; });
+
+  function openTeacherDrawer(){
+    teacherDrawer.style.display='block';
+    document.getElementById('tPhase').value = String(appState.phase);
+    document.getElementById('tUnlockDuel').checked = !!appState.duelUnlocked;
+    document.getElementById('tUnlockSandbox').checked = !!appState.sandboxUnlocked;
+    document.getElementById('tFreezeBuyer').checked = !!appState.teacher.freezeBuyer;
+    document.getElementById('tLockScale').checked = !!appState.teacher.lockScale;
+  }
+  function syncTeacherFromUI(){
+    appState.phase = clamp(parseInt(document.getElementById('tPhase').value,10)||0,0,5);
+    appState.duelUnlocked = !!document.getElementById('tUnlockDuel').checked;
+    appState.sandboxUnlocked = !!document.getElementById('tUnlockSandbox').checked;
+    appState.teacher.freezeBuyer = !!document.getElementById('tFreezeBuyer').checked;
+    appState.teacher.lockScale = !!document.getElementById('tLockScale').checked;
+    saveState();
+    updateStatusPills();
+    updateHintPill();
+    updateUnlocks();
+    updateAllContracts();
+  }
+  ["tPhase","tUnlockDuel","tUnlockSandbox","tFreezeBuyer","tLockScale"].forEach(id=>{
+    document.getElementById(id).addEventListener('change', syncTeacherFromUI);
+  });
+  document.getElementById('tSkipReveal').addEventListener('click', ()=>{
+    appState.phase = 4;
+    appState.revealSeen = true;
+    appState.duelUnlocked = true;
+    saveState();
+    updateUnlocks();
+    updateStatusPills();
+    updateHintPill();
+    toast("Skipped to reveal phase. Duel unlocked.", 2200);
+    revealTaylorModal();
+  });
+  document.getElementById('tReset').addEventListener('click', ()=>{
+    openModal("Reset progress?",
+      `<div class="tiny">This clears local progress on this browser.</div>
+       <div class="controls" style="margin-top:12px">
+         <button class="danger" id="btnDoReset">Reset</button>
+         <button class="ghost" id="btnCancelReset">Cancel</button>
+       </div>`);
+    setTimeout(()=>{
+      document.getElementById('btnDoReset')?.addEventListener('click', ()=>{
+        closeModal();
+        resetState();
+        location.reload();
+      });
+      document.getElementById('btnCancelReset')?.addEventListener('click', closeModal);
+    }, 0);
+  });
+
+  // Hold Shift+` or Shift+~ for 2 seconds
+  let holdTimer=null;
+  let holding=false;
+  function startHold(){
+    if(holding) return;
+    holding=true;
+    holdTimer=setTimeout(()=>{
+      holding=false;
+      openTeacherDrawer();
+      toast("<strong>Teacher/Resume</strong> opened.", 1500);
+    }, 2000);
+  }
+  function cancelHold(){
+    holding=false;
+    if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; }
+  }
+
+  window.addEventListener('keydown', (e)=>{
+    // detect backtick/tilde key - Shift+` produces ~ on most keyboards
+    if(e.key === "~" || (e.key === "`" && e.shiftKey)){
+      startHold();
+    }
+
+    // gameplay shortcuts when in contracts
+    const activeTab = appState.lastTab;
+    if(activeTab==="contracts"){
+      if(e.key==='ArrowUp'||e.key==='+') bumpK(+1);
+      if(e.key==='ArrowDown'||e.key==='-') bumpK(-1);
+      if(e.key==='Enter') submitDeal();
+      if(e.key.toLowerCase()==='n') newBuyer();
+      if(e.key.toLowerCase()==='h') hint();
+      if(e.key.toLowerCase()==='d') testDistribution(200);
+    }
+    if(e.key==='Escape') closeModal();
+  });
+  window.addEventListener('keyup', (e)=>{
+    if(e.key === "~" || e.key === "`") cancelHold();
+  });
+  window.addEventListener('blur', cancelHold);
+
+  // =========================================================
+  // Boot
+  // =========================================================
+  function boot(){
+    // Ensure phase matches progress if not overridden by teacher
+    // If teacher manually set phase, we respect it, but keep it within bounds.
+    appState.phase = clamp(appState.phase,0,5);
+
+    // If they've played enough, update unlocks
+    if(appState.revealSeen) appState.duelUnlocked = true;
+    if(appState.phase>=5) { appState.duelUnlocked=true; appState.sandboxUnlocked=true; }
+
+    updateUnlocks();
+    updateStatusPills();
+    updateHintPill();
+
+    // Setup initial scenario
+    scenario = curateScenario();
+    kSlider.max=scenario.maxK;
+    kSlider.value=1;
+    revealed=false;
+    updateAllContracts();
+
+    // restore last tab
+    const t = appState.lastTab || "contracts";
+    switchTab(t);
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

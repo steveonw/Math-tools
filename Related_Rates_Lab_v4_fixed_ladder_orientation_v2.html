@@ -1,0 +1,3058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Related Rates Lab v4 — Multi-Problem</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #container { width: 100vw; height: 100vh; position: relative; }
+        canvas { display: block; }
+
+        /* Math Panel */
+        #math-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid #f39c12;
+            border-radius: 8px;
+            padding: 10px 12px;
+            width: 280px;
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+
+        #math-panel h2 {
+            color: #f39c12;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        .math-section {
+            margin: 6px 0;
+            padding: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .math-section h3 {
+            font-size: 0.6rem;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .math-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 3px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .math-label { color: #aaa; font-size: 0.75rem; }
+        .math-value { font-size: 0.85rem; font-weight: bold; }
+        .math-value.distance { color: #3498db; }
+        .math-value.shadow { color: #9b59b6; }
+        .math-value.velocity { color: #2ecc71; }
+        .math-value.rate { color: #e74c3c; }
+        .math-value.angular { color: #f39c12; }
+        .math-value.tip { color: #e91e63; }
+        .math-value.ladder { color: #00e676; }
+        .math-value.winch { color: #58d68d; }
+        .math-value.beacon { color: #f1c40f; }
+        .math-value.curvature { color: #ff00ff; }
+
+        /* Problem Type Selector */
+        .problem-selector {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .problem-selector h4 {
+            color: #e91e63;
+            font-size: 0.7rem;
+            margin-bottom: 5px;
+        }
+        .problem-selector select {
+            width: 100%;
+            padding: 8px;
+            background: rgba(233, 30, 99, 0.15);
+            border: 1px solid rgba(233, 30, 99, 0.5);
+            border-radius: 4px;
+            color: #e91e63;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        .problem-desc {
+            font-size: 0.6rem;
+            color: #888;
+            margin-top: 4px;
+            padding: 4px 6px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+        /* Problem-specific math panels */
+        .problem-math { display: none; }
+        .problem-math.active { display: block; }
+
+        /* Higher math note */
+        .higher-math-note {
+            background: rgba(255, 0, 255, 0.1);
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            border-radius: 4px;
+            padding: 5px;
+            margin-top: 6px;
+            font-size: 0.6rem;
+            color: #ff00ff;
+        }
+
+        .formula-box {
+            background: rgba(243, 156, 18, 0.1);
+            border: 1px solid rgba(243, 156, 18, 0.3);
+            border-radius: 4px;
+            padding: 6px;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 0.95rem;
+            color: #f39c12;
+            font-style: italic;
+        }
+
+        .formula-computed {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #ccc;
+            margin-top: 3px;
+        }
+
+        .key-insight {
+            background: rgba(46, 204, 113, 0.15);
+            border: 1px solid #2ecc71;
+            border-radius: 4px;
+            padding: 6px;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: #2ecc71;
+            text-align: center;
+        }
+
+        /* Rate Components Box */
+        .rate-components {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+        }
+
+        .rate-box {
+            background: rgba(0,0,0,0.4);
+            border-radius: 4px;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .rate-box .label { color: #888; font-size: 0.6rem; }
+        .rate-box .value { font-family: 'Courier New', monospace; font-weight: bold; margin-top: 2px; }
+
+        /* Controls Panel */
+        #controls-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 10px 12px;
+            width: 220px;
+        }
+
+        #controls-panel h3 {
+            color: #3498db;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 5px 0;
+            gap: 6px;
+        }
+
+        .control-row label { font-size: 0.65rem; color: #aaa; }
+        .control-row input[type="range"] { width: 70px; accent-color: #3498db; }
+        .control-row span {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #3498db;
+            min-width: 35px;
+            text-align: right;
+        }
+
+        .btn-row { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+
+        .btn {
+            flex: 1;
+            min-width: 45px;
+            padding: 5px 6px;
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid #3498db;
+            border-radius: 3px;
+            color: #3498db;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover { background: rgba(52, 152, 219, 0.4); }
+        .btn.active { background: #3498db; color: #000; }
+
+        /* Demo Mode Dropdown */
+        .demo-modes { margin-top: 8px; }
+        .demo-modes h4 { color: #9b59b6; font-size: 0.7rem; margin-bottom: 5px; }
+
+        .demo-modes select {
+            width: 100%;
+            padding: 6px 8px;
+            background: rgba(155, 89, 182, 0.15);
+            border: 1px solid rgba(155, 89, 182, 0.5);
+            border-radius: 4px;
+            color: #9b59b6;
+            font-size: 0.7rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .demo-modes select:hover { background: rgba(155, 89, 182, 0.25); }
+        .demo-modes select:focus { border-color: #9b59b6; }
+
+        .mode-desc {
+            font-size: 0.6rem;
+            color: #888;
+            margin-top: 4px;
+            padding: 4px 6px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+        /* Spiral Controls */
+        .spiral-controls {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+            display: none;
+        }
+
+        .spiral-controls.visible { display: block; }
+        .spiral-controls h4 { color: #e91e63; font-size: 0.7rem; margin-bottom: 5px; }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 4px 0;
+            font-size: 0.65rem;
+            color: #aaa;
+        }
+
+        .checkbox-row input { accent-color: #e91e63; }
+
+        /* Status Bar */
+        #status-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid #555;
+            border-radius: 15px;
+            padding: 6px 15px;
+            display: flex;
+            gap: 15px;
+            font-size: 0.7rem;
+        }
+
+        .status-item { display: flex; align-items: center; gap: 4px; }
+        .status-item.paused { color: #e74c3c; }
+
+        /* Insight Panel */
+        #insight-panel {
+            position: absolute;
+            bottom: 50px;
+            left: 10px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid #2ecc71;
+            border-radius: 8px;
+            padding: 8px 12px;
+            max-width: 300px;
+        }
+
+        #insight-panel h3 { color: #2ecc71; font-size: 0.7rem; margin-bottom: 4px; }
+        #insight-text { font-size: 0.75rem; line-height: 1.3; color: #ccc; }
+
+        /* Instructions */
+        #instructions {
+            position: absolute;
+            bottom: 50px;
+            right: 10px;
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 8px 10px;
+            font-size: 0.6rem;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        #instructions kbd {
+            background: #333;
+            border: 1px solid #555;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-family: monospace;
+        }
+
+        /* Paused Overlay */
+        #paused-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(231, 76, 60, 0.9);
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: none;
+            z-index: 100;
+        }
+
+        #paused-overlay.visible { display: block; }
+
+        /* Trail toggle indicator */
+        .trail-indicator {
+            position: absolute;
+            top: 50%;
+            right: 240px;
+            transform: translateY(-50%);
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid #e91e63;
+            border-radius: 5px;
+            padding: 6px 10px;
+            font-size: 0.65rem;
+            display: none;
+        }
+
+        .trail-indicator.visible { display: block; }
+        .trail-indicator h4 { color: #e91e63; margin-bottom: 3px; }
+
+        /* Speed Control */
+        #speed-control {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .speed-btn {
+            background: #333;
+            border: 1px solid #555;
+            color: #aaa;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.15s;
+        }
+
+        .speed-btn:hover { background: #444; color: #fff; }
+        .speed-btn.active { background: #2ecc71; color: #000; border-color: #2ecc71; }
+        
+        .speed-btn.timer-toggle {
+            margin-left: 8px;
+            border-color: #3498db;
+        }
+        .speed-btn.timer-toggle.active { background: #3498db; border-color: #3498db; }
+
+        /* Quick Actions */
+        #quick-actions {
+            position: absolute;
+            bottom: 135px;
+            right: 10px;
+            display: flex;
+            gap: 6px;
+        }
+
+        #quick-actions button {
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid #555;
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.15s;
+        }
+
+        #quick-actions button:hover { background: #333; border-color: #2ecc71; }
+        #quick-actions button.active { background: #2ecc71; border-color: #2ecc71; }
+
+        /* Help Overlay */
+        #help-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #help-overlay.visible { display: flex; }
+
+        .help-content {
+            background: rgba(20, 25, 40, 0.98);
+            border: 2px solid #2ecc71;
+            border-radius: 12px;
+            padding: 25px 35px;
+            max-width: 800px;
+            color: #eee;
+        }
+
+        .help-content h2 { color: #2ecc71; margin-bottom: 20px; text-align: center; }
+        .help-content h3 { color: #f39c12; margin-bottom: 8px; font-size: 0.9rem; }
+
+        .help-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .help-col p { font-size: 0.75rem; margin: 4px 0; color: #bbb; }
+        .help-col kbd {
+            background: #333;
+            border: 1px solid #555;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.7rem;
+        }
+
+        .help-close {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        /* UI Hidden State */
+        body.ui-hidden #math-panel,
+        body.ui-hidden #controls-panel,
+        body.ui-hidden #insight-panel,
+        body.ui-hidden #instructions,
+        body.ui-hidden #speed-control,
+        body.ui-hidden .trail-indicator {
+            display: none !important;
+        }
+
+        body.ui-hidden #status-bar {
+            opacity: 0.3;
+        }
+
+        body.ui-hidden #quick-actions {
+            opacity: 0.3;
+        }
+
+        body.ui-hidden #quick-actions:hover,
+        body.ui-hidden #status-bar:hover {
+            opacity: 1;
+        }
+
+        /* Share Toast */
+        #share-toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2ecc71;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: none;
+            z-index: 500;
+        }
+
+        #share-toast.visible { display: block; animation: fadeInOut 2s forwards; }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            #math-panel { width: 240px; font-size: 0.7rem; }
+            #controls-panel { width: 180px; }
+            #insight-panel { max-width: 240px; }
+            .help-columns { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <!-- Math Panel -->
+    <div id="math-panel">
+        <h2>📐 Related Rates <span id="problem-badge" style="font-size:0.6rem;padding:2px 6px;border-radius:8px;background:#9b59b6;color:#fff;margin-left:5px;">Shadow</span></h2>
+        
+        <!-- SHADOW PROBLEM -->
+        <div id="shadow-math" class="problem-math active">
+        <div class="math-section">
+            <h3>Constants</h3>
+            <div class="math-row">
+                <span class="math-label">Lamp H</span>
+                <span class="math-value" id="lamp-height">15.0 ft</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Your h</span>
+                <span class="math-value" id="player-height">6.0 ft</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">m = h/(H−h)</span>
+                <span class="math-value angular" id="ratio-m">0.667</span>
+            </div>
+        </div>
+
+        <div class="math-section">
+            <h3>Position (Polar)</h3>
+            <div class="math-row">
+                <span class="math-label">r (distance)</span>
+                <span class="math-value distance" id="distance-r">0.00 ft</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">θ (angle)</span>
+                <span class="math-value angular" id="angle-theta">0°</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">s (shadow)</span>
+                <span class="math-value shadow" id="shadow-s">0.00 ft</span>
+            </div>
+        </div>
+
+        <div class="math-section">
+            <h3>Velocity Components</h3>
+            <div class="rate-components">
+                <div class="rate-box">
+                    <div class="label">Radial dr/dt</div>
+                    <div class="value velocity" id="rate-dr">0.00</div>
+                </div>
+                <div class="rate-box">
+                    <div class="label">Angular r·dθ/dt</div>
+                    <div class="value angular" id="rate-tangent">0.00</div>
+                </div>
+                <div class="rate-box">
+                    <div class="label">Shadow ds/dt</div>
+                    <div class="value rate" id="rate-ds">0.00</div>
+                </div>
+                <div class="rate-box">
+                    <div class="label">Tip Speed</div>
+                    <div class="value tip" id="tip-speed">0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="formula-box">
+            <div class="formula">ds/dt = m · dr/dt</div>
+            <div class="formula-computed" id="rate-formula">ds/dt = (0.667)(0) = 0</div>
+        </div>
+
+        <div class="key-insight" id="key-insight">
+            🔑 Shadow rate depends ONLY on radial motion!
+        </div>
+        </div><!-- end shadow-math -->
+        
+        <!-- LADDER PROBLEM -->
+        <div id="ladder-math" class="problem-math">
+            <div class="math-section">
+                <h3>🪜 Ladder Constraint</h3>
+                <div class="math-row">
+                    <span class="math-label">Ladder L</span>
+                    <span class="math-value ladder" id="ladder-L">20.0 ft</span>
+                </div>
+                <div class="math-row">
+                    <span class="math-label">Base x</span>
+                    <span class="math-value distance" id="ladder-x">8.00 ft</span>
+                </div>
+                <div class="math-row">
+                    <span class="math-label">Top y</span>
+                    <span class="math-value ladder" id="ladder-y">18.33 ft</span>
+                </div>
+            </div>
+            <div class="math-section">
+                <h3>Rates</h3>
+                <div class="rate-components">
+                    <div class="rate-box">
+                        <div class="label">dx/dt (base)</div>
+                        <div class="value velocity" id="ladder-dxdt">0.00</div>
+                    </div>
+                    <div class="rate-box">
+                        <div class="label">dy/dt (top)</div>
+                        <div class="value rate" id="ladder-dydt">0.00</div>
+                    </div>
+                </div>
+            </div>
+            <div class="formula-box" style="border-color:#00e676; background:rgba(0,230,118,0.1);">
+                <div class="formula" style="color:#00e676;">x² + y² = L²</div>
+                <div class="formula-computed" id="ladder-formula">dy/dt = -(x/y)·dx/dt</div>
+            </div>
+            <div class="key-insight" style="border-color:#00e676;color:#00e676;background:rgba(0,230,118,0.15);">
+                🔑 As base slides out, top falls FASTER!
+            </div>
+        </div>
+        
+        <!-- WINCH PROBLEM -->
+        <div id="winch-math" class="problem-math">
+            <div class="math-section">
+                <h3>⚓ Boat & Winch</h3>
+                <div class="math-row">
+                    <span class="math-label">Dock Height H</span>
+                    <span class="math-value" id="winch-H">15.0 ft</span>
+                </div>
+                <div class="math-row">
+                    <span class="math-label">Rope Length L</span>
+                    <span class="math-value distance" id="winch-L">25.00 ft</span>
+                </div>
+                <div class="math-row">
+                    <span class="math-label">Boat Distance x</span>
+                    <span class="math-value winch" id="winch-x">20.00 ft</span>
+                </div>
+            </div>
+            <div class="math-section">
+                <h3>Rates</h3>
+                <div class="rate-components">
+                    <div class="rate-box">
+                        <div class="label">dL/dt (rope)</div>
+                        <div class="value velocity" id="winch-dLdt">-2.00</div>
+                    </div>
+                    <div class="rate-box">
+                        <div class="label">dx/dt (boat)</div>
+                        <div class="value rate" id="winch-dxdt">0.00</div>
+                    </div>
+                </div>
+            </div>
+            <div class="formula-box" style="border-color:#58d68d; background:rgba(88,214,141,0.1);">
+                <div class="formula" style="color:#58d68d;">x² + H² = L²</div>
+                <div class="formula-computed" id="winch-formula">dx/dt = (L/x)·dL/dt</div>
+            </div>
+            <div class="key-insight" style="border-color:#58d68d;color:#58d68d;background:rgba(88,214,141,0.15);">
+                🔑 Boat ACCELERATES as it approaches dock!
+            </div>
+        </div>
+        
+        <!-- BEACON PROBLEM -->
+        <div id="beacon-math" class="problem-math">
+            <div class="math-section">
+                <h3>🔦 Rotating Beacon</h3>
+                <div class="math-row">
+                    <span class="math-label">Wall Distance D</span>
+                    <span class="math-value" id="beacon-D">15.0 ft</span>
+                </div>
+                <div class="math-row">
+                    <span class="math-label">Angle θ</span>
+                    <span class="math-value angular" id="beacon-theta">0°</span>
+                </div>
+                <div class="math-row">
+                    <span class="math-label">Spot Position y</span>
+                    <span class="math-value beacon" id="beacon-y">0.00 ft</span>
+                </div>
+            </div>
+            <div class="math-section">
+                <h3>Rates</h3>
+                <div class="rate-components">
+                    <div class="rate-box">
+                        <div class="label">dθ/dt (spin)</div>
+                        <div class="value angular" id="beacon-omega-display">0.50</div>
+                    </div>
+                    <div class="rate-box">
+                        <div class="label">dy/dt (spot)</div>
+                        <div class="value rate" id="beacon-dydt">0.00</div>
+                    </div>
+                </div>
+            </div>
+            <div class="formula-box" style="border-color:#f1c40f; background:rgba(241,196,15,0.1);">
+                <div class="formula" style="color:#f1c40f;">y = D·tan(θ)</div>
+                <div class="formula-computed" id="beacon-formula">dy/dt = D·sec²(θ)·dθ/dt</div>
+            </div>
+            <div class="key-insight" style="border-color:#f1c40f;color:#f1c40f;background:rgba(241,196,15,0.15);">
+                🔑 Spot moves INFINITELY fast at edges!
+            </div>
+        </div>
+        
+        <!-- CURVATURE (Higher Math) -->
+        <div id="curvature-math" class="problem-math">
+            <div class="math-section">
+                <h3>⭕ Path Curvature</h3>
+                <div class="math-row">
+                    <span class="math-label">Speed |v|</span>
+                    <span class="math-value velocity" id="curv-speed">0.00 ft/s</span>
+                </div>
+                <div class="math-row">
+                    <span class="math-label">Curvature κ</span>
+                    <span class="math-value curvature" id="curv-kappa">0.000</span>
+                </div>
+                <div class="math-row">
+                    <span class="math-label">Radius R = 1/κ</span>
+                    <span class="math-value curvature" id="curv-radius">∞</span>
+                </div>
+            </div>
+            <div class="math-section">
+                <h3>Acceleration Components</h3>
+                <div class="rate-components">
+                    <div class="rate-box">
+                        <div class="label">Tangent aₜ</div>
+                        <div class="value velocity" id="curv-at">0.00</div>
+                    </div>
+                    <div class="rate-box">
+                        <div class="label">Normal aₙ = v²κ</div>
+                        <div class="value rate" id="curv-an">0.00</div>
+                    </div>
+                </div>
+            </div>
+            <div class="formula-box" style="border-color:#ff00ff; background:rgba(255,0,255,0.1);">
+                <div class="formula" style="color:#ff00ff;">κ = |v⃗ × a⃗| / |v⃗|³</div>
+                <div class="formula-computed" id="curv-formula">Osculating circle R = 1/κ</div>
+            </div>
+            <div class="higher-math-note">
+                <strong>🎓 Higher Math:</strong> Differential Geometry — used in GPS, robotics, self-driving cars
+            </div>
+        </div>
+        
+        <!-- Two Cars Distance Section -->
+        <div class="math-section" id="distance-section" style="display:none; border: 1px solid #2ecc71;">
+            <h3 style="color:#2ecc71;">🚗 Two Cars Distance</h3>
+            <div class="math-row">
+                <span class="math-label">Distance D</span>
+                <span class="math-value" style="color:#2ecc71" id="distance-d">0.00 ft</span>
+            </div>
+            <div class="math-row">
+                <span class="math-label">Rate dD/dt</span>
+                <span class="math-value" style="color:#e74c3c" id="distance-rate">0.00 ft/s</span>
+            </div>
+            <div class="formula-box" style="border-color:#2ecc71; background:rgba(46,204,113,0.1);">
+                <div class="formula" style="color:#2ecc71; font-size:0.85rem;">dD/dt = (Δx·Δvx + Δz·Δvz) / D</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div id="controls-panel">
+        <!-- Problem Type Selector -->
+        <div class="problem-selector">
+            <h4>📚 Problem Type</h4>
+            <select id="problem-select">
+                <optgroup label="📖 Classic Textbook">
+                    <option value="shadow" selected>🌑 Shadow (walking away)</option>
+                    <option value="ladder">🪜 Sliding Ladder</option>
+                    <option value="winch">⚓ Boat & Winch</option>
+                    <option value="beacon">🔦 Rotating Beacon</option>
+                </optgroup>
+                <optgroup label="🎓 Higher Math Preview">
+                    <option value="curvature">⭕ Path Curvature</option>
+                </optgroup>
+            </select>
+            <div class="problem-desc" id="problem-desc">Person walks away from lamp. How fast does shadow grow?</div>
+        </div>
+        
+        <!-- Shadow-specific controls -->
+        <div id="shadow-controls" class="problem-controls" style="display:block;">
+        <h3>⚙️ Parameters</h3>
+        <div class="control-row">
+            <label>Lamp H</label>
+            <input type="range" id="lamp-slider" min="10" max="25" value="15" step="0.5">
+            <span id="lamp-slider-val">15</span>
+        </div>
+        <div class="control-row">
+            <label>Your h</label>
+            <input type="range" id="player-slider" min="3" max="8" value="6" step="0.5">
+            <span id="player-slider-val">6</span>
+        </div>
+        </div><!-- end shadow-controls -->
+        
+        <!-- Ladder-specific controls -->
+        <div id="ladder-controls" class="problem-controls" style="display:none;">
+            <h3 style="color:#00e676;">🪜 Ladder Settings</h3>
+            <div class="control-row">
+                <label>Ladder L</label>
+                <input type="range" id="ladder-length" min="15" max="30" value="20" step="1">
+                <span id="ladder-length-val">20</span>
+            </div>
+        </div>
+        
+        <!-- Winch-specific controls -->
+        <div id="winch-controls" class="problem-controls" style="display:none;">
+            <h3 style="color:#58d68d;">⚓ Winch Settings</h3>
+            <div class="control-row">
+                <label>Dock H</label>
+                <input type="range" id="winch-height" min="8" max="20" value="15" step="1">
+                <span id="winch-height-val">15</span>
+            </div>
+            <div class="control-row">
+                <label>Pull Rate</label>
+                <input type="range" id="winch-rate" min="-5" max="-0.5" value="-2" step="0.5">
+                <span id="winch-rate-val">-2</span>
+            </div>
+        </div>
+        
+        <!-- Beacon-specific controls -->
+        <div id="beacon-controls" class="problem-controls" style="display:none;">
+            <h3 style="color:#f1c40f;">🔦 Beacon Settings</h3>
+            <div class="control-row">
+                <label>Wall D</label>
+                <input type="range" id="beacon-dist" min="10" max="30" value="15" step="1">
+                <span id="beacon-dist-val">15</span>
+            </div>
+            <div class="control-row">
+                <label>Spin ω</label>
+                <input type="range" id="beacon-omega-slider" min="0.1" max="1.5" value="0.5" step="0.1">
+                <span id="beacon-omega-val">0.5</span>
+            </div>
+        </div>
+        
+        <!-- Curvature-specific controls -->
+        <div id="curvature-controls" class="problem-controls" style="display:none;">
+            <h3 style="color:#ff00ff;">⭕ Curvature Settings</h3>
+            <div class="checkbox-row">
+                <input type="checkbox" id="show-osculating" checked>
+                <label for="show-osculating">Show Osculating Circle</label>
+            </div>
+        </div>
+        
+        <h3 style="margin-top:8px;">📷 Camera</h3>
+        <div class="btn-row">
+            <button class="btn active" id="cam-follow">Follow</button>
+            <button class="btn" id="cam-side">Side</button>
+            <button class="btn" id="cam-top">Top</button>
+        </div>
+
+        <div class="demo-modes">
+            <h4>🎬 Demo Mode</h4>
+            <select id="mode-select">
+                <option value="manual">🎮 Manual Control</option>
+                <option value="orbit">🌀 Ellipse Orbit</option>
+                <option value="spiral-out">🌊 Spiral Out</option>
+                <option value="spiral-in">🕳️ Spiral In</option>
+                <option value="oscillate">〰️ In/Out Oscillate</option>
+            </select>
+            <div class="mode-desc" id="mode-desc">WASD to move freely</div>
+            
+            <div class="checkbox-row" style="margin-top:8px;">
+                <input type="checkbox" id="two-cars-toggle">
+                <label for="two-cars-toggle">🚗🚙 Two Cars Mode</label>
+            </div>
+            <div class="two-cars-controls" id="two-cars-controls" style="display:none;">
+                <div class="two-cars-hint" style="font-size:0.55rem; color:#e67e22; margin:4px 0;">
+                    🟠 OKL; mirrors WASD in manual mode
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="p2-mirror" checked>
+                    <label for="p2-mirror">Mirror demo (180° offset)</label>
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="back-forth">
+                    <label for="back-forth">Back & Forth mode</label>
+                </div>
+                <div class="control-row">
+                    <label>P2 Offset</label>
+                    <input type="range" id="p2-offset" min="-20" max="20" value="0" step="1">
+                    <span id="p2-offset-val">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="spiral-controls" id="spiral-controls">
+            <h4>⚙️ Mode Settings</h4>
+            <div class="control-row">
+                <label>Spiral Rate</label>
+                <input type="range" id="spiral-rate" min="0.1" max="2" value="0.5" step="0.1">
+                <span id="spiral-rate-val">0.5</span>
+            </div>
+            <div class="control-row">
+                <label>Angular Speed</label>
+                <input type="range" id="angular-speed" min="0.2" max="2" value="0.8" step="0.1">
+                <span id="angular-speed-val">0.8</span>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="conserve-momentum" checked>
+                <label for="conserve-momentum">Conserve Angular Momentum</label>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="show-trail" checked>
+                <label for="show-trail">Show Trail</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insight Panel -->
+    <div id="insight-panel">
+        <h3>💡 Insight</h3>
+        <div id="insight-text">Move with WASD or select a demo mode!</div>
+    </div>
+
+    <!-- Trail Indicator -->
+    <div class="trail-indicator" id="trail-indicator">
+        <h4>📍 Trail Active</h4>
+        <div>Points: <span id="trail-count">0</span></div>
+    </div>
+
+    <!-- Instructions -->
+    <div id="instructions">
+        🔵 <kbd>WASD</kbd>/<kbd>↑↓←→</kbd> Move<br>
+        <kbd>Shift</kbd> Run | <kbd>Space</kbd> Pause<br>
+        <kbd>C</kbd> Cam | <kbd>T</kbd> Trail | <kbd>R</kbd> Reset<br>
+        <kbd>M</kbd> Hide UI | <kbd>?</kbd> Help
+    </div>
+
+    <!-- Paused Overlay -->
+    <div id="paused-overlay">⏸️ PAUSED</div>
+
+    <!-- Status Bar -->
+    <div id="status-bar">
+        <div class="status-item" id="status-problem">🌑 Shadow</div>
+        <div class="status-item" id="status-mode">🎮 Manual</div>
+        <div class="status-item" id="status-speed">1×</div>
+        <div class="status-item" id="status-timer" style="display:none;">⏱️ <span id="timer-display">0.0s</span></div>
+        <div class="status-item" id="status-cam" style="display:none;">🎥 Free</div>
+        <div class="status-item paused" id="status-paused" style="display:none;">⏸️ PAUSED</div>
+    </div>
+    
+    <!-- Speed Control -->
+    <div id="speed-control">
+        <button class="speed-btn" data-speed="0.25">¼×</button>
+        <button class="speed-btn" data-speed="0.5">½×</button>
+        <button class="speed-btn active" data-speed="1">1×</button>
+        <button class="speed-btn" data-speed="2">2×</button>
+        <button class="speed-btn timer-toggle" id="btn-timer" title="Toggle Timer">⏱️</button>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div id="quick-actions">
+        <button id="btn-freecam" title="Free Camera (F)">🎥</button>
+        <button id="btn-share" title="Share URL">🔗</button>
+        <button id="btn-screenshot" title="Screenshot">📷</button>
+        <button id="btn-help" title="Help (?)">❓</button>
+    </div>
+    
+    <!-- Help Overlay -->
+    <div id="help-overlay">
+        <div class="help-content">
+            <h2>⌨️ Keyboard Shortcuts</h2>
+            <div class="help-columns">
+                <div class="help-col">
+                    <h3>Movement</h3>
+                    <p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> — Move</p>
+                    <p><kbd>Shift</kbd> — Run (2× speed)</p>
+                    <p><kbd>O</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd> — Player 2 (Two Cars)</p>
+                </div>
+                <div class="help-col">
+                    <h3>Camera</h3>
+                    <p><kbd>C</kbd> — Cycle camera (Follow/Side/Top)</p>
+                    <p><kbd>F</kbd> — Toggle free camera</p>
+                    <p>Drag to orbit when free cam is on</p>
+                </div>
+                <div class="help-col">
+                    <h3>Simulation</h3>
+                    <p><kbd>Space</kbd> — Pause/Resume</p>
+                    <p><kbd>R</kbd> — Reset position</p>
+                    <p><kbd>T</kbd> — Toggle trail</p>
+                    <p><kbd>[</kbd> <kbd>]</kbd> — Slow down / Speed up</p>
+                </div>
+                <div class="help-col">
+                    <h3>Modes & Problems</h3>
+                    <p><kbd>1</kbd>-<kbd>5</kbd> — Demo modes</p>
+                    <p><kbd>6</kbd> Shadow | <kbd>7</kbd> Ladder | <kbd>8</kbd> Winch</p>
+                    <p><kbd>9</kbd> Beacon | <kbd>0</kbd> Curvature</p>
+                </div>
+                <div class="help-col">
+                    <h3>Interface</h3>
+                    <p><kbd>M</kbd> — Hide/Show UI</p>
+                    <p><kbd>?</kbd> — This help screen</p>
+                    <p><kbd>⏱️</kbd> button — Toggle timer</p>
+                </div>
+            </div>
+            <p class="help-close">Press <kbd>?</kbd> or <kbd>Esc</kbd> to close</p>
+        </div>
+    </div>
+    
+    <!-- Share Toast -->
+    <div id="share-toast">✓ URL copied to clipboard!</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// === CONFIG ===
+const CONFIG = {
+    lampHeight: 15,
+    playerHeight: 6,
+    groundSize: 100,
+    moveSpeed: 8,
+    runMultiplier: 2,
+    // Orbit
+    orbitA: 12,
+    orbitB: 8,
+    // Spiral
+    spiralRate: 0.5,
+    angularSpeed: 0.8,
+    conserveMomentum: true,
+    angularMomentum: 80,
+    // Oscillate
+    oscillateAmp: 4,
+    oscillateFreq: 0.3,
+    // Ladder
+    ladderLength: 20,
+    // Winch
+    winchHeight: 15,
+    winchRate: -2,
+    winchInitialRope: 30,
+    // Beacon
+    beaconDist: 15,
+    beaconOmega: 0.5,
+    // Time
+    timeScale: 1.0
+};
+
+// === STATE ===
+const state = {
+    // Player 1 (Blue) - Polar coordinates
+    r: 8,
+    theta: 0,
+    x: 8,
+    z: 0,
+    vx: 0,
+    vz: 0,
+    rdot: 0,
+    thetadot: 0,
+    dsdt: 0,
+    tipSpeed: 0,
+    shadowLength: 0,
+    shadowEndX: 0,
+    shadowEndZ: 0,
+    
+    // Player 2 (Orange) - for Two Cars mode
+    p2: {
+        r: 8,
+        theta: Math.PI,
+        x: -8,
+        z: 0,
+        vx: 0,
+        vz: 0,
+        rdot: 0,
+        shadowLength: 0,
+        shadowEndX: 0,
+        shadowEndZ: 0
+    },
+    
+    // Distance between players (Two Cars)
+    distance: 16,
+    dDistancedt: 0,
+    
+    // Problem Type
+    problemType: 'shadow',
+    
+    // Ladder state
+    ladderY: 0,
+    ladderDydt: 0,
+    
+    // Winch state
+    ropeLength: 30,
+    boatX: 25,
+    boatDxdt: 0,
+    
+    // Beacon state
+    beaconTheta: 0,
+    beaconY: 0,
+    beaconDydt: 0,
+    
+    // Curvature state
+    curvature: 0,
+    curvatureRadius: Infinity,
+    prevVx: 0,
+    prevVz: 0,
+    normalAccel: 0,
+    tangentAccel: 0,
+    showOsculating: true,
+    
+    // Mode
+    demoMode: 'manual',
+    twoCarsMode: false,
+    p2Mirror: true,
+    backForth: false,
+    p2Offset: 0,
+    backForthPhase: 0,
+    paused: false,
+    cameraMode: 'follow',
+    showTrail: true,
+    freeCam: false,
+    uiHidden: false,
+    showTimer: false,
+    simTime: 0,  // Accumulated simulation time
+    
+    // Trail
+    trailPoints: [],
+    trailPoints2: [],
+    maxTrailPoints: 500
+};
+
+const keys = { w: false, a: false, s: false, d: false, shift: false };
+const keys2 = { up: false, left: false, down: false, right: false };
+
+// === THREE.JS ===
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a1a);
+scene.fog = new THREE.Fog(0x0a0a1a, 50, 150);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+camera.position.set(-5, 15, 30);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('container').appendChild(renderer.domElement);
+
+// === ORBIT CONTROLS (Free Cam) ===
+const orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+orbitControls.enabled = false;
+orbitControls.enableDamping = true;
+orbitControls.dampingFactor = 0.05;
+orbitControls.maxPolarAngle = Math.PI * 0.45; // Don't go below ground
+
+// === LIGHTING ===
+scene.add(new THREE.AmbientLight(0x1a1a2e, 0.4));
+
+const lampLight = new THREE.SpotLight(0xffeaa7, 2.5, 100, Math.PI / 3, 0.4, 1);
+lampLight.position.set(0, CONFIG.lampHeight, 0);
+lampLight.castShadow = true;
+lampLight.shadow.mapSize.width = 2048;
+lampLight.shadow.mapSize.height = 2048;
+scene.add(lampLight);
+
+const glowLight = new THREE.PointLight(0xf39c12, 1.5, 30);
+glowLight.position.set(0, CONFIG.lampHeight, 0);
+scene.add(glowLight);
+
+// === GROUND ===
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(CONFIG.groundSize, CONFIG.groundSize),
+    new THREE.MeshStandardMaterial({ color: 0x0f0f1a, roughness: 0.95 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(CONFIG.groundSize, 25, 0x2a2a3a, 0x1a1a2a);
+grid.position.y = 0.01;
+scene.add(grid);
+
+// === LAMPPOST ===
+const lamppost = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.25, CONFIG.lampHeight, 8),
+    new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.8 })
+);
+lamppost.position.set(0, CONFIG.lampHeight / 2, 0);
+lamppost.castShadow = true;
+scene.add(lamppost);
+
+const lampHead = new THREE.Mesh(
+    new THREE.SphereGeometry(0.6, 16, 16),
+    new THREE.MeshStandardMaterial({ color: 0xf39c12, emissive: 0xf39c12, emissiveIntensity: 1 })
+);
+lampHead.position.set(0, CONFIG.lampHeight, 0);
+scene.add(lampHead);
+
+// === PLAYER ===
+const player = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.6, 0.8, CONFIG.playerHeight, 16),
+    new THREE.MeshStandardMaterial({ color: 0x3498db, roughness: 0.5 })
+);
+player.position.set(state.x, CONFIG.playerHeight / 2, state.z);
+player.castShadow = true;
+scene.add(player);
+
+const playerHead = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 16, 16),
+    new THREE.MeshStandardMaterial({ color: 0x2980b9 })
+);
+playerHead.position.set(state.x, CONFIG.playerHeight + 0.2, state.z);
+playerHead.castShadow = true;
+scene.add(playerHead);
+
+// === PLAYER 2 (Orange - for Two Cars mode) ===
+const player2 = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.6, 0.8, CONFIG.playerHeight, 16),
+    new THREE.MeshStandardMaterial({ color: 0xe67e22, roughness: 0.5 })
+);
+player2.position.set(state.p2.x, CONFIG.playerHeight / 2, state.p2.z);
+player2.castShadow = true;
+player2.visible = false;
+scene.add(player2);
+
+const player2Head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 16, 16),
+    new THREE.MeshStandardMaterial({ color: 0xd35400 })
+);
+player2Head.position.set(state.p2.x, CONFIG.playerHeight + 0.2, state.p2.z);
+player2Head.castShadow = true;
+player2Head.visible = false;
+scene.add(player2Head);
+
+// Player 2 light ray
+const ray2Geometry = new THREE.BufferGeometry();
+const lightRay2 = new THREE.Line(ray2Geometry, new THREE.LineBasicMaterial({ 
+    color: 0xe67e22, transparent: true, opacity: 0.5 
+}));
+lightRay2.visible = false;
+scene.add(lightRay2);
+
+// Player 2 shadow line
+const shadow2LineGeometry = new THREE.BufferGeometry();
+const shadow2Line = new THREE.Line(shadow2LineGeometry, 
+    new THREE.LineBasicMaterial({ color: 0xe67e22, transparent: true, opacity: 0.6 }));
+shadow2Line.visible = false;
+scene.add(shadow2Line);
+
+// Distance line between players
+const distanceLineMaterial = new THREE.LineBasicMaterial({ color: 0x2ecc71, transparent: true, opacity: 0.8 });
+const distanceLineGeometry = new THREE.BufferGeometry();
+const distanceLine = new THREE.Line(distanceLineGeometry, distanceLineMaterial);
+distanceLine.visible = false;
+scene.add(distanceLine);
+
+// === LIGHT RAY ===
+const rayGeometry = new THREE.BufferGeometry();
+const lightRay = new THREE.Line(rayGeometry, new THREE.LineBasicMaterial({ 
+    color: 0xffeaa7, transparent: true, opacity: 0.5 
+}));
+scene.add(lightRay);
+
+// === SHADOW MARKER ===
+const shadowMarker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.3, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0x9b59b6 })
+);
+shadowMarker.position.y = 0.3;
+scene.add(shadowMarker);
+
+// Shadow line
+const shadowLineGeometry = new THREE.BufferGeometry();
+const shadowLine = new THREE.Line(shadowLineGeometry, 
+    new THREE.LineBasicMaterial({ color: 0x9b59b6, transparent: true, opacity: 0.6 }));
+scene.add(shadowLine);
+
+// === WALL (for Ladder & Beacon) ===
+const wall = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 50),
+    new THREE.MeshStandardMaterial({ color: 0x8b4513, side: THREE.DoubleSide, transparent: true, opacity: 0.7 })
+);
+wall.rotation.y = Math.PI / 2;
+wall.position.set(0, 25, 0);
+wall.visible = false;
+scene.add(wall);
+
+// === LADDER LINE ===
+const ladderGeometry = new THREE.BufferGeometry();
+const ladderLine = new THREE.Line(ladderGeometry, 
+    new THREE.LineBasicMaterial({ color: 0x00e676, linewidth: 3 }));
+ladderLine.visible = false;
+scene.add(ladderLine);
+
+// Ladder as solid mesh (cylinder)
+const ladderMesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.2, 0.2, 1, 8),
+    new THREE.MeshStandardMaterial({ color: 0x8b4513, metalness: 0.3, roughness: 0.7 })
+);
+ladderMesh.visible = false;
+scene.add(ladderMesh);
+
+const ladderTopMarker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0x00e676 })
+);
+ladderTopMarker.visible = false;
+scene.add(ladderTopMarker);
+
+// Ladder base marker (shows where base is on ground)
+const ladderBaseMarker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.4, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0xff9800 })  // Orange
+);
+ladderBaseMarker.visible = false;
+scene.add(ladderBaseMarker);
+
+// === ROPE LINE (Winch) ===
+const ropeGeometry = new THREE.BufferGeometry();
+const ropeLine = new THREE.Line(ropeGeometry, 
+    new THREE.LineBasicMaterial({ color: 0x58d68d, linewidth: 2 }));
+ropeLine.visible = false;
+scene.add(ropeLine);
+
+// Dock structure for Winch
+const dockGroup = new THREE.Group();
+
+// Dock base on ground
+const dockBase = new THREE.Mesh(
+    new THREE.BoxGeometry(3, 0.5, 3),
+    new THREE.MeshStandardMaterial({ color: 0x5d4037 })
+);
+dockBase.position.set(0, 0.25, 0);
+dockGroup.add(dockBase);
+
+// Vertical post from dock to winch height
+const dockPost = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.3, 0.3, CONFIG.winchHeight, 8),
+    new THREE.MeshStandardMaterial({ color: 0x795548 })
+);
+dockPost.position.set(0, CONFIG.winchHeight / 2, 0);
+dockGroup.add(dockPost);
+
+// Winch box at top
+const winchMarker = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 1, 1.5),
+    new THREE.MeshStandardMaterial({ color: 0x8d6e63 })
+);
+winchMarker.position.set(0, CONFIG.winchHeight + 0.5, 0);
+dockGroup.add(winchMarker);
+
+dockGroup.visible = false;
+scene.add(dockGroup);
+
+// Boat marker
+const boatMarker = new THREE.Mesh(
+    new THREE.ConeGeometry(1, 3, 8),
+    new THREE.MeshStandardMaterial({ color: 0x2196f3 })
+);
+boatMarker.rotation.z = Math.PI / 2;
+boatMarker.visible = false;
+scene.add(boatMarker);
+
+// === BEACON BEAM ===
+const beaconGeometry = new THREE.BufferGeometry();
+const beaconBeam = new THREE.Line(beaconGeometry, 
+    new THREE.LineBasicMaterial({ color: 0xf1c40f, linewidth: 2 }));
+beaconBeam.visible = false;
+scene.add(beaconBeam);
+
+const beaconSpotMarker = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0xf1c40f })
+);
+beaconSpotMarker.visible = false;
+scene.add(beaconSpotMarker);
+
+// === OSCULATING CIRCLE (Curvature) ===
+const osculatingGeometry = new THREE.BufferGeometry();
+const osculatingCircle = new THREE.Line(osculatingGeometry, 
+    new THREE.LineBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.5 }));
+osculatingCircle.visible = false;
+scene.add(osculatingCircle);
+
+// T (tangent) and N (normal) arrows for curvature visualization
+const tangentArrow = new THREE.ArrowHelper(
+    new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 3, 0x00ffff, 0.5, 0.3
+);
+tangentArrow.visible = false;
+scene.add(tangentArrow);
+
+const normalArrow = new THREE.ArrowHelper(
+    new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 2, 0xff00ff, 0.4, 0.25
+);
+normalArrow.visible = false;
+scene.add(normalArrow);
+
+// === TRAIL ===
+const trailMaterial = new THREE.LineBasicMaterial({ color: 0xe91e63, transparent: true, opacity: 0.6 });
+const trailGeometry = new THREE.BufferGeometry();
+const trail = new THREE.Line(trailGeometry, trailMaterial);
+scene.add(trail);
+
+// Trail for player 2
+const trail2Material = new THREE.LineBasicMaterial({ color: 0xe67e22, transparent: true, opacity: 0.6 });
+const trail2Geometry = new THREE.BufferGeometry();
+const trail2 = new THREE.Line(trail2Geometry, trail2Material);
+trail2.visible = false;
+scene.add(trail2);
+
+// === ORBIT PATH PREVIEW ===
+function createOrbitPath() {
+    const points = [];
+    for (let i = 0; i <= 64; i++) {
+        const t = (i / 64) * Math.PI * 2;
+        points.push(new THREE.Vector3(
+            CONFIG.orbitA * Math.cos(t),
+            0.1,
+            CONFIG.orbitB * Math.sin(t)
+        ));
+    }
+    return points;
+}
+
+const orbitPath = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(createOrbitPath()),
+    new THREE.LineBasicMaterial({ color: 0x9b59b6, transparent: true, opacity: 0.2 })
+);
+orbitPath.visible = false;
+scene.add(orbitPath);
+
+// === UI ELEMENTS ===
+const ui = {
+    distanceR: document.getElementById('distance-r'),
+    angleTheta: document.getElementById('angle-theta'),
+    shadowS: document.getElementById('shadow-s'),
+    rateDr: document.getElementById('rate-dr'),
+    rateTangent: document.getElementById('rate-tangent'),
+    rateDs: document.getElementById('rate-ds'),
+    tipSpeed: document.getElementById('tip-speed'),
+    ratioM: document.getElementById('ratio-m'),
+    rateFormula: document.getElementById('rate-formula'),
+    keyInsight: document.getElementById('key-insight'),
+    insightText: document.getElementById('insight-text'),
+    lampHeight: document.getElementById('lamp-height'),
+    playerHeight: document.getElementById('player-height'),
+    lampSlider: document.getElementById('lamp-slider'),
+    playerSlider: document.getElementById('player-slider'),
+    lampSliderVal: document.getElementById('lamp-slider-val'),
+    playerSliderVal: document.getElementById('player-slider-val'),
+    spiralControls: document.getElementById('spiral-controls'),
+    modeSelect: document.getElementById('mode-select'),
+    modeDesc: document.getElementById('mode-desc'),
+    spiralRate: document.getElementById('spiral-rate'),
+    spiralRateVal: document.getElementById('spiral-rate-val'),
+    angularSpeed: document.getElementById('angular-speed'),
+    angularSpeedVal: document.getElementById('angular-speed-val'),
+    conserveMomentum: document.getElementById('conserve-momentum'),
+    showTrail: document.getElementById('show-trail'),
+    pausedOverlay: document.getElementById('paused-overlay'),
+    statusMode: document.getElementById('status-mode'),
+    statusPaused: document.getElementById('status-paused'),
+    trailIndicator: document.getElementById('trail-indicator'),
+    trailCount: document.getElementById('trail-count'),
+    twoCarsToggle: document.getElementById('two-cars-toggle'),
+    twoCarsControls: document.getElementById('two-cars-controls'),
+    p2Mirror: document.getElementById('p2-mirror'),
+    backForth: document.getElementById('back-forth'),
+    p2Offset: document.getElementById('p2-offset'),
+    p2OffsetVal: document.getElementById('p2-offset-val'),
+    distanceSection: document.getElementById('distance-section'),
+    distanceD: document.getElementById('distance-d'),
+    distanceRate: document.getElementById('distance-rate'),
+    
+    // Problem selector
+    problemSelect: document.getElementById('problem-select'),
+    problemDesc: document.getElementById('problem-desc'),
+    problemBadge: document.getElementById('problem-badge'),
+    
+    // Ladder UI
+    ladderL: document.getElementById('ladder-L'),
+    ladderX: document.getElementById('ladder-x'),
+    ladderY: document.getElementById('ladder-y'),
+    ladderDxdt: document.getElementById('ladder-dxdt'),
+    ladderDydt: document.getElementById('ladder-dydt'),
+    ladderFormula: document.getElementById('ladder-formula'),
+    ladderLength: document.getElementById('ladder-length'),
+    ladderLengthVal: document.getElementById('ladder-length-val'),
+    ladderControls: document.getElementById('ladder-controls'),
+    shadowControls: document.getElementById('shadow-controls'),
+    
+    // Winch UI
+    winchH: document.getElementById('winch-H'),
+    winchL: document.getElementById('winch-L'),
+    winchX: document.getElementById('winch-x'),
+    winchDLdt: document.getElementById('winch-dLdt'),
+    winchDxdt: document.getElementById('winch-dxdt'),
+    winchFormula: document.getElementById('winch-formula'),
+    winchHeight: document.getElementById('winch-height'),
+    winchHeightVal: document.getElementById('winch-height-val'),
+    winchRate: document.getElementById('winch-rate'),
+    winchRateVal: document.getElementById('winch-rate-val'),
+    winchControls: document.getElementById('winch-controls'),
+    
+    // Beacon UI
+    beaconD: document.getElementById('beacon-D'),
+    beaconTheta: document.getElementById('beacon-theta'),
+    beaconY: document.getElementById('beacon-y'),
+    beaconOmega: document.getElementById('beacon-omega-display'),
+    beaconDydt: document.getElementById('beacon-dydt'),
+    beaconFormula: document.getElementById('beacon-formula'),
+    beaconDist: document.getElementById('beacon-dist'),
+    beaconDistVal: document.getElementById('beacon-dist-val'),
+    beaconOmegaSlider: document.getElementById('beacon-omega-slider'),
+    beaconOmegaVal: document.getElementById('beacon-omega-val'),
+    beaconControls: document.getElementById('beacon-controls'),
+    
+    // Curvature UI
+    curvSpeed: document.getElementById('curv-speed'),
+    curvKappa: document.getElementById('curv-kappa'),
+    curvRadius: document.getElementById('curv-radius'),
+    curvAt: document.getElementById('curv-at'),
+    curvAn: document.getElementById('curv-an'),
+    curvFormula: document.getElementById('curv-formula'),
+    showOsculating: document.getElementById('show-osculating'),
+    curvatureControls: document.getElementById('curvature-controls'),
+    
+    // Status bar
+    statusProblem: document.getElementById('status-problem'),
+    statusSpeed: document.getElementById('status-speed'),
+    statusCam: document.getElementById('status-cam'),
+    statusTimer: document.getElementById('status-timer'),
+    timerDisplay: document.getElementById('timer-display'),
+    btnTimer: document.getElementById('btn-timer'),
+    
+    // New UI elements
+    helpOverlay: document.getElementById('help-overlay'),
+    shareToast: document.getElementById('share-toast'),
+    speedControl: document.getElementById('speed-control'),
+    btnFreecam: document.getElementById('btn-freecam'),
+    btnShare: document.getElementById('btn-share'),
+    btnScreenshot: document.getElementById('btn-screenshot'),
+    btnHelp: document.getElementById('btn-help'),
+    mathPanel: document.getElementById('math-panel'),
+    controlsPanel: document.getElementById('controls-panel'),
+    insightPanel: document.getElementById('insight-panel'),
+    instructions: document.getElementById('instructions')
+};
+
+// === POLAR KINEMATICS (GPT-5) ===
+// Stabilize small numbers to prevent display jitter
+function stable(n, threshold = 0.005) {
+    return Math.abs(n) < threshold ? 0 : n;
+}
+
+// Convert radians to degrees [0, 360)
+function deg360(rad) {
+    const d = rad * 180 / Math.PI;
+    return ((d % 360) + 360) % 360;
+}
+
+function polarFromCartesian(x, z, vx, vz) {
+    const r = Math.hypot(x, z);
+    const theta = Math.atan2(z, x);
+    if (r < 0.01) return { r, theta, rdot: vx, thetadot: 0 };
+    const rdot = (x * vx + z * vz) / r;
+    const thetadot = (x * vz - z * vx) / (r * r);
+    return { r, theta, rdot, thetadot };
+}
+
+function cartesianFromPolar(r, theta, rdot, thetadot) {
+    const x = r * Math.cos(theta);
+    const z = r * Math.sin(theta);
+    const vx = rdot * Math.cos(theta) - r * thetadot * Math.sin(theta);
+    const vz = rdot * Math.sin(theta) + r * thetadot * Math.cos(theta);
+    return { x, z, vx, vz };
+}
+
+// === SHADOW MATH ===
+function calculateShadow(x, z, H, h) {
+    const r = Math.hypot(x, z);
+    if (r < 0.01 || H <= h) return { r, s: 0, endX: x, endZ: z };
+    const lambda = H / (H - h);
+    return { r, s: (h / (H - h)) * r, endX: lambda * x, endZ: lambda * z };
+}
+
+function tipSpeedFrom(r, thetadot, rdot, H, h) {
+    if (H <= h) return 0;
+    const lambda = H / (H - h);
+    return lambda * Math.hypot(rdot, r * thetadot);
+}
+
+// === PHYSICS UPDATE ===
+function updatePhysics(dt) {
+    if (state.paused) return;
+    
+    const H = CONFIG.lampHeight;
+    const h = CONFIG.playerHeight;
+    const m = h / (H - h);
+    
+    // Problem-specific: beacon and winch run automatically
+    if (state.problemType === 'beacon') {
+        updateBeaconProblem(dt);
+        updateCamera();
+        return;
+    }
+    
+    if (state.problemType === 'winch') {
+        updateWinchProblem(dt);
+        updateCamera();
+        return;
+    }
+    
+    // Standard motion modes
+    switch (state.demoMode) {
+        case 'manual':
+            updateManual(dt);
+            break;
+        case 'orbit':
+            updateOrbit(dt);
+            break;
+        case 'spiral-out':
+            updateSpiral(dt, 1);
+            break;
+        case 'spiral-in':
+            updateSpiral(dt, -1);
+            break;
+        case 'oscillate':
+            updateOscillate(dt);
+            break;
+    }
+    
+    // Ladder constrains to x-axis
+    if (state.problemType === 'ladder') {
+        state.z = 0;
+        state.vz = 0;
+        updateLadderProblem(dt);
+    }
+    
+    // Curvature calculation
+    if (state.problemType === 'curvature') {
+        updateCurvatureProblem(dt);
+    }
+    
+    // Calculate shadow (for shadow and curvature modes)
+    if (state.problemType === 'shadow' || state.problemType === 'curvature') {
+        const shadow = calculateShadow(state.x, state.z, H, h);
+        state.r = shadow.r;
+        state.shadowLength = shadow.s;
+        state.shadowEndX = shadow.endX;
+        state.shadowEndZ = shadow.endZ;
+        
+        // Calculate polar kinematics (but preserve theta for orbit mode)
+        const polar = polarFromCartesian(state.x, state.z, state.vx, state.vz);
+        state.rdot = polar.rdot;
+        state.thetadot = polar.thetadot;
+        if (state.demoMode === 'manual') {
+            state.theta = polar.theta;
+        }
+        
+        // Shadow rate
+        state.dsdt = m * state.rdot;
+        state.tipSpeed = tipSpeedFrom(state.r, state.thetadot, state.rdot, H, h);
+        
+        // Update 3D objects - Player 1
+        player.position.set(state.x, h / 2, state.z);
+        playerHead.position.set(state.x, h + 0.2, state.z);
+        
+        rayGeometry.setFromPoints([
+            new THREE.Vector3(0, H, 0),
+            new THREE.Vector3(state.x, h, state.z),
+            new THREE.Vector3(state.shadowEndX, 0, state.shadowEndZ)
+        ]);
+        
+        shadowMarker.position.set(state.shadowEndX, 0.3, state.shadowEndZ);
+        shadowLineGeometry.setFromPoints([
+            new THREE.Vector3(state.x, 0.05, state.z),
+            new THREE.Vector3(state.shadowEndX, 0.05, state.shadowEndZ)
+        ]);
+    }
+    
+    // === PLAYER 2 (Two Cars Mode) ===
+    if (state.twoCarsMode) {
+        updatePlayer2(dt);
+        
+        // Player 2 shadow
+        const shadow2 = calculateShadow(state.p2.x, state.p2.z, H, h);
+        state.p2.shadowLength = shadow2.s;
+        state.p2.shadowEndX = shadow2.endX;
+        state.p2.shadowEndZ = shadow2.endZ;
+        
+        // Player 2 polar kinematics
+        const polar2 = polarFromCartesian(state.p2.x, state.p2.z, state.p2.vx, state.p2.vz);
+        state.p2.rdot = polar2.rdot;
+        state.p2.r = shadow2.r;
+        
+        // Update Player 2 3D objects
+        player2.position.set(state.p2.x, h / 2, state.p2.z);
+        player2Head.position.set(state.p2.x, h + 0.2, state.p2.z);
+        
+        ray2Geometry.setFromPoints([
+            new THREE.Vector3(0, H, 0),
+            new THREE.Vector3(state.p2.x, h, state.p2.z),
+            new THREE.Vector3(state.p2.shadowEndX, 0, state.p2.shadowEndZ)
+        ]);
+        
+        shadow2LineGeometry.setFromPoints([
+            new THREE.Vector3(state.p2.x, 0.05, state.p2.z),
+            new THREE.Vector3(state.p2.shadowEndX, 0.05, state.p2.shadowEndZ)
+        ]);
+        
+        // Calculate distance between players (Two Cars formula!)
+        const dx = state.x - state.p2.x;
+        const dz = state.z - state.p2.z;
+        state.distance = Math.hypot(dx, dz);
+        
+        // dD/dt = (Δx·Δvx + Δz·Δvz) / D
+        const dvx = state.vx - state.p2.vx;
+        const dvz = state.vz - state.p2.vz;
+        if (state.distance > 0.1) {
+            state.dDistancedt = (dx * dvx + dz * dvz) / state.distance;
+        } else {
+            state.dDistancedt = 0;
+        }
+        
+        // Distance line
+        distanceLineGeometry.setFromPoints([
+            new THREE.Vector3(state.x, 0.5, state.z),
+            new THREE.Vector3(state.p2.x, 0.5, state.p2.z)
+        ]);
+        
+        // Player 2 trail
+        if (state.showTrail && state.demoMode !== 'manual') {
+            state.trailPoints2.push(new THREE.Vector3(state.p2.x, 0.1, state.p2.z));
+            if (state.trailPoints2.length > state.maxTrailPoints) {
+                state.trailPoints2.shift();
+            }
+            trail2Geometry.setFromPoints(state.trailPoints2);
+        }
+    }
+    
+    // Trail for player 1
+    if (state.showTrail && state.demoMode !== 'manual') {
+        state.trailPoints.push(new THREE.Vector3(state.x, 0.1, state.z));
+        if (state.trailPoints.length > state.maxTrailPoints) {
+            state.trailPoints.shift();
+        }
+        trailGeometry.setFromPoints(state.trailPoints);
+    }
+    
+    updateCamera();
+}
+
+// === PLAYER 2 UPDATE ===
+function updatePlayer2(dt) {
+    // Back & forth mode overrides everything
+    if (state.backForth) {
+        updateBackForth(dt);
+        return;
+    }
+    
+    // In demo modes (not manual), mirror player 1's motion
+    if (state.demoMode !== 'manual' && state.p2Mirror) {
+        // Mirror with 180° offset + any slider offset
+        const offsetAngle = Math.PI; // 180 degrees
+        
+        switch (state.demoMode) {
+            case 'orbit':
+                updatePlayer2Orbit(dt, offsetAngle);
+                break;
+            case 'spiral-out':
+            case 'spiral-in':
+            case 'oscillate':
+                updatePlayer2Spiral(dt, offsetAngle);
+                break;
+        }
+    } else {
+        // Manual control with OKL; (mirrors WASD layout)
+        let dx = 0, dz = 0;
+        if (keys2.up) dz -= 1;    // O
+        if (keys2.down) dz += 1;  // L
+        if (keys2.left) dx -= 1;  // K
+        if (keys2.right) dx += 1; // ;
+        
+        const mag = Math.hypot(dx, dz);
+        if (mag > 0) { dx /= mag; dz /= mag; }
+        
+        const speed = CONFIG.moveSpeed * (keys.shift ? CONFIG.runMultiplier : 1);
+        state.p2.vx = dx * speed;
+        state.p2.vz = dz * speed;
+        
+        // Apply offset from slider
+        const baseX = state.p2.x + state.p2.vx * dt;
+        const baseZ = state.p2.z + state.p2.vz * dt;
+        
+        state.p2.x = Math.max(-40, Math.min(40, baseX));
+        state.p2.z = Math.max(-40, Math.min(40, baseZ));
+    }
+}
+
+function updatePlayer2Orbit(dt, offsetAngle) {
+    // Same orbit as P1 but offset by 180°
+    state.p2.theta = state.theta + offsetAngle;
+    
+    const newX = CONFIG.orbitA * Math.cos(state.p2.theta) + state.p2Offset;
+    const newZ = CONFIG.orbitB * Math.sin(state.p2.theta);
+    
+    state.p2.vx = (newX - state.p2.x) / Math.max(dt, 0.001);
+    state.p2.vz = (newZ - state.p2.z) / Math.max(dt, 0.001);
+    state.p2.x = newX;
+    state.p2.z = newZ;
+}
+
+function updatePlayer2Spiral(dt, offsetAngle) {
+    // Same spiral as P1 but offset
+    state.p2.theta = state.theta + offsetAngle;
+    state.p2.r = state.r; // Same radius
+    
+    const newX = state.p2.r * Math.cos(state.p2.theta) + state.p2Offset;
+    const newZ = state.p2.r * Math.sin(state.p2.theta);
+    
+    state.p2.vx = (newX - state.p2.x) / Math.max(dt, 0.001);
+    state.p2.vz = (newZ - state.p2.z) / Math.max(dt, 0.001);
+    state.p2.x = newX;
+    state.p2.z = newZ;
+}
+
+function updateBackForth(dt) {
+    // Classic two cars: both move toward/away from each other on perpendicular paths
+    state.backForthPhase += dt * 0.5; // Slow oscillation
+    
+    const amplitude = 15;
+    const speed = Math.cos(state.backForthPhase) * 5; // Oscillating speed
+    
+    // P1 moves along X axis
+    state.x = amplitude * Math.sin(state.backForthPhase);
+    state.z = 0;
+    state.vx = amplitude * Math.cos(state.backForthPhase) * 0.5;
+    state.vz = 0;
+    
+    // P2 moves along Z axis (perpendicular!)
+    state.p2.x = 0 + state.p2Offset;
+    state.p2.z = amplitude * Math.sin(state.backForthPhase + Math.PI/2); // 90° phase offset
+    state.p2.vx = 0;
+    state.p2.vz = amplitude * Math.cos(state.backForthPhase + Math.PI/2) * 0.5;
+}
+
+function updateManual(dt) {
+    let dx = 0, dz = 0;
+    
+    // Ladder mode: only A/D (horizontal) movement
+    if (state.problemType === 'ladder') {
+        if (keys.a) dx -= 1;
+        if (keys.d) dx += 1;
+        // W/S ignored for ladder
+    } else {
+        if (keys.w) dz -= 1;
+        if (keys.s) dz += 1;
+        if (keys.a) dx -= 1;
+        if (keys.d) dx += 1;
+    }
+    
+    const mag = Math.hypot(dx, dz);
+    if (mag > 0) { dx /= mag; dz /= mag; }
+    
+    const speed = CONFIG.moveSpeed * (keys.shift ? CONFIG.runMultiplier : 1);
+    state.vx = dx * speed;
+    state.vz = dz * speed;
+    
+    state.x = Math.max(-40, Math.min(40, state.x + state.vx * dt));
+    state.z = Math.max(-40, Math.min(40, state.z + state.vz * dt));
+}
+
+function updateOrbit(dt) {
+    // Elliptical orbit with variable speed (faster near center)
+    const currentR = Math.hypot(
+        CONFIG.orbitA * Math.cos(state.theta),
+        CONFIG.orbitB * Math.sin(state.theta)
+    );
+    const speedFactor = 1 + 0.4 * (CONFIG.orbitA - currentR) / CONFIG.orbitA;
+    
+    // Use angular speed from slider
+    state.theta += CONFIG.angularSpeed * speedFactor * dt;
+    if (state.theta > Math.PI * 2) state.theta -= Math.PI * 2;
+    
+    const newX = CONFIG.orbitA * Math.cos(state.theta);
+    const newZ = CONFIG.orbitB * Math.sin(state.theta);
+    
+    // Calculate velocities
+    state.vx = (newX - state.x) / Math.max(dt, 0.001);
+    state.vz = (newZ - state.z) / Math.max(dt, 0.001);
+    state.x = newX;
+    state.z = newZ;
+}
+
+function updateSpiral(dt, direction) {
+    // Spiral with optional angular momentum conservation (Claude suggestion)
+    const spiralRate = CONFIG.spiralRate * direction;
+    
+    // Update radius
+    state.r += spiralRate * dt;
+    state.r = Math.max(1, Math.min(40, state.r));
+    
+    // Angular velocity
+    let omega;
+    if (CONFIG.conserveMomentum) {
+        // ω = L / (m·r²) - angular momentum conservation
+        omega = CONFIG.angularMomentum / (state.r * state.r);
+        omega = Math.min(omega, 5); // Cap to avoid crazy spinning
+    } else {
+        omega = CONFIG.angularSpeed;
+    }
+    
+    state.theta += omega * dt;
+    if (state.theta > Math.PI * 2) state.theta -= Math.PI * 2;
+    
+    // Convert to Cartesian
+    const cart = cartesianFromPolar(state.r, state.theta, spiralRate, omega);
+    state.x = cart.x;
+    state.z = cart.z;
+    state.vx = cart.vx;
+    state.vz = cart.vz;
+    state.rdot = spiralRate;
+    state.thetadot = omega;
+}
+
+function updateOscillate(dt) {
+    // Radial oscillation while orbiting
+    const time = performance.now() / 1000;
+    const baseR = 10;
+    const targetR = baseR + CONFIG.oscillateAmp * Math.sin(2 * Math.PI * CONFIG.oscillateFreq * time);
+    
+    const rdot = (targetR - state.r) * 3; // Smooth approach
+    state.r += rdot * dt;
+    state.r = Math.max(2, Math.min(30, state.r));
+    
+    const omega = CONFIG.angularSpeed;
+    state.theta += omega * dt;
+    if (state.theta > Math.PI * 2) state.theta -= Math.PI * 2;
+    
+    const cart = cartesianFromPolar(state.r, state.theta, rdot, omega);
+    state.x = cart.x;
+    state.z = cart.z;
+    state.vx = cart.vx;
+    state.vz = cart.vz;
+    state.rdot = rdot;
+    state.thetadot = omega;
+}
+
+// === PROBLEM TYPE SWITCHING ===
+function setProblemType(type) {
+    state.problemType = type;
+    
+    // Hide all problem math panels
+    document.querySelectorAll('.problem-math').forEach(el => el.classList.remove('active'));
+    // Show selected problem math panel
+    const mathPanel = document.getElementById(type + '-math');
+    if (mathPanel) mathPanel.classList.add('active');
+    
+    // Hide all problem controls
+    if (ui.shadowControls) ui.shadowControls.style.display = 'none';
+    if (ui.ladderControls) ui.ladderControls.style.display = 'none';
+    if (ui.winchControls) ui.winchControls.style.display = 'none';
+    if (ui.beaconControls) ui.beaconControls.style.display = 'none';
+    if (ui.curvatureControls) ui.curvatureControls.style.display = 'none';
+    
+    // Hide all problem-specific 3D objects
+    wall.visible = false;
+    ladderLine.visible = false;
+    ladderMesh.visible = false;
+    ladderTopMarker.visible = false;
+    ladderBaseMarker.visible = false;
+    ropeLine.visible = false;
+    dockGroup.visible = false;
+    boatMarker.visible = false;
+    beaconBeam.visible = false;
+    beaconSpotMarker.visible = false;
+    osculatingCircle.visible = false;
+    tangentArrow.visible = false;
+    normalArrow.visible = false;
+    
+    // Show shadow objects by default
+    lightRay.visible = true;
+    shadowMarker.visible = true;
+    shadowLine.visible = true;
+    player.visible = true;
+    playerHead.visible = true;
+    
+    const descs = {
+        shadow: "Person walks away from lamp. How fast does shadow grow?",
+        ladder: "Ladder slides down wall. As base moves out, top slides down faster!",
+        winch: "Rope pulls boat to dock. Boat speeds up as it approaches!",
+        beacon: "Spotlight rotates. Spot on wall moves faster near edges!",
+        curvature: "Shows path curvature & osculating circle. Higher math preview!"
+    };
+    
+    const badges = { shadow: "Shadow", ladder: "Ladder", winch: "Winch", beacon: "Beacon", curvature: "Curvature" };
+    const colors = { shadow: "#9b59b6", ladder: "#00e676", winch: "#58d68d", beacon: "#f1c40f", curvature: "#ff00ff" };
+    const statusLabels = { shadow: "🌑 Shadow", ladder: "🪜 Ladder", winch: "⚓ Winch", beacon: "🔦 Beacon", curvature: "⭕ Curvature" };
+    
+    ui.problemDesc.textContent = descs[type];
+    ui.problemBadge.textContent = badges[type];
+    ui.problemBadge.style.background = colors[type];
+    if (ui.statusProblem) ui.statusProblem.textContent = statusLabels[type];
+    
+    // Show correct controls and setup
+    switch (type) {
+        case 'shadow':
+            if (ui.shadowControls) ui.shadowControls.style.display = 'block';
+            break;
+            
+        case 'ladder':
+            if (ui.ladderControls) ui.ladderControls.style.display = 'block';
+            wall.visible = true;
+            ladderLine.visible = true;
+            ladderMesh.visible = true;
+            ladderTopMarker.visible = true;
+            ladderBaseMarker.visible = true;  // Show base marker
+            player.visible = false;  // Hide player in ladder mode
+            playerHead.visible = false;
+            lightRay.visible = false;
+            shadowMarker.visible = false;
+            shadowLine.visible = false;
+            state.z = 0;
+            // Start closer to wall (x=5) so dy/dt effect is more dramatic
+            state.x = 5;
+            break;
+            
+        case 'winch':
+            if (ui.winchControls) ui.winchControls.style.display = 'block';
+            ropeLine.visible = true;
+            dockGroup.visible = true;
+            boatMarker.visible = true;
+            player.visible = false;
+            playerHead.visible = false;
+            lightRay.visible = false;
+            shadowMarker.visible = false;
+            shadowLine.visible = false;
+            state.ropeLength = CONFIG.winchInitialRope;
+            state.boatX = Math.sqrt(state.ropeLength * state.ropeLength - CONFIG.winchHeight * CONFIG.winchHeight);
+            break;
+            
+        case 'beacon':
+            if (ui.beaconControls) ui.beaconControls.style.display = 'block';
+            wall.visible = true;
+            wall.position.x = CONFIG.beaconDist;
+            beaconBeam.visible = true;
+            beaconSpotMarker.visible = true;
+            player.visible = false;
+            playerHead.visible = false;
+            lightRay.visible = false;
+            shadowMarker.visible = false;
+            shadowLine.visible = false;
+            state.beaconTheta = 0;
+            break;
+            
+        case 'curvature':
+            if (ui.curvatureControls) ui.curvatureControls.style.display = 'block';
+            if (ui.shadowControls) ui.shadowControls.style.display = 'block';
+            osculatingCircle.visible = state.showOsculating;
+            state.prevVx = 0;
+            state.prevVz = 0;
+            if (state.demoMode === 'manual') setMode('orbit');
+            break;
+    }
+    
+    // Enable/disable demo modes based on problem compatibility
+    const modeOptions = ui.modeSelect.querySelectorAll('option');
+    modeOptions.forEach(opt => {
+        opt.disabled = false;
+        opt.textContent = opt.textContent.replace(' (N/A)', '');
+    });
+    
+    // Ladder/Winch/Beacon: disable 2D motion modes
+    if (['ladder', 'winch', 'beacon'].includes(type)) {
+        modeOptions.forEach(opt => {
+            if (['orbit', 'spiral-out', 'spiral-in', 'oscillate'].includes(opt.value)) {
+                opt.disabled = true;
+                if (!opt.textContent.includes('N/A')) {
+                    opt.textContent += ' (N/A)';
+                }
+            }
+        });
+        // Force to manual if currently in incompatible mode
+        if (['orbit', 'spiral-out', 'spiral-in', 'oscillate'].includes(state.demoMode)) {
+            setMode('manual');
+        }
+    }
+}
+
+// === PROBLEM-SPECIFIC PHYSICS ===
+function updateLadderProblem(dt) {
+    const L = CONFIG.ladderLength;
+    const x = Math.max(0.1, Math.min(L - 0.1, state.x));
+    state.x = x;
+    
+    const y = Math.sqrt(Math.max(0, L * L - x * x));
+    state.ladderY = y;
+    
+    const dxdt = state.vx;
+    state.ladderDydt = y > 0.1 ? -(x / y) * dxdt : 0;
+    
+    // Position markers (player is hidden, base marker shows position)
+    ladderBaseMarker.position.set(x, 0.4, 0);  // Base on ground
+    ladderTopMarker.position.set(0, y, 0);     // Top on wall
+    
+    ladderGeometry.setFromPoints([
+        new THREE.Vector3(x, 0, 0),
+        new THREE.Vector3(0, y, 0)
+    ]);
+    
+    // Position and rotate the solid ladder mesh
+    ladderMesh.scale.y = L;  // Length of ladder
+    ladderMesh.position.set(x / 2, y / 2, 0);  // Center of ladder
+    ladderMesh.rotation.z = Math.atan2(x, y);  // align cylinder (Y-axis) with ladder (base->top)
+    
+    // Warning color when near edge (x/y > 2 means top falling fast)
+    const ratio = y > 0.1 ? x / y : 10;
+    if (ratio > 2) {
+        ladderMesh.material.color.setHex(0xff4444);  // Red warning
+        ladderLine.material.color.setHex(0xff4444);
+    } else {
+        ladderMesh.material.color.setHex(0x8b4513);  // Normal brown
+        ladderLine.material.color.setHex(0x00e676);  // Normal green
+    }
+}
+
+function updateWinchProblem(dt) {
+    const H = CONFIG.winchHeight;
+    
+    // Manual mode: W pulls rope in (negative dL/dt), S lets out
+    let dLdt;
+    if (state.demoMode === 'manual') {
+        const pull = (keys.w ? 1 : 0) - (keys.s ? 1 : 0);
+        dLdt = pull * CONFIG.winchRate;  // W = pull in (negative), S = release
+        if (pull === 0) dLdt = 0;
+    } else {
+        dLdt = CONFIG.winchRate;  // Auto mode uses constant rate
+    }
+    
+    // Store actual rate for UI display
+    state.winchDLdt = dLdt;
+    
+    state.ropeLength += dLdt * dt;
+    state.ropeLength = Math.max(H + 0.5, Math.min(CONFIG.winchInitialRope + 10, state.ropeLength));
+    
+    const L = state.ropeLength;
+    const xSq = L * L - H * H;
+    
+    if (xSq <= 0) {
+        state.boatX = 0.1;
+        state.boatDxdt = 0;
+    } else {
+        const x = Math.sqrt(xSq);
+        state.boatDxdt = (L / x) * dLdt;
+        state.boatX = x;
+    }
+    
+    boatMarker.position.set(state.boatX, 0.5, 0);
+    // Update dock structure for current height
+    dockPost.scale.y = H / CONFIG.winchHeight;  // Scale post
+    dockPost.position.y = H / 2;
+    winchMarker.position.y = H + 0.5;
+    ropeGeometry.setFromPoints([
+        new THREE.Vector3(0, H, 0),
+        new THREE.Vector3(state.boatX, 0.5, 0)
+    ]);
+}
+
+function updateBeaconProblem(dt) {
+    const D = CONFIG.beaconDist;
+    const omega = CONFIG.beaconOmega;
+    
+    // Initialize direction if not set
+    if (state.beaconDir === undefined) state.beaconDir = 1;
+    
+    // Ping-pong oscillation between 0 and ~80 degrees (stays above floor)
+    state.beaconTheta += omega * dt * state.beaconDir;
+    
+    // Reverse at edges: min ~5 degrees, max ~80 degrees
+    const minTheta = 0.05;  // ~3 degrees
+    const maxTheta = Math.PI * 0.44;  // ~80 degrees
+    if (state.beaconTheta > maxTheta) {
+        state.beaconDir = -1;
+        state.beaconTheta = maxTheta;
+    } else if (state.beaconTheta < minTheta) {
+        state.beaconDir = 1;
+        state.beaconTheta = minTheta;
+    }
+    
+    const theta = state.beaconTheta;
+    state.beaconY = D * Math.tan(theta);
+    
+    const secTheta = 1 / Math.cos(theta);
+    // Include direction in rate calculation
+    state.beaconDydt = D * secTheta * secTheta * omega * state.beaconDir;
+    
+    wall.position.x = D;
+    // Clamp visually to wall range
+    const clampedY = Math.max(0.5, Math.min(50, state.beaconY));
+    beaconSpotMarker.position.set(D, clampedY, 0);
+    beaconGeometry.setFromPoints([
+        new THREE.Vector3(0, CONFIG.lampHeight, 0),
+        new THREE.Vector3(D, clampedY, 0)
+    ]);
+}
+
+function updateCurvatureProblem(dt) {
+    const ax = (state.vx - state.prevVx) / Math.max(dt, 0.001);
+    const az = (state.vz - state.prevVz) / Math.max(dt, 0.001);
+    state.prevVx = state.vx;
+    state.prevVz = state.vz;
+    
+    const speed = Math.hypot(state.vx, state.vz);
+    const speedCubed = speed * speed * speed;
+    const crossMag = Math.abs(state.vx * az - state.vz * ax);
+    
+    if (speed < 0.1 || speedCubed < 0.001) {
+        state.curvature = 0;
+        state.curvatureRadius = Infinity;
+        state.normalAccel = 0;
+        state.tangentAccel = 0;
+        osculatingCircle.visible = false;
+        tangentArrow.visible = false;
+        normalArrow.visible = false;
+    } else {
+        state.curvature = crossMag / speedCubed;
+        state.curvatureRadius = state.curvature > 0.001 ? 1 / state.curvature : 9999;
+        state.normalAccel = speed * speed * state.curvature;
+        state.tangentAccel = (state.vx * ax + state.vz * az) / speed;
+        
+        // Tangent unit vector (velocity direction)
+        const tx = state.vx / speed;
+        const tz = state.vz / speed;
+        
+        // Normal unit vector (perpendicular, pointing toward center)
+        const sign = (state.vx * az - state.vz * ax) > 0 ? 1 : -1;
+        const nx = -sign * tz;  // perpendicular to tangent
+        const nz = sign * tx;
+        
+        // Update T arrow (cyan) - shows velocity direction
+        tangentArrow.visible = state.showOsculating;
+        tangentArrow.position.set(state.x, CONFIG.playerHeight + 1, state.z);
+        tangentArrow.setDirection(new THREE.Vector3(tx, 0, tz).normalize());
+        tangentArrow.setLength(Math.min(speed * 0.5, 5), 0.5, 0.3);
+        
+        // Update N arrow (magenta) - shows centripetal direction
+        normalArrow.visible = state.showOsculating && state.curvature > 0.01;
+        normalArrow.position.set(state.x, CONFIG.playerHeight + 1, state.z);
+        normalArrow.setDirection(new THREE.Vector3(nx, 0, nz).normalize());
+        normalArrow.setLength(Math.min(state.normalAccel * 0.3, 4), 0.4, 0.25);
+        
+        if (state.showOsculating && state.curvatureRadius < 100) {
+            osculatingCircle.visible = true;
+            const cx = state.x + nx * state.curvatureRadius;
+            const cz = state.z + nz * state.curvatureRadius;
+            
+            const circlePoints = [];
+            for (let i = 0; i <= 64; i++) {
+                const angle = (i / 64) * Math.PI * 2;
+                circlePoints.push(new THREE.Vector3(
+                    cx + state.curvatureRadius * Math.cos(angle),
+                    0.2,
+                    cz + state.curvatureRadius * Math.sin(angle)
+                ));
+            }
+            osculatingGeometry.setFromPoints(circlePoints);
+        } else {
+            osculatingCircle.visible = false;
+        }
+    }
+}
+
+function updateCamera() {
+    // Skip automatic camera when free cam is active
+    if (state.freeCam) return;
+    
+    let target, camPos;
+    
+    // Problem-specific camera targets
+    if (state.problemType === 'winch') {
+        target = new THREE.Vector3(state.boatX / 2, CONFIG.winchHeight / 2, 0);
+    } else if (state.problemType === 'beacon') {
+        target = new THREE.Vector3(CONFIG.beaconDist / 2, CONFIG.lampHeight / 2, 0);
+    } else {
+        target = new THREE.Vector3(state.x, CONFIG.playerHeight / 2, state.z);
+    }
+    
+    switch (state.cameraMode) {
+        case 'follow':
+            if (state.problemType === 'winch' || state.problemType === 'beacon') {
+                camPos = new THREE.Vector3(-10, 20, 25);
+            } else if (state.problemType === 'ladder') {
+                // Follow ladder from side
+                camPos = new THREE.Vector3(CONFIG.ladderLength / 2, CONFIG.ladderLength / 2, 20);
+                target = new THREE.Vector3(state.x / 2, state.ladderY / 2, 0);
+            } else {
+                camPos = new THREE.Vector3(state.x - 8, CONFIG.playerHeight + 10, state.z + 18);
+            }
+            break;
+        case 'side':
+            // Beacon needs rotated view to see beam sweep on wall
+            if (state.problemType === 'beacon') {
+                camPos = new THREE.Vector3(CONFIG.beaconDist / 2, 10, 35);
+                target = new THREE.Vector3(CONFIG.beaconDist / 2, CONFIG.lampHeight / 2, 0);
+            } else if (state.problemType === 'winch') {
+                camPos = new THREE.Vector3(15, 8, 25);
+                target = new THREE.Vector3(state.boatX / 2, CONFIG.winchHeight / 2, 0);
+            } else if (state.problemType === 'ladder') {
+                // Side view with wall on right: camera at negative z
+                camPos = new THREE.Vector3(CONFIG.ladderLength / 2, CONFIG.ladderLength / 2, -25);
+                target = new THREE.Vector3(CONFIG.ladderLength / 4, CONFIG.ladderLength / 2, 0);
+            } else {
+                camPos = new THREE.Vector3(30, 10, 0);
+                target = new THREE.Vector3(0, CONFIG.lampHeight / 2, 0);
+            }
+            break;
+        case 'top':
+            camPos = new THREE.Vector3(0, 50, 1);
+            target.set(0, 0, 0);
+            break;
+    }
+    
+    camera.position.lerp(camPos, 0.05);
+    camera.lookAt(target);
+}
+
+// === UI UPDATE ===
+function updateUI() {
+    const H = CONFIG.lampHeight;
+    const h = CONFIG.playerHeight;
+    const m = h / (H - h);
+    
+    // Problem-specific UI updates
+    switch (state.problemType) {
+        case 'shadow':
+        case 'curvature':
+            ui.distanceR.textContent = state.r.toFixed(2) + ' ft';
+            ui.angleTheta.textContent = deg360(state.theta).toFixed(0) + '°';
+            ui.shadowS.textContent = state.shadowLength.toFixed(2) + ' ft';
+            
+            const stableRdot = stable(state.rdot);
+            const stableTangent = stable(state.r * state.thetadot);
+            const stableDsdt = stable(state.dsdt);
+            
+            ui.rateDr.textContent = stableRdot.toFixed(2);
+            ui.rateTangent.textContent = stableTangent.toFixed(2);
+            ui.rateDs.textContent = stableDsdt.toFixed(2);
+            ui.tipSpeed.textContent = state.tipSpeed.toFixed(2);
+            
+            ui.ratioM.textContent = m.toFixed(3);
+            ui.rateFormula.textContent = `ds/dt = (${m.toFixed(2)})(${stableRdot.toFixed(2)}) = ${stableDsdt.toFixed(2)}`;
+            
+            if (state.problemType === 'curvature') {
+                const speed = Math.hypot(state.vx, state.vz);
+                ui.curvSpeed.textContent = speed.toFixed(2) + ' ft/s';
+                ui.curvKappa.textContent = state.curvature.toFixed(4);
+                ui.curvRadius.textContent = state.curvatureRadius < 1000 ? state.curvatureRadius.toFixed(1) + ' ft' : '∞';
+                ui.curvAt.textContent = stable(state.tangentAccel).toFixed(2);
+                ui.curvAn.textContent = stable(state.normalAccel).toFixed(2);
+            }
+            break;
+            
+        case 'ladder':
+            ui.ladderL.textContent = CONFIG.ladderLength.toFixed(1) + ' ft';
+            ui.ladderX.textContent = state.x.toFixed(2) + ' ft';
+            ui.ladderY.textContent = state.ladderY.toFixed(2) + ' ft';
+            ui.ladderDxdt.textContent = stable(state.vx).toFixed(2);
+            ui.ladderDydt.textContent = stable(state.ladderDydt).toFixed(2);
+            const ratio = state.ladderY > 0.1 ? (state.x / state.ladderY).toFixed(2) : '∞';
+            ui.ladderFormula.textContent = `dy/dt = -(${ratio})·dx/dt = ${stable(state.ladderDydt).toFixed(2)}`;
+            break;
+            
+        case 'winch':
+            ui.winchH.textContent = CONFIG.winchHeight.toFixed(1) + ' ft';
+            ui.winchL.textContent = state.ropeLength.toFixed(2) + ' ft';
+            ui.winchX.textContent = state.boatX.toFixed(2) + ' ft';
+            const actualDLdt = state.winchDLdt !== undefined ? state.winchDLdt : 0;
+            ui.winchDLdt.textContent = actualDLdt.toFixed(2);
+            ui.winchDxdt.textContent = stable(state.boatDxdt).toFixed(2);
+            const ropeRatio = state.boatX > 0.1 ? (state.ropeLength / state.boatX).toFixed(2) : '∞';
+            ui.winchFormula.textContent = `dx/dt = (${ropeRatio})·(${actualDLdt.toFixed(1)}) = ${stable(state.boatDxdt).toFixed(2)}`;
+            break;
+            
+        case 'beacon':
+            ui.beaconD.textContent = CONFIG.beaconDist.toFixed(1) + ' ft';
+            ui.beaconTheta.textContent = (state.beaconTheta * 180 / Math.PI).toFixed(1) + '°';
+            ui.beaconY.textContent = Math.abs(state.beaconY) < 100 ? state.beaconY.toFixed(2) + ' ft' : '±∞';
+            ui.beaconOmega.textContent = CONFIG.beaconOmega.toFixed(2);
+            ui.beaconDydt.textContent = Math.abs(state.beaconDydt) < 1000 ? state.beaconDydt.toFixed(2) : '±∞';
+            const secSq = (1 / Math.cos(state.beaconTheta)) ** 2;
+            ui.beaconFormula.textContent = `dy/dt = ${CONFIG.beaconDist}·${secSq.toFixed(1)}·${CONFIG.beaconOmega} = ${Math.abs(state.beaconDydt) < 100 ? state.beaconDydt.toFixed(1) : '±∞'}`;
+            break;
+    }
+    
+    // Key insight based on mode
+    updateInsight();
+    
+    // Trail count
+    ui.trailCount.textContent = state.trailPoints.length;
+    ui.trailIndicator.classList.toggle('visible', state.showTrail && state.demoMode !== 'manual');
+    
+    // Two Cars distance display
+    if (state.twoCarsMode && state.problemType === 'shadow') {
+        ui.distanceD.textContent = state.distance.toFixed(2) + ' ft';
+        ui.distanceRate.textContent = stable(state.dDistancedt).toFixed(2) + ' ft/s';
+    }
+}
+
+function updateInsight() {
+    const m = CONFIG.playerHeight / (CONFIG.lampHeight - CONFIG.playerHeight);
+    const tangentSpeed = Math.abs(state.r * state.thetadot);
+    let insight = '';
+    let keyInsight = '';
+    
+    // Problem-specific insights
+    switch (state.problemType) {
+        case 'ladder':
+            const ladderRatio = state.ladderY > 0.1 ? Math.abs(state.x / state.ladderY) : Infinity;
+            insight = `🪜 Base at x=${state.x.toFixed(1)}ft, top at y=${state.ladderY.toFixed(1)}ft`;
+            if (Math.abs(state.vx) > 0.1) {
+                insight += `. Top falling ${Math.abs(state.ladderDydt / state.vx).toFixed(1)}× faster!`;
+                keyInsight = ladderRatio > 2 ? '⚠️ CRITICAL: Top plummeting!' : '🔑 dy/dt = -(x/y)·dx/dt';
+            } else if (state.demoMode === 'manual') {
+                insight += ` | Try: Hold D → watch top FALL!`;
+                keyInsight = '👉 Hold D and watch dy/dt explode as y→0';
+            } else {
+                keyInsight = ladderRatio > 2 ? '⚠️ Near edge: dy/dt accelerates wildly!' : '🔑 dy/dt = -(x/y)·dx/dt';
+            }
+            ui.insightText.textContent = insight;
+            ui.keyInsight.textContent = keyInsight;
+            return;
+            
+        case 'winch':
+            // Check if docked
+            if (state.boatX < 1.0) {
+                insight = `🎉 DOCKED! Boat reached the dock!`;
+                keyInsight = '🔑 Press R to reset and try again!';
+                ui.insightText.textContent = insight;
+                ui.keyInsight.textContent = keyInsight;
+                return;
+            }
+            
+            insight = `⚓ Rope=${state.ropeLength.toFixed(1)}ft, Boat=${state.boatX.toFixed(1)}ft from dock`;
+            const speedup = state.boatX > 0.1 ? Math.abs(state.ropeLength / state.boatX) : Infinity;
+            if (Math.abs(state.winchDLdt) > 0.1) {
+                if (speedup > 1.5) {
+                    insight += `. Boat moves ${speedup.toFixed(1)}× faster than rope!`;
+                }
+                keyInsight = state.boatX < 5 ? '🚀 Near dock: boat ACCELERATES!' : '🔑 dx/dt = (L/x)·dL/dt';
+            } else if (state.demoMode === 'manual') {
+                insight += ` | Try: Hold W → boat ACCELERATES!`;
+                keyInsight = '👉 Hold W to pull rope, watch boat speed up near dock!';
+            } else {
+                keyInsight = '🔑 dx/dt = (L/x)·dL/dt';
+            }
+            ui.insightText.textContent = insight;
+            ui.keyInsight.textContent = keyInsight;
+            return;
+            
+        case 'beacon':
+            const degTheta = Math.abs(state.beaconTheta * 180 / Math.PI);
+            insight = `🔦 Beam at ${degTheta.toFixed(0)}°, spot at y=${Math.abs(state.beaconY) < 50 ? state.beaconY.toFixed(1) : '∞'}ft`;
+            if (degTheta > 35) {
+                keyInsight = '💫 Watch: spot moves INFINITELY fast at edges!';
+            } else {
+                keyInsight = '🔑 dy/dt = D·sec²(θ)·dθ/dt — watch near ±45°!';
+            }
+            ui.insightText.textContent = insight;
+            ui.keyInsight.textContent = keyInsight;
+            return;
+            
+        case 'curvature':
+            const kappa = state.curvature;
+            const R = state.curvatureRadius;
+            insight = `⭕ κ=${kappa.toFixed(4)}, R=${R < 100 ? R.toFixed(1) + 'ft' : '∞'}`;
+            if (state.demoMode === 'orbit') {
+                insight += ` | Constant curve = constant κ`;
+            }
+            keyInsight = '🎓 Tighter turn = bigger κ. Used in GPS, robotics, road design!';
+            ui.insightText.textContent = insight;
+            ui.keyInsight.textContent = keyInsight;
+            return;
+    }
+    
+    // Shadow mode insights (original)
+    switch (state.demoMode) {
+        case 'manual':
+            if (Math.hypot(state.vx, state.vz) < 0.1) {
+                insight = `📍 Standing at r=${state.r.toFixed(1)}ft. Shadow=${state.shadowLength.toFixed(1)}ft. Move to see rates!`;
+            } else if (Math.abs(state.rdot) > 0.5) {
+                const dir = state.rdot > 0 ? 'AWAY from' : 'TOWARD';
+                insight = `🚶 Moving ${dir} lamp → ds/dt = ${state.dsdt.toFixed(2)} ft/s`;
+            } else {
+                insight = `↔️ Mostly tangent motion → ds/dt ≈ 0 even though you're moving!`;
+            }
+            keyInsight = '🔑 Only radial motion changes shadow length!';
+            break;
+            
+        case 'orbit':
+            insight = `🌀 Orbiting: r oscillates slightly, dr/dt ≈ ${state.rdot.toFixed(2)}, so ds/dt ≈ ${state.dsdt.toFixed(2)}`;
+            keyInsight = `🔑 Tangent speed = ${tangentSpeed.toFixed(1)} ft/s but shadow barely changes!`;
+            break;
+            
+        case 'spiral-out':
+            insight = `🌊 Spiraling OUT at dr/dt = ${state.rdot.toFixed(2)} ft/s → Shadow grows steadily!`;
+            if (CONFIG.conserveMomentum) {
+                insight += ` Angular velocity ω = ${state.thetadot.toFixed(2)} rad/s (slowing as r grows)`;
+            }
+            keyInsight = `🔑 ds/dt = ${state.dsdt.toFixed(2)} is CONSTANT even though path curves!`;
+            break;
+            
+        case 'spiral-in':
+            insight = `🕳️ Spiraling IN at dr/dt = ${state.rdot.toFixed(2)} ft/s → Shadow shrinking!`;
+            if (CONFIG.conserveMomentum) {
+                insight += ` Spinning faster: ω = ${state.thetadot.toFixed(2)} rad/s`;
+            }
+            keyInsight = `🔑 Like water draining — faster spin near center!`;
+            break;
+            
+        case 'oscillate':
+            const phase = state.rdot > 0.1 ? 'expanding' : state.rdot < -0.1 ? 'contracting' : 'turning';
+            insight = `〰️ ${phase.toUpperCase()}: dr/dt = ${state.rdot.toFixed(2)} → ds/dt = ${state.dsdt.toFixed(2)}`;
+            keyInsight = `🔑 ds/dt alternates ± as you breathe in/out!`;
+            break;
+    }
+    
+    // Add Two Cars insight
+    if (state.twoCarsMode) {
+        const approaching = state.dDistancedt < -0.1;
+        const separating = state.dDistancedt > 0.1;
+        if (state.backForth) {
+            insight = `🚗🚙 Back & Forth: D=${state.distance.toFixed(1)}ft, dD/dt=${stable(state.dDistancedt).toFixed(2)} ft/s`;
+            keyInsight = approaching ? `🔑 Getting CLOSER → dD/dt < 0` : 
+                         separating ? `🔑 Getting FARTHER → dD/dt > 0` : 
+                         `🔑 Distance rate depends on relative velocities!`;
+        } else {
+            insight += ` | 🚙 D=${state.distance.toFixed(1)}ft`;
+            if (approaching) keyInsight = `🔑 Cars approaching! dD/dt = ${stable(state.dDistancedt).toFixed(2)}`;
+            else if (separating) keyInsight = `🔑 Cars separating! dD/dt = ${stable(state.dDistancedt).toFixed(2)}`;
+        }
+    }
+    
+    ui.insightText.textContent = insight;
+    ui.keyInsight.textContent = keyInsight;
+}
+
+// === MODE SWITCHING ===
+function setMode(mode) {
+    state.demoMode = mode;
+    
+    // Update select
+    ui.modeSelect.value = mode;
+    
+    // Update description
+    const modeDescs = {
+        manual: 'WASD/Arrows to move freely',
+        orbit: 'Adjust size (2-12) & speed',
+        'spiral-out': 'dr/dt > 0 → shadow grows',
+        'spiral-in': 'dr/dt < 0 → shadow shrinks',
+        oscillate: 'dr/dt alternates ±'
+    };
+    ui.modeDesc.textContent = modeDescs[mode];
+    
+    // Update status
+    const modeNames = {
+        manual: '🎮 Manual',
+        orbit: '🌀 Orbit',
+        'spiral-out': '🌊 Spiral Out',
+        'spiral-in': '🕳️ Spiral In',
+        oscillate: '〰️ Oscillate'
+    };
+    ui.statusMode.textContent = modeNames[mode];
+    
+    // Show/hide spiral controls (also show for orbit)
+    const showControls = ['orbit', 'spiral-out', 'spiral-in', 'oscillate'].includes(mode);
+    ui.spiralControls.classList.toggle('visible', showControls);
+    
+    // Update control labels based on mode
+    const spiralRateLabel = document.querySelector('#spiral-controls .control-row:first-of-type label');
+    const momentumRow = ui.conserveMomentum ? ui.conserveMomentum.closest('.checkbox-row') : null;
+    
+    if (mode === 'orbit') {
+        if (spiralRateLabel) spiralRateLabel.textContent = 'Orbit Size';
+        ui.spiralRate.min = 2;
+        ui.spiralRate.max = 12;
+        ui.spiralRate.value = CONFIG.orbitA;
+        ui.spiralRateVal.textContent = CONFIG.orbitA;
+        if (momentumRow) momentumRow.style.display = 'none';
+    } else {
+        if (spiralRateLabel) spiralRateLabel.textContent = 'Spiral Rate';
+        ui.spiralRate.min = 0.1;
+        ui.spiralRate.max = 2;
+        ui.spiralRate.value = CONFIG.spiralRate;
+        ui.spiralRateVal.textContent = CONFIG.spiralRate;
+        if (momentumRow) momentumRow.style.display = 'flex';
+    }
+    
+    // Show/hide orbit path
+    orbitPath.visible = mode === 'orbit';
+    
+    // Reset trail
+    state.trailPoints = [];
+    trailGeometry.setFromPoints([]);
+    
+    // Reset position for demo modes
+    if (mode !== 'manual') {
+        state.theta = 0;
+        
+        if (mode === 'orbit') {
+            // Start on ellipse at current size
+            state.x = CONFIG.orbitA;
+            state.z = 0;
+            state.r = CONFIG.orbitA;
+        } else if (mode === 'spiral-in') {
+            state.r = 25;
+            state.x = state.r;
+            state.z = 0;
+        } else {
+            state.r = 8;
+            state.x = state.r;
+            state.z = 0;
+        }
+    }
+}
+
+function setCamera(mode) {
+    state.cameraMode = mode;
+    document.querySelectorAll('#controls-panel .btn:not(.mode-btn)').forEach(b => b.classList.remove('active'));
+    document.getElementById('cam-' + mode).classList.add('active');
+}
+
+// === LAMPPOST UPDATE ===
+function updateLamppost() {
+    lamppost.scale.y = CONFIG.lampHeight / 15;
+    lamppost.position.y = CONFIG.lampHeight / 2;
+    lampHead.position.y = CONFIG.lampHeight;
+    lampLight.position.y = CONFIG.lampHeight;
+    glowLight.position.y = CONFIG.lampHeight;
+    ui.lampHeight.textContent = CONFIG.lampHeight.toFixed(1) + ' ft';
+}
+
+function updatePlayerModel() {
+    player.scale.y = CONFIG.playerHeight / 6;
+    player.position.y = CONFIG.playerHeight / 2;
+    playerHead.position.y = CONFIG.playerHeight + 0.2;
+    ui.playerHeight.textContent = CONFIG.playerHeight.toFixed(1) + ' ft';
+}
+
+// === INPUT ===
+document.addEventListener('keydown', e => {
+    const key = e.key.toLowerCase();
+    // Player 1: WASD and Arrows
+    if (key === 'w' || key === 'arrowup') keys.w = true;
+    if (key === 'a' || key === 'arrowleft') keys.a = true;
+    if (key === 's' || key === 'arrowdown') keys.s = true;
+    if (key === 'd' || key === 'arrowright') keys.d = true;
+    
+    // Player 2: OKL;
+    if (key === 'o') keys2.up = true;
+    if (key === 'k') keys2.left = true;
+    if (key === 'l') keys2.down = true;
+    if (key === ';') keys2.right = true;
+    
+    // Shift key - track explicitly
+    if (key === 'shift') keys.shift = true;
+    if (key === ' ') { e.preventDefault(); state.paused = !state.paused; ui.pausedOverlay.classList.toggle('visible', state.paused); ui.statusPaused.style.display = state.paused ? 'flex' : 'none'; }
+    if (key === 'r') { 
+        state.x = 8; state.z = 0; state.r = 8; state.theta = 0; 
+        state.p2.x = -8; state.p2.z = 0; state.p2.theta = Math.PI;
+        state.trailPoints = []; state.trailPoints2 = [];
+        trailGeometry.setFromPoints([]); trail2Geometry.setFromPoints([]);
+        // Reset problem-specific state
+        state.ropeLength = CONFIG.winchInitialRope;
+        state.beaconTheta = 0;
+        // Reset timer
+        state.simTime = 0;
+    }
+    if (key === 'c') { const modes = ['follow', 'side', 'top']; setCamera(modes[(modes.indexOf(state.cameraMode) + 1) % modes.length]); }
+    if (key === 't') { state.showTrail = !state.showTrail; ui.showTrail.checked = state.showTrail; trail.visible = state.showTrail; trail2.visible = state.showTrail && state.twoCarsMode; }
+    if (key === '1') setMode('manual');
+    if (key === '2') setMode('orbit');
+    if (key === '3') setMode('spiral-out');
+    if (key === '4') setMode('spiral-in');
+    if (key === '5') setMode('oscillate');
+    // Problem type shortcuts (6-0)
+    if (key === '6') { setProblemType('shadow'); ui.problemSelect.value = 'shadow'; }
+    if (key === '7') { setProblemType('ladder'); ui.problemSelect.value = 'ladder'; }
+    if (key === '8') { setProblemType('winch'); ui.problemSelect.value = 'winch'; }
+    if (key === '9') { setProblemType('beacon'); ui.problemSelect.value = 'beacon'; }
+    if (key === '0') { setProblemType('curvature'); ui.problemSelect.value = 'curvature'; }
+    
+    // Help overlay (? key)
+    if (key === '?' || (e.shiftKey && key === '/')) {
+        ui.helpOverlay.classList.toggle('visible');
+    }
+    if (key === 'escape') {
+        ui.helpOverlay.classList.remove('visible');
+    }
+    
+    // Hide UI (M key)
+    if (key === 'm') {
+        state.uiHidden = !state.uiHidden;
+        document.body.classList.toggle('ui-hidden', state.uiHidden);
+    }
+    
+    // Free cam toggle (F key)
+    if (key === 'f') {
+        toggleFreeCam();
+    }
+    
+    // Speed control ([ and ])
+    if (key === '[') {
+        setTimeScale(CONFIG.timeScale / 2);
+    }
+    if (key === ']') {
+        setTimeScale(CONFIG.timeScale * 2);
+    }
+    
+    // Prevent arrow keys from scrolling page
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) e.preventDefault();
+});
+
+document.addEventListener('keyup', e => {
+    const key = e.key.toLowerCase();
+    // Player 1
+    if (key === 'w' || key === 'arrowup') keys.w = false;
+    if (key === 'a' || key === 'arrowleft') keys.a = false;
+    if (key === 's' || key === 'arrowdown') keys.s = false;
+    if (key === 'd' || key === 'arrowright') keys.d = false;
+    
+    // Player 2
+    if (key === 'o') keys2.up = false;
+    if (key === 'k') keys2.left = false;
+    if (key === 'l') keys2.down = false;
+    if (key === ';') keys2.right = false;
+    
+    // Shift key - track explicitly
+    if (key === 'shift') keys.shift = false;
+});
+
+// Mode dropdown
+ui.modeSelect.addEventListener('change', e => setMode(e.target.value));
+
+// Problem selector
+ui.problemSelect.addEventListener('change', e => setProblemType(e.target.value));
+
+// Ladder controls
+ui.ladderLength.addEventListener('input', e => {
+    CONFIG.ladderLength = parseFloat(e.target.value);
+    ui.ladderLengthVal.textContent = CONFIG.ladderLength;
+    state.x = Math.min(state.x, CONFIG.ladderLength - 0.5);
+});
+
+// Winch controls
+ui.winchHeight.addEventListener('input', e => {
+    CONFIG.winchHeight = parseFloat(e.target.value);
+    ui.winchHeightVal.textContent = CONFIG.winchHeight;
+});
+ui.winchRate.addEventListener('input', e => {
+    CONFIG.winchRate = parseFloat(e.target.value);
+    ui.winchRateVal.textContent = CONFIG.winchRate;
+});
+
+// Beacon controls
+ui.beaconDist.addEventListener('input', e => {
+    CONFIG.beaconDist = parseFloat(e.target.value);
+    ui.beaconDistVal.textContent = CONFIG.beaconDist;
+});
+ui.beaconOmegaSlider.addEventListener('input', e => {
+    CONFIG.beaconOmega = parseFloat(e.target.value);
+    ui.beaconOmegaVal.textContent = CONFIG.beaconOmega;
+});
+
+// Curvature controls
+ui.showOsculating.addEventListener('change', e => {
+    state.showOsculating = e.target.checked;
+    if (!state.showOsculating) osculatingCircle.visible = false;
+});
+
+// === NEW FEATURES ===
+
+// Time scale control
+function setTimeScale(scale) {
+    CONFIG.timeScale = Math.max(0.25, Math.min(4, scale));
+    ui.statusSpeed.textContent = CONFIG.timeScale + '×';
+    
+    // Update speed buttons
+    document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
+        btn.classList.toggle('active', parseFloat(btn.dataset.speed) === CONFIG.timeScale);
+    });
+}
+
+// Speed buttons
+document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
+    btn.addEventListener('click', () => setTimeScale(parseFloat(btn.dataset.speed)));
+});
+
+// Free camera toggle
+function toggleFreeCam() {
+    state.freeCam = !state.freeCam;
+    orbitControls.enabled = state.freeCam;
+    ui.btnFreecam.classList.toggle('active', state.freeCam);
+    ui.statusCam.style.display = state.freeCam ? 'flex' : 'none';
+    
+    if (state.freeCam) {
+        // Set orbit target to current focus point
+        const target = state.problemType === 'winch' ? 
+            new THREE.Vector3(state.boatX / 2, CONFIG.winchHeight / 2, 0) :
+            new THREE.Vector3(state.x, CONFIG.playerHeight / 2, state.z);
+        orbitControls.target.copy(target);
+    }
+}
+
+// Share URL with state
+function shareURL() {
+    const params = new URLSearchParams();
+    params.set('problem', state.problemType);
+    params.set('mode', state.demoMode);
+    params.set('H', CONFIG.lampHeight);
+    params.set('h', CONFIG.playerHeight);
+    
+    if (state.problemType === 'ladder') {
+        params.set('L', CONFIG.ladderLength);
+    } else if (state.problemType === 'winch') {
+        params.set('wH', CONFIG.winchHeight);
+        params.set('wR', CONFIG.winchRate);
+    } else if (state.problemType === 'beacon') {
+        params.set('bD', CONFIG.beaconDist);
+        params.set('bO', CONFIG.beaconOmega);
+    }
+    
+    const url = window.location.origin + window.location.pathname + '?' + params.toString();
+    navigator.clipboard.writeText(url).then(() => {
+        ui.shareToast.classList.add('visible');
+        setTimeout(() => ui.shareToast.classList.remove('visible'), 2000);
+    });
+}
+
+// Load state from URL
+function loadFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    
+    if (params.has('problem')) {
+        const problem = params.get('problem');
+        setProblemType(problem);
+        ui.problemSelect.value = problem;
+    }
+    if (params.has('mode')) {
+        setMode(params.get('mode'));
+        ui.modeSelect.value = params.get('mode');
+    }
+    if (params.has('H')) {
+        CONFIG.lampHeight = parseFloat(params.get('H'));
+        ui.lampSlider.value = CONFIG.lampHeight;
+        updateLamppost();
+    }
+    if (params.has('h')) {
+        CONFIG.playerHeight = parseFloat(params.get('h'));
+        ui.playerSlider.value = CONFIG.playerHeight;
+        updatePlayerModel();
+    }
+    if (params.has('L')) {
+        CONFIG.ladderLength = parseFloat(params.get('L'));
+        ui.ladderLength.value = CONFIG.ladderLength;
+        ui.ladderLengthVal.textContent = CONFIG.ladderLength;
+    }
+    if (params.has('wH')) {
+        CONFIG.winchHeight = parseFloat(params.get('wH'));
+        ui.winchHeight.value = CONFIG.winchHeight;
+        ui.winchHeightVal.textContent = CONFIG.winchHeight;
+    }
+    if (params.has('wR')) {
+        CONFIG.winchRate = parseFloat(params.get('wR'));
+        ui.winchRate.value = CONFIG.winchRate;
+        ui.winchRateVal.textContent = CONFIG.winchRate;
+    }
+    if (params.has('bD')) {
+        CONFIG.beaconDist = parseFloat(params.get('bD'));
+        ui.beaconDist.value = CONFIG.beaconDist;
+        ui.beaconDistVal.textContent = CONFIG.beaconDist;
+    }
+    if (params.has('bO')) {
+        CONFIG.beaconOmega = parseFloat(params.get('bO'));
+        ui.beaconOmegaSlider.value = CONFIG.beaconOmega;
+        ui.beaconOmegaVal.textContent = CONFIG.beaconOmega;
+    }
+}
+
+// Screenshot
+function takeScreenshot() {
+    const link = document.createElement('a');
+    link.download = `related-rates-${state.problemType}-${Date.now()}.png`;
+    link.href = renderer.domElement.toDataURL('image/png');
+    link.click();
+}
+
+// Quick action buttons
+ui.btnFreecam.addEventListener('click', toggleFreeCam);
+ui.btnShare.addEventListener('click', shareURL);
+ui.btnScreenshot.addEventListener('click', takeScreenshot);
+ui.btnHelp.addEventListener('click', () => ui.helpOverlay.classList.toggle('visible'));
+
+// Timer toggle
+function toggleTimer() {
+    state.showTimer = !state.showTimer;
+    ui.statusTimer.style.display = state.showTimer ? 'inline-block' : 'none';
+    ui.btnTimer.classList.toggle('active', state.showTimer);
+}
+ui.btnTimer.addEventListener('click', toggleTimer);
+
+// Close help on click outside content
+ui.helpOverlay.addEventListener('click', e => {
+    if (e.target === ui.helpOverlay) ui.helpOverlay.classList.remove('visible');
+});
+
+// Camera buttons
+document.getElementById('cam-follow').addEventListener('click', () => setCamera('follow'));
+document.getElementById('cam-side').addEventListener('click', () => setCamera('side'));
+document.getElementById('cam-top').addEventListener('click', () => setCamera('top'));
+
+// Sliders
+ui.lampSlider.addEventListener('input', e => { CONFIG.lampHeight = parseFloat(e.target.value); ui.lampSliderVal.textContent = CONFIG.lampHeight; updateLamppost(); });
+ui.playerSlider.addEventListener('input', e => { CONFIG.playerHeight = parseFloat(e.target.value); ui.playerSliderVal.textContent = CONFIG.playerHeight; updatePlayerModel(); });
+ui.spiralRate.addEventListener('input', e => {
+    const val = parseFloat(e.target.value);
+    if (state.demoMode === 'orbit') {
+        CONFIG.orbitA = val;
+        CONFIG.orbitB = val * 0.67; // Keep ellipse proportions
+        ui.spiralRateVal.textContent = val;
+        // Update orbit path preview
+        const points = [];
+        for (let i = 0; i <= 64; i++) {
+            const t = (i / 64) * Math.PI * 2;
+            points.push(new THREE.Vector3(CONFIG.orbitA * Math.cos(t), 0.1, CONFIG.orbitB * Math.sin(t)));
+        }
+        orbitPath.geometry.setFromPoints(points);
+    } else {
+        CONFIG.spiralRate = val;
+        ui.spiralRateVal.textContent = val;
+    }
+});
+ui.angularSpeed.addEventListener('input', e => { CONFIG.angularSpeed = parseFloat(e.target.value); ui.angularSpeedVal.textContent = CONFIG.angularSpeed; });
+ui.conserveMomentum.addEventListener('change', e => { CONFIG.conserveMomentum = e.target.checked; });
+ui.showTrail.addEventListener('change', e => { state.showTrail = e.target.checked; trail.visible = state.showTrail; trail2.visible = state.showTrail && state.twoCarsMode; });
+
+// Two Cars mode toggle
+ui.twoCarsToggle.addEventListener('change', e => {
+    state.twoCarsMode = e.target.checked;
+    
+    // Show/hide player 2 elements
+    player2.visible = state.twoCarsMode;
+    player2Head.visible = state.twoCarsMode;
+    lightRay2.visible = state.twoCarsMode;
+    shadow2Line.visible = state.twoCarsMode;
+    distanceLine.visible = state.twoCarsMode;
+    trail2.visible = state.twoCarsMode && state.showTrail;
+    
+    // Show/hide UI elements
+    ui.twoCarsControls.style.display = state.twoCarsMode ? 'block' : 'none';
+    ui.distanceSection.style.display = state.twoCarsMode ? 'block' : 'none';
+    
+    // Reset player 2 position (opposite side)
+    if (state.twoCarsMode) {
+        state.p2.x = -state.x;
+        state.p2.z = -state.z;
+        state.p2.theta = state.theta + Math.PI;
+        state.trailPoints2 = [];
+        trail2Geometry.setFromPoints([]);
+    }
+});
+
+// P2 mirror checkbox
+ui.p2Mirror.addEventListener('change', e => { state.p2Mirror = e.target.checked; });
+
+// Back & forth checkbox
+ui.backForth.addEventListener('change', e => { 
+    state.backForth = e.target.checked;
+    state.backForthPhase = 0;
+});
+
+// P2 offset slider
+ui.p2Offset.addEventListener('input', e => {
+    state.p2Offset = parseFloat(e.target.value);
+    ui.p2OffsetVal.textContent = state.p2Offset;
+});
+
+// Resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// === ANIMATION ===
+let lastTime = 0;
+function animate(time) {
+    requestAnimationFrame(animate);
+    try {
+        let dt = Math.min((time - lastTime) / 1000, 0.1);
+        lastTime = time;
+        
+        // Apply time scale (slow-mo / fast-forward)
+        dt *= CONFIG.timeScale;
+        
+        // Accumulate simulation time (only when not paused)
+        if (!state.paused) {
+            state.simTime += dt;
+        }
+        
+        // Update timer display if visible
+        if (state.showTimer && ui.timerDisplay) {
+            ui.timerDisplay.textContent = state.simTime.toFixed(1) + 's';
+        }
+        
+        updatePhysics(dt);
+        updateUI();
+        
+        // Update orbit controls if free cam is active
+        if (state.freeCam) {
+            orbitControls.update();
+        }
+        
+        renderer.render(scene, camera);
+    } catch(e) {
+        console.error('Animation error:', e);
+    }
+}
+
+// === INIT ===
+console.log('Starting init...');
+try {
+    console.log('updateLamppost...');
+    updateLamppost();
+    console.log('updatePlayerModel...');
+    updatePlayerModel();
+    console.log('setProblemType...');
+    setProblemType('shadow');
+    console.log('setMode...');
+    setMode('orbit');  // Start with motion so students see action immediately
+    console.log('loadFromURL...');
+    loadFromURL();
+    console.log('animate...');
+    animate(0);
+    console.log('Init complete!');
+} catch(e) {
+    console.error('Init error:', e);
+}
+</script>
+</body>
+</html>

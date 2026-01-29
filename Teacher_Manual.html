@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Calculus Tools — Teacher Manual</title>
+<style>
+:root {
+  --primary: #2563eb;
+  --secondary: #7c3aed;
+  --success: #059669;
+  --warning: #d97706;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --bg: #ffffff;
+  --border: #e5e7eb;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+@media print {
+  body { font-size: 11pt; }
+  .page-break { page-break-before: always; }
+  .no-print { display: none; }
+  h1, h2, h3 { page-break-after: avoid; }
+  table, figure { page-break-inside: avoid; }
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 40px 30px;
+}
+
+h1 {
+  font-size: 2.2em;
+  color: var(--primary);
+  border-bottom: 3px solid var(--primary);
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 1.2em;
+  color: var(--muted);
+  margin-bottom: 30px;
+}
+
+h2 {
+  font-size: 1.5em;
+  color: var(--secondary);
+  margin-top: 35px;
+  margin-bottom: 15px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border);
+}
+
+h3 {
+  font-size: 1.2em;
+  color: var(--text);
+  margin-top: 25px;
+  margin-bottom: 10px;
+}
+
+h4 {
+  font-size: 1.05em;
+  color: var(--muted);
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+p { margin-bottom: 12px; }
+
+ul, ol {
+  margin-left: 24px;
+  margin-bottom: 15px;
+}
+
+li { margin-bottom: 6px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0 20px;
+  font-size: 0.95em;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+tr:nth-child(even) { background: #f9fafb; }
+
+.tool-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  background: #fafafa;
+}
+
+.tool-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tool-icon {
+  font-size: 2em;
+}
+
+.tool-title {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.tool-meta {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 12px;
+  font-size: 0.9em;
+}
+
+.tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.tag-topic { background: #dbeafe; color: #1e40af; }
+.tag-calc1 { background: #d1fae5; color: #065f46; }
+.tag-calc2 { background: #fef3c7; color: #92400e; }
+
+.kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #e5e7eb;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.tip {
+  background: #eff6ff;
+  border-left: 4px solid var(--primary);
+  padding: 12px 15px;
+  margin: 15px 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.tip-title {
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.warning {
+  background: #fef3c7;
+  border-left: 4px solid var(--warning);
+  padding: 12px 15px;
+  margin: 15px 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.toc {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 25px;
+  margin: 25px 0;
+}
+
+.toc-title {
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--secondary);
+}
+
+.toc ul {
+  list-style: none;
+  margin-left: 0;
+}
+
+.toc li { margin-bottom: 8px; }
+.toc a { color: var(--primary); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+.footer {
+  margin-top: 50px;
+  padding-top: 20px;
+  border-top: 2px solid var(--border);
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+</style>
+</head>
+<body>
+
+<h1>📐 Interactive Calculus Tools</h1>
+<p class="subtitle">Teacher Manual & Documentation</p>
+
+<p>This manual provides an overview of 11 interactive HTML-based tools designed to support Calculus 1 and Calculus 2 instruction. Each tool is a self-contained single HTML file that runs entirely in the browser with no installation required.</p>
+
+<div class="toc">
+  <div class="toc-title">📑 Table of Contents</div>
+  <ul>
+    <li><a href="#overview">1. Overview & Quick Start</a></li>
+    <li><a href="#curriculum">2. Curriculum Alignment</a></li>
+    <li><a href="#tools">3. Individual Tool Guides</a></li>
+    <li><a href="#classroom">4. Classroom Integration Ideas</a></li>
+    <li><a href="#technical">5. Technical Notes</a></li>
+    <li><a href="#shortcuts">6. Keyboard Shortcuts Reference</a></li>
+  </ul>
+</div>
+
+<!-- ============================================ -->
+<h2 id="overview">1. Overview & Quick Start</h2>
+
+<h3>What's Included</h3>
+<p>The bundle contains 11 interactive tools covering the full Calculus 1/2 curriculum:</p>
+
+<table>
+  <tr>
+    <th>#</th>
+    <th>Tool Name</th>
+    <th>Primary Topic</th>
+    <th>Course</th>
+  </tr>
+  <tr><td>01</td><td>Bike Simulator</td><td>Derivatives as Rate of Change</td><td>Calc 1</td></tr>
+  <tr><td>02</td><td>Derivative Dojo v5</td><td>Derivative Rules Practice</td><td>Calc 1</td></tr>
+  <tr><td>03</td><td>Function Anatomy Lab v3</td><td>Curve Sketching & Analysis</td><td>Calc 1</td></tr>
+  <tr><td>04</td><td>Related Rates Shadow Lab v3</td><td>Related Rates Problems</td><td>Calc 1</td></tr>
+  <tr><td>05</td><td>Optimization Paradox Lab v2</td><td>Optimization Word Problems</td><td>Calc 1</td></tr>
+  <tr><td>06</td><td>Integral Lockbox v5</td><td>Integration Techniques</td><td>Calc 2</td></tr>
+  <tr><td>07</td><td>Volumes of Revolution v3</td><td>Disk/Washer/Shell Methods</td><td>Calc 2</td></tr>
+  <tr><td>08</td><td>Taylor Journey v0.9</td><td>Taylor Series</td><td>Calc 2</td></tr>
+  <tr><td>09</td><td>Zeno's Paradox</td><td>Limits & Infinite Series</td><td>Calc 1/2</td></tr>
+  <tr><td>10</td><td>Polar Explorer</td><td>Polar Coordinates</td><td>Calc 2</td></tr>
+  <tr><td>11</td><td>Vector Void v2</td><td>Vectors & Operations</td><td>Calc 2/3</td></tr>
+</table>
+
+<h3>Quick Start</h3>
+<ol>
+  <li><strong>Unzip</strong> the downloaded bundle to any folder</li>
+  <li><strong>Open</strong> any <code>.html</code> file in a modern web browser (Chrome, Firefox, Safari, Edge)</li>
+  <li><strong>No internet required</strong> — all tools run locally after download</li>
+  <li><strong>Progress auto-saves</strong> to browser localStorage</li>
+</ol>
+
+<div class="tip">
+  <div class="tip-title">💡 Pro Tip</div>
+  Students can bookmark individual tools or save them to their desktop for quick access throughout the semester.
+</div>
+
+<!-- ============================================ -->
+<h2 id="curriculum" class="page-break">2. Curriculum Alignment</h2>
+
+<h3>Calculus 1 Coverage</h3>
+<table>
+  <tr>
+    <th>Topic</th>
+    <th>Tool(s)</th>
+    <th>Depth</th>
+  </tr>
+  <tr>
+    <td>Limits & Continuity</td>
+    <td>Zeno's Paradox</td>
+    <td>Conceptual introduction via geometric series</td>
+  </tr>
+  <tr>
+    <td>Definition of Derivative</td>
+    <td>Bike Simulator</td>
+    <td>Visual: slope of tangent, rate of change</td>
+  </tr>
+  <tr>
+    <td>Derivative Rules</td>
+    <td>Derivative Dojo v5</td>
+    <td>Comprehensive: power, product, quotient, chain rules</td>
+  </tr>
+  <tr>
+    <td>Curve Sketching</td>
+    <td>Function Anatomy Lab v3</td>
+    <td>f, f', f'' analysis; critical points; inflection</td>
+  </tr>
+  <tr>
+    <td>Related Rates</td>
+    <td>Related Rates Shadow Lab v3</td>
+    <td>Step-by-step problem solving with visualization</td>
+  </tr>
+  <tr>
+    <td>Optimization</td>
+    <td>Optimization Paradox Lab v2</td>
+    <td>6 classic problems with constraint coupling</td>
+  </tr>
+</table>
+
+<h3>Calculus 2 Coverage</h3>
+<table>
+  <tr>
+    <th>Topic</th>
+    <th>Tool(s)</th>
+    <th>Depth</th>
+  </tr>
+  <tr>
+    <td>Integration Techniques</td>
+    <td>Integral Lockbox v5</td>
+    <td>U-sub, By Parts, Partial Fractions, Trig Sub; 60+ problems</td>
+  </tr>
+  <tr>
+    <td>Volumes of Revolution</td>
+    <td>Volumes of Revolution v3</td>
+    <td>Disk, washer, shell methods with 3D visualization</td>
+  </tr>
+  <tr>
+    <td>Sequences & Series</td>
+    <td>Zeno's Paradox, Taylor Journey</td>
+    <td>Geometric series, convergence intuition</td>
+  </tr>
+  <tr>
+    <td>Taylor Series</td>
+    <td>Taylor Journey v0.9</td>
+    <td>Comprehensive: approximation, error, convergence</td>
+  </tr>
+  <tr>
+    <td>Polar Coordinates</td>
+    <td>Polar Explorer</td>
+    <td>Graphing, area calculation, common curves</td>
+  </tr>
+  <tr>
+    <td>Vectors</td>
+    <td>Vector Void v2</td>
+    <td>Addition, dot product, cross product, projections</td>
+  </tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="tools" class="page-break">3. Individual Tool Guides</h2>
+
+<!-- Tool 1 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🚴</span>
+    <span class="tool-title">01 — Bike Simulator</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc1">Calc 1</span>
+    <span class="tag tag-topic">Derivatives</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Builds intuition for derivatives as rate of change by visualizing a cyclist's position, velocity, and acceleration in real-time.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li>Three synchronized graphs: position s(t), velocity v(t) = s'(t), acceleration a(t) = s''(t)</li>
+    <li>Adjustable speed function parameters</li>
+    <li>Tangent line visualization at any point</li>
+    <li>Animation controls (play, pause, step)</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Introduce before formal derivative definition. Ask students: "When is the bike speeding up? Slowing down? How do you know from each graph?"</p>
+</div>
+
+<!-- Tool 2 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🥋</span>
+    <span class="tool-title">02 — Derivative Dojo v5</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc1">Calc 1</span>
+    <span class="tag tag-topic">Derivative Rules</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Drill-based practice for all derivative rules with immediate feedback and adaptive difficulty.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li><strong>Rule Categories:</strong> Power, Product, Quotient, Chain, Trigonometric, Exponential, Logarithmic</li>
+    <li><strong>Boss Rush Mode:</strong> Timed challenge combining all rules</li>
+    <li><strong>100+ problems</strong> with step-by-step hints</li>
+    <li><strong>Progress tracking:</strong> Belt ranking system (White → Black)</li>
+    <li><strong>Common error detection:</strong> Identifies specific mistakes</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Assign specific rule categories after teaching each rule. Use Boss Rush mode for exam review.</p>
+</div>
+
+<!-- Tool 3 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🔬</span>
+    <span class="tool-title">03 — Function Anatomy Lab v3</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc1">Calc 1</span>
+    <span class="tag tag-topic">Curve Sketching</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Interactive exploration of the relationship between a function and its first and second derivatives.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li>Synchronized f(x), f'(x), f''(x) graphs</li>
+    <li>Draggable point showing corresponding values on all three graphs</li>
+    <li>Automatic detection of critical points, inflection points, and extrema</li>
+    <li>Multiple function families: polynomials, rational, trigonometric, exponential</li>
+    <li>Sign analysis overlays</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Project during lecture when introducing curve sketching. Have students predict f' sign from f behavior before revealing.</p>
+</div>
+
+<!-- Tool 4 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🏃</span>
+    <span class="tool-title">04 — Related Rates Shadow Lab v3</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc1">Calc 1</span>
+    <span class="tag tag-topic">Related Rates</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Visualizes the classic "shadow problem" — a person walking away from a streetlamp — with step-by-step problem-solving guidance.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li>Animated scene: person, streetlamp, shadow moving in real-time</li>
+    <li>Adjustable parameters: lamp height, person height, walking speed</li>
+    <li>Step-by-step guided solution (identify variables → draw diagram → write equation → differentiate → solve)</li>
+    <li>Formula overlay showing similar triangles relationship</li>
+    <li>Rate display: dx/dt, ds/dt (shadow tip), dL/dt (shadow length)</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Work through as a class first, then have students change parameters and predict how rates change before running animation.</p>
+</div>
+
+<!-- Tool 5 -->
+<div class="tool-card page-break">
+  <div class="tool-header">
+    <span class="tool-icon">🔄</span>
+    <span class="tool-title">05 — Optimization Paradox Lab v2</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc1">Calc 1</span>
+    <span class="tag tag-topic">Optimization</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Teaches optimization through cognitive conflict — students discover why their intuition fails before learning the calculus solution.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li><strong>6 Classic Problems:</strong> Fence by River, Box Volume, Tin Can, Ladder Around Corner, Poster Margins, Rectangle Under Parabola</li>
+    <li><strong>Explore Mode:</strong> Interactive sliders showing constraint coupling in real-time</li>
+    <li><strong>Challenge Mode:</strong> "Gut choice" buttons with labeled cognitive biases (Symmetry Bias, Endpoint Bias, etc.)</li>
+    <li><strong>Failure feedback:</strong> Shows exactly why intuitive answers fail</li>
+    <li><strong>Math Path:</strong> 3-step verification (constraint → substitution → derivative)</li>
+    <li><strong>Animated transitions</strong> when exploring parameters</li>
+  </ul>
+  
+  <h4>Cognitive Biases Taught</h4>
+  <ul>
+    <li><em>Symmetry Bias:</em> "Squares are always optimal!"</li>
+    <li><em>Endpoint Bias:</em> "Maximize one dimension!"</li>
+    <li><em>Ignoring Constraint Coupling:</em> Treating variables as independent</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Have students try gut choices first (without penalty), discuss as class why each fails, then solve together.</p>
+</div>
+
+<!-- Tool 6 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🔒</span>
+    <span class="tool-title">06 — Integral Lockbox v5</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc2">Calc 2</span>
+    <span class="tag tag-topic">Integration Techniques</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Gamified integration practice where each technique is a "tumbler" that unlocks a puzzle box.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li><strong>5 Technique Tumblers:</strong> U-Substitution, Integration by Parts, Partial Fractions, Trig Substitution, Simplify First</li>
+    <li><strong>60+ problems</strong> across all difficulty levels</li>
+    <li><strong>Pattern Quest mode:</strong> Learn to identify which technique to use</li>
+    <li><strong>Decision Tree Wizard:</strong> Interactive flowchart for technique selection</li>
+    <li><strong>Star rating system:</strong> Track mastery per technique</li>
+    <li><strong>Step-by-step hints</strong> available for each problem</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Assign one tumbler per week as techniques are taught. Use Pattern Quest mode before exams to practice technique identification.</p>
+</div>
+
+<!-- Tool 7 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🍩</span>
+    <span class="tool-title">07 — Volumes of Revolution v3</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc2">Calc 2</span>
+    <span class="tag tag-topic">Applications of Integration</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>3D visualization of solids of revolution with disk, washer, and shell methods.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li><strong>Three methods:</strong> Disk, Washer, Shell — with visual explanation of each</li>
+    <li><strong>3D rotating view:</strong> See the solid from any angle</li>
+    <li><strong>Representative slice animation:</strong> Watch a slice sweep to form the solid</li>
+    <li><strong>Formula builder:</strong> Shows how integral is constructed</li>
+    <li><strong>Multiple axes:</strong> Revolve around x-axis, y-axis, or arbitrary lines</li>
+    <li><strong>Preset examples + custom function input</strong></li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Demo during lecture to show why shell method is easier for certain problems. Have students predict volume before calculation.</p>
+</div>
+
+<!-- Tool 8 -->
+<div class="tool-card page-break">
+  <div class="tool-header">
+    <span class="tool-icon">🚗</span>
+    <span class="tool-title">08 — Taylor Journey (Close Enough) v0.9</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc2">Calc 2</span>
+    <span class="tag tag-topic">Taylor Series</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>A narrative-driven game where students discover Taylor series through a "business simulation" — finding polynomial approximations that are "close enough" for buyers.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li><strong>6-Phase Discovery Arc:</strong>
+      <ol>
+        <li>Zoom & Guess (contracts 1-6)</li>
+        <li>Tangents Rule (7-10)</li>
+        <li>Curvature Bites (11-14)</li>
+        <li>Pain Point (15-18)</li>
+        <li>Taylor Reveal (19-20) — "Aha!" moment</li>
+        <li>Aftermath — Duel + Sandbox unlocked</li>
+      </ol>
+    </li>
+    <li><strong>Duel Mode:</strong> Taylor vs. Least Squares comparison</li>
+    <li><strong>Sandbox Workshop:</strong> Full control over function, center point, degree</li>
+    <li><strong>Coefficient breakdown:</strong> Shows c₀ = f(a), c₁ = f'(a), etc.</li>
+    <li><strong>Convergence warnings:</strong> Displays radius of convergence for each function</li>
+    <li><strong>Error visualization:</strong> Shaded remainder region R_n(x)</li>
+  </ul>
+  
+  <h4>Teacher Mode</h4>
+  <p>Hold <span class="kbd">Shift</span> + <span class="kbd">~</span> for 2 seconds to open Teacher panel with options to skip phases, freeze buyer, or unlock all modes.</p>
+  
+  <h4>Suggested Use</h4>
+  <p>Assign as homework before Taylor lecture. Students arrive having "discovered" the pattern. Use Duel mode to compare Taylor vs. least squares fit.</p>
+</div>
+
+<!-- Tool 9 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🐢</span>
+    <span class="tool-title">09 — Zeno's Paradox</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc1">Calc 1</span>
+    <span class="tag tag-calc2">Calc 2</span>
+    <span class="tag tag-topic">Limits & Series</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Visualizes the Achilles and Tortoise paradox to build intuition for limits and infinite series.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li>Animated race between Achilles and the Tortoise</li>
+    <li>Step-by-step visualization: each "catch-up" attempt</li>
+    <li>Running sum display: 1/2 + 1/4 + 1/8 + ... → 1</li>
+    <li>Geometric series formula connection</li>
+    <li>Adjustable parameters (speeds, head start)</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Use on day 1 of limits (Calc 1) or series (Calc 2) to motivate why we need rigorous definitions.</p>
+</div>
+
+<!-- Tool 10 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🧭</span>
+    <span class="tool-title">10 — Polar Explorer</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc2">Calc 2</span>
+    <span class="tag tag-topic">Polar Coordinates</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Interactive polar coordinate graphing with area calculation.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li><strong>Function library:</strong> Cardioids, roses, limaçons, spirals, lemniscates</li>
+    <li><strong>Custom equation input:</strong> Enter any r = f(θ)</li>
+    <li><strong>Animated drawing:</strong> Watch curve trace as θ increases</li>
+    <li><strong>Area calculator:</strong> Computes ½∫r²dθ with visual shading</li>
+    <li><strong>Cartesian overlay option</strong></li>
+    <li><strong>Point coordinates display:</strong> (r, θ) and (x, y) simultaneously</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Have students predict shape before animation plays. Use area shading to visualize what the integral calculates.</p>
+</div>
+
+<!-- Tool 11 -->
+<div class="tool-card">
+  <div class="tool-header">
+    <span class="tool-icon">🚀</span>
+    <span class="tool-title">11 — Vector Void v2</span>
+  </div>
+  <div class="tool-meta">
+    <span class="tag tag-calc2">Calc 2/3</span>
+    <span class="tag tag-topic">Vectors</span>
+  </div>
+  
+  <h4>Purpose</h4>
+  <p>Space navigation game teaching vector operations through gameplay.</p>
+  
+  <h4>Key Features</h4>
+  <ul>
+    <li><strong>Missions:</strong> Navigate through space using vector addition</li>
+    <li><strong>Operations covered:</strong> Addition, scalar multiplication, dot product, cross product, projection</li>
+    <li><strong>Visual representation:</strong> 2D and 3D vector displays</li>
+    <li><strong>Challenge modes:</strong> Timed navigation, angle calculations</li>
+    <li><strong>Geometric interpretation:</strong> Shows angle between vectors, parallel/perpendicular detection</li>
+  </ul>
+  
+  <h4>Suggested Use</h4>
+  <p>Assign after introducing each operation. Game context makes abstract operations concrete.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="classroom" class="page-break">4. Classroom Integration Ideas</h2>
+
+<h3>Before Lecture (Flipped Classroom)</h3>
+<ul>
+  <li><strong>Taylor Journey:</strong> Assign contracts 1-10 as "discovery homework" — students arrive having found patterns</li>
+  <li><strong>Optimization Paradox:</strong> Have students try gut choices at home, discuss failures in class</li>
+  <li><strong>Zeno's Paradox:</strong> Watch animation before limits lecture</li>
+</ul>
+
+<h3>During Lecture</h3>
+<ul>
+  <li><strong>Function Anatomy Lab:</strong> Project and drag point across curve while asking "Is f increasing here? Is f' positive?"</li>
+  <li><strong>Volumes of Revolution:</strong> Show 3D solid forming in real-time</li>
+  <li><strong>Related Rates:</strong> Animate shadow problem while building equation</li>
+</ul>
+
+<h3>Homework & Practice</h3>
+<ul>
+  <li><strong>Derivative Dojo:</strong> "Complete 20 problems in Chain Rule category"</li>
+  <li><strong>Integral Lockbox:</strong> "Unlock the U-Substitution tumbler"</li>
+  <li><strong>Polar Explorer:</strong> "Graph these 5 equations and sketch by hand to compare"</li>
+</ul>
+
+<h3>Exam Review</h3>
+<ul>
+  <li><strong>Derivative Dojo Boss Rush:</strong> Timed mixed practice</li>
+  <li><strong>Integral Lockbox Pattern Quest:</strong> Technique identification drill</li>
+  <li><strong>Optimization Paradox:</strong> Review all 6 problem types</li>
+</ul>
+
+<h3>Assessment Ideas</h3>
+<ul>
+  <li>Have students screenshot their Derivative Dojo belt progression</li>
+  <li>Assign specific Taylor Journey sandbox explorations with written analysis</li>
+  <li>Quiz: "Without the tool, predict which integration technique is needed"</li>
+</ul>
+
+<!-- ============================================ -->
+<h2 id="technical">5. Technical Notes</h2>
+
+<h3>Browser Compatibility</h3>
+<p>All tools tested and working on:</p>
+<ul>
+  <li>Chrome 90+</li>
+  <li>Firefox 88+</li>
+  <li>Safari 14+</li>
+  <li>Edge 90+</li>
+</ul>
+
+<h3>Data Storage</h3>
+<p>Progress is saved to <strong>browser localStorage</strong>. This means:</p>
+<ul>
+  <li>Progress persists between sessions on the same device/browser</li>
+  <li>Clearing browser data will reset progress</li>
+  <li>Progress does not sync between devices</li>
+  <li>Each tool has independent storage</li>
+</ul>
+
+<div class="warning">
+  <strong>⚠️ Note:</strong> If students use incognito/private browsing mode, progress will not be saved.
+</div>
+
+<h3>Offline Use</h3>
+<p>All tools work offline after initial download. The only external resources are Google Fonts (for styling), which will fall back to system fonts if unavailable.</p>
+
+<h3>Mobile Support</h3>
+<p>All tools are responsive and work on tablets. Phone screens are supported but may be cramped for some visualizations. Landscape orientation recommended for mobile use.</p>
+
+<h3>Resetting Progress</h3>
+<p>Most tools include a reset option in settings. Alternatively, students can clear localStorage for the specific tool in browser developer tools.</p>
+
+<!-- ============================================ -->
+<h2 id="shortcuts" class="page-break">6. Keyboard Shortcuts Reference</h2>
+
+<h3>Taylor Journey (Close Enough)</h3>
+<table>
+  <tr><th>Shortcut</th><th>Action</th></tr>
+  <tr><td><span class="kbd">N</span></td><td>New buyer</td></tr>
+  <tr><td><span class="kbd">↑</span> / <span class="kbd">+</span></td><td>Increase polynomial degree</td></tr>
+  <tr><td><span class="kbd">↓</span> / <span class="kbd">-</span></td><td>Decrease polynomial degree</td></tr>
+  <tr><td><span class="kbd">Enter</span></td><td>Submit deal</td></tr>
+  <tr><td><span class="kbd">H</span></td><td>Show hint</td></tr>
+  <tr><td><span class="kbd">Shift</span>+<span class="kbd">~</span> (hold 2s)</td><td>Open teacher panel</td></tr>
+  <tr><td><span class="kbd">Esc</span></td><td>Close modal</td></tr>
+</table>
+
+<h3>Derivative Dojo</h3>
+<table>
+  <tr><th>Shortcut</th><th>Action</th></tr>
+  <tr><td><span class="kbd">Enter</span></td><td>Submit answer</td></tr>
+  <tr><td><span class="kbd">Tab</span></td><td>Next problem (after answer)</td></tr>
+  <tr><td><span class="kbd">H</span></td><td>Show hint</td></tr>
+</table>
+
+<h3>Integral Lockbox</h3>
+<table>
+  <tr><th>Shortcut</th><th>Action</th></tr>
+  <tr><td><span class="kbd">Enter</span></td><td>Submit answer</td></tr>
+  <tr><td><span class="kbd">H</span></td><td>Show hint</td></tr>
+  <tr><td><span class="kbd">Esc</span></td><td>Close modal</td></tr>
+</table>
+
+<h3>General (Most Tools)</h3>
+<table>
+  <tr><th>Shortcut</th><th>Action</th></tr>
+  <tr><td><span class="kbd">Esc</span></td><td>Close modal/overlay</td></tr>
+  <tr><td><span class="kbd">Space</span></td><td>Play/pause animation (where applicable)</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="footer">
+  <p><strong>Interactive Calculus Tools Bundle</strong></p>
+  <p>Created 2025 • For educational use</p>
+  <p>Questions or feedback? Contact your curriculum coordinator.</p>
+</div>
+
+</body>
+</html>

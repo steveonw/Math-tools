@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Derivative Dojo v6.3 — Practice & Worksheets</title>
+<style>
+:root {
+  --bg: #0d0d0d;
+  --panel: #1a1a1a;
+  --border: rgba(255,255,255,0.1);
+  --text: #f0f0f0;
+  --muted: #888;
+  --accent: #ff6b4a;
+  --accent2: #4af0ff;
+  --success: #4aff7f;
+  --warning: #ffd44a;
+  --error: #ff4a6a;
+  --purple: #a78bfa;
+}
+
+/* Practice Mode Indicator */
+.practice-badge {
+  background: var(--success);
+  color: var(--bg);
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 10px;
+}
+
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin: 15px 0;
+  justify-content: center;
+}
+
+.mode-btn {
+  padding: 10px 20px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.85rem;
+}
+
+.mode-btn:hover { border-color: var(--accent); }
+.mode-btn.active { border-color: var(--accent); background: rgba(255, 107, 74, 0.2); }
+.mode-btn .emoji { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+
+/* Stats Panel */
+.stats-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  max-width: 500px;
+  width: 100%;
+}
+
+.stats-panel h3 {
+  color: var(--accent2);
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stats-box {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.stats-box .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+}
+
+.stats-box .label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.stats-box.score .value { color: var(--warning); }
+.stats-box.problems .value { color: var(--accent2); }
+.stats-box.accuracy .value { color: var(--success); }
+
+.rule-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.rule-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.rule-stat .name { color: var(--muted); }
+.rule-stat .pct { font-weight: 700; font-family: ui-monospace, monospace; }
+.rule-stat .pct.high { color: var(--success); }
+.rule-stat .pct.mid { color: var(--warning); }
+.rule-stat .pct.low { color: var(--error); }
+
+/* Worksheet Panel */
+.worksheet-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 500px;
+  width: 100%;
+  display: none;
+}
+
+.worksheet-panel.visible { display: block; }
+
+.worksheet-panel h3 {
+  color: var(--purple);
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.worksheet-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.worksheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.worksheet-row label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.worksheet-row select,
+.worksheet-row input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 0.85rem;
+  min-width: 150px;
+}
+
+.worksheet-row input[type="number"] { width: 80px; min-width: 80px; }
+
+.worksheet-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.worksheet-actions button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.worksheet-actions .generate { background: var(--purple); color: var(--bg); }
+.worksheet-actions .generate:hover { filter: brightness(1.1); }
+
+/* Worksheet Output */
+.worksheet-output {
+  display: none;
+  margin-top: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.worksheet-output.visible { display: block; }
+
+.worksheet-header {
+  text-align: center;
+  padding: 15px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 15px;
+}
+
+.worksheet-header h2 { font-size: 1.2rem; margin-bottom: 5px; }
+.worksheet-header .meta { font-size: 0.75rem; color: var(--muted); }
+
+.worksheet-problem {
+  padding: 12px 15px;
+  margin: 8px 0;
+  background: var(--bg);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.worksheet-problem .num {
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 30px;
+}
+
+.worksheet-problem .question { flex: 1; font-size: 1.1rem; }
+
+.worksheet-problem .answer {
+  font-family: ui-monospace, monospace;
+  color: var(--success);
+  font-size: 0.9rem;
+  display: none;
+}
+
+.worksheet-output.show-answers .worksheet-problem .answer { display: block; }
+
+.worksheet-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.worksheet-controls button {
+  padding: 8px 16px;
+  background: var(--border);
+  border: none;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.worksheet-controls button:hover { background: var(--muted); }
+.worksheet-controls button.active { background: var(--accent); color: var(--bg); }
+
+/* Timer hidden in practice mode */
+.timer-bar.hidden { display: none; }
+
+/* Menu tabs */
+.menu-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.menu-tab {
+  padding: 10px 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.menu-tab:hover { color: var(--text); }
+.menu-tab.active { 
+  background: var(--bg); 
+  color: var(--accent); 
+  border-bottom-color: var(--bg);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo h1 { font-size: 1.3rem; font-weight: 800; }
+.logo h1 span { color: var(--accent); }
+.version { color: var(--purple); font-size: 0.7rem; margin-left: 8px; }
+
+.header-stats { display: flex; gap: 20px; }
+.stat { text-align: center; }
+.stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+.stat-value { font-size: 1.2rem; font-weight: 700; font-family: ui-monospace, monospace; }
+.stat-value.score { color: var(--warning); }
+.stat-value.streak { color: var(--accent); }
+.stat-value.level { color: var(--accent2); }
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 20px;
+}
+
+.seed-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  flex-wrap: wrap;
+}
+
+.seed-bar label { font-size: 0.8rem; color: var(--muted); }
+
+.seed-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--purple);
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  width: 120px;
+  text-transform: uppercase;
+}
+
+.seed-input:focus { outline: none; border-color: var(--purple); }
+
+.seed-btn, .action-btn {
+  background: var(--border);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.seed-btn:hover, .action-btn:hover { background: var(--muted); }
+.action-btn.primary { background: var(--accent); color: var(--bg); }
+.action-btn.primary:hover { filter: brightness(1.1); }
+
+.problem-id {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.problem-card {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 30px 40px;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  position: relative;
+}
+
+.problem-card.correct { border-color: var(--success); animation: pulse-success 0.5s ease; }
+.problem-card.wrong { border-color: var(--error); animation: shake 0.5s ease; }
+
+@keyframes pulse-success { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+
+.rule-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: var(--bg);
+  padding: 4px 16px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.problem-text {
+  font-size: 1.8rem;
+  margin: 20px 0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.problem-counter { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
+
+.timer-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  margin: 15px 0;
+  overflow: hidden;
+}
+
+.timer-fill {
+  height: 100%;
+  background: var(--accent2);
+  border-radius: 3px;
+  will-change: width;
+}
+
+.timer-fill.warning { background: var(--warning); }
+.timer-fill.danger { background: var(--error); }
+
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+@media (max-width: 400px) { .choices { grid-template-columns: 1fr; } }
+
+.choice-btn {
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 20px;
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.choice-btn:hover:not(:disabled) { border-color: var(--accent2); transform: translateY(-2px); }
+.choice-btn.correct { border-color: var(--success); background: rgba(74, 255, 127, 0.2); }
+.choice-btn.wrong { border-color: var(--error); background: rgba(255, 74, 106, 0.2); }
+.choice-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+
+.feedback {
+  margin-top: 15px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  min-height: 50px;
+}
+
+.feedback.success { background: rgba(74, 255, 127, 0.15); border: 1px solid var(--success); color: var(--success); }
+.feedback.error { background: rgba(255, 74, 106, 0.15); border: 1px solid var(--error); color: var(--error); }
+.feedback.hint { background: rgba(255, 212, 74, 0.15); border: 1px solid var(--warning); color: var(--warning); }
+
+.actions { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center; }
+
+.work-panel {
+  display: none;
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid var(--purple);
+  border-radius: 10px;
+  text-align: left;
+}
+
+.work-panel.visible { display: block; }
+.work-panel .step { margin: 6px 0; font-family: ui-monospace, monospace; color: var(--purple); }
+
+.save-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.save-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.save-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+
+.save-code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.95rem;
+  color: var(--purple);
+  text-align: center;
+  padding: 8px;
+  background: rgba(167, 139, 250, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.save-buttons { display: flex; gap: 8px; margin-top: 8px; }
+.save-buttons button { flex: 1; padding: 8px; background: var(--border); border: none; border-radius: 6px; color: var(--text); font-size: 0.75rem; cursor: pointer; }
+.save-buttons button:hover { background: var(--muted); }
+
+.mastery-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.mastery-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+.mastery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+.mastery-item { text-align: center; }
+.mastery-name { font-size: 0.7rem; color: var(--muted); margin-bottom: 4px; }
+.mastery-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.mastery-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+.mastery-fill.low { background: var(--error); }
+.mastery-fill.mid { background: var(--warning); }
+.mastery-fill.high { background: var(--success); }
+
+.start-screen { text-align: center; max-width: 500px; }
+.start-screen h2 { font-size: 2rem; margin-bottom: 10px; }
+.start-screen p { color: var(--muted); margin-bottom: 20px; }
+
+.belt-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+
+.belt-btn {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.belt-btn:hover { border-color: var(--accent); }
+.belt-btn.selected { border-color: var(--accent); background: rgba(255, 107, 74, 0.1); }
+.belt-name { font-weight: 700; font-size: 0.9rem; }
+.belt-desc { font-size: 0.75rem; color: var(--muted); }
+.belt-emoji { font-size: 1.2rem; margin-right: 6px; }
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal.visible { display: flex; }
+
+.modal-content {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-title { font-size: 1.2rem; margin-bottom: 16px; color: var(--accent2); }
+
+.modal-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+  margin-bottom: 16px;
+}
+
+.modal-buttons { display: flex; gap: 10px; }
+.modal-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.modal-buttons .secondary { background: var(--border); color: var(--text); }
+.modal-buttons .primary { background: var(--accent); color: var(--bg); }
+
+.reference {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  max-width: 600px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.reference summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); }
+.reference-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; margin-top: 10px; }
+.ref-item { font-size: 0.75rem; padding: 4px 8px; background: var(--bg); border-radius: 4px; font-family: ui-monospace, monospace; }
+
+.gen-badge {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background: var(--purple);
+  color: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <h1>🥋 Derivative <span>Dojo</span></h1>
+    <span class="version">v6.3</span>
+    <span class="practice-badge" id="practiceBadge" style="display:none;">PRACTICE MODE</span>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-label">Score</div><div class="stat-value score" id="score">0</div></div>
+    <div class="stat"><div class="stat-label">Streak</div><div class="stat-value streak" id="streak">0</div></div>
+    <div class="stat"><div class="stat-label">Belt</div><div class="stat-value level" id="belt">⬜</div></div>
+  </div>
+</header>
+
+<main>
+  <!-- Start Screen -->
+  <div class="start-screen" id="startScreen">
+    <h2>🥋 Derivative Dojo</h2>
+    <p>Master derivatives through practice. Same seed = same problems for everyone!</p>
+    
+    <!-- Menu Tabs -->
+    <div class="menu-tabs">
+      <button class="menu-tab active" onclick="showTab('play')">🎮 Play</button>
+      <button class="menu-tab" onclick="showTab('stats')">📊 Stats</button>
+      <button class="menu-tab" onclick="showTab('worksheet')">📝 Worksheet</button>
+    </div>
+    
+    <!-- Play Tab -->
+    <div class="tab-content active" id="tabPlay">
+      <div class="seed-bar" style="justify-content: center; margin-bottom: 15px;">
+        <label>Seed:</label>
+        <input type="text" class="seed-input" id="seedInput" value="DOJO" placeholder="Enter seed">
+        <button class="seed-btn" onclick="randomSeed()">🎲</button>
+      </div>
+      
+      <!-- Mode Toggle -->
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeChallenge" onclick="setGameMode('challenge')">
+          <span class="emoji">⏱️</span>
+          Challenge
+        </button>
+        <button class="mode-btn" id="modePractice" onclick="setGameMode('practice')">
+          <span class="emoji">📚</span>
+          Practice
+        </button>
+      </div>
+      
+      <div class="belt-select" id="beltSelect"></div>
+      
+      <button class="action-btn primary" onclick="startGame()" style="padding: 12px 30px; font-size: 1rem;">
+        Begin Training
+      </button>
+      
+      <div style="margin-top: 20px;">
+        <button class="action-btn" onclick="showLoadModal()">📂 Load Save Code</button>
+      </div>
+    </div>
+    
+    <!-- Stats Tab -->
+    <div class="tab-content" id="tabStats">
+      <div class="stats-panel">
+        <h3>📊 Your Statistics</h3>
+        
+        <div class="stats-grid">
+          <div class="stats-box score">
+            <div class="value" id="statsTotalScore">0</div>
+            <div class="label">Total Score</div>
+          </div>
+          <div class="stats-box problems">
+            <div class="value" id="statsTotalProblems">0</div>
+            <div class="label">Problems</div>
+          </div>
+          <div class="stats-box accuracy">
+            <div class="value" id="statsAccuracy">--%</div>
+            <div class="label">Accuracy</div>
+          </div>
+        </div>
+        
+        <h4 style="color: var(--muted); font-size: 0.8rem; margin-bottom: 10px;">MASTERY BY RULE</h4>
+        <div class="rule-stats" id="ruleStats"></div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+          <button class="action-btn" onclick="resetStats()">🗑️ Reset All Stats</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Worksheet Tab -->
+    <div class="tab-content" id="tabWorksheet">
+      <div class="worksheet-panel visible">
+        <h3>📝 Generate Worksheet</h3>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 15px;">
+          Create a printable problem set. Same seed = same problems!
+        </p>
+        
+        <div class="worksheet-options">
+          <div class="worksheet-row">
+            <label>Seed:</label>
+            <input type="text" id="wsSeed" value="WORKSHEET1" placeholder="Enter seed">
+          </div>
+          <div class="worksheet-row">
+            <label>Belt Level:</label>
+            <select id="wsBelt">
+              <option value="1">⬜ White - Power Rule</option>
+              <option value="2">🟨 Yellow - Power + Constants</option>
+              <option value="3">🟧 Orange - Power + Trig</option>
+              <option value="4">🟩 Green - Power + Trig + Exp</option>
+              <option value="5">🟦 Blue - Power + Product</option>
+              <option value="6">🟪 Purple - Power + Quotient</option>
+              <option value="7">🟫 Brown - Chain Rule</option>
+              <option value="8" selected>⬛ Black - All Rules</option>
+            </select>
+          </div>
+          <div class="worksheet-row">
+            <label>Problems:</label>
+            <input type="number" id="wsCount" value="10" min="5" max="50">
+          </div>
+        </div>
+        
+        <div class="worksheet-actions">
+          <button class="generate" onclick="generateWorksheet()">📄 Generate Worksheet</button>
+        </div>
+        
+        <div class="worksheet-output" id="wsOutput">
+          <div class="worksheet-header">
+            <h2 id="wsTitle">Derivative Practice</h2>
+            <div class="meta" id="wsMeta">Seed: WORKSHEET1 • 10 Problems • Black Belt</div>
+          </div>
+          <div id="wsProblems"></div>
+          <div class="worksheet-controls">
+            <button onclick="toggleAnswers()" id="btnToggleAnswers">👁️ Show Answers</button>
+            <button onclick="printWorksheet()">🖨️ Print</button>
+            <button onclick="copyWorksheetText()">📋 Copy as Text</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Area -->
+  <div id="gameArea" style="display: none; width: 100%; max-width: 600px;">
+    <div class="seed-bar">
+      <label>Seed:</label>
+      <span class="seed-input" id="currentSeed" style="cursor: pointer;" onclick="copySeed()">DOJO</span>
+      <span class="problem-id" id="problemId">#0000-1</span>
+    </div>
+    
+    <div class="problem-card" id="problemCard">
+      <div class="rule-badge" id="ruleBadge">Power Rule</div>
+      <div class="gen-badge">↩️ BACKWARDS GEN</div>
+      <div class="problem-counter" id="problemCounter">Problem 1</div>
+      <div class="problem-text" id="problemText">d/dx [ x² ]</div>
+      <div class="timer-bar" id="timerBar"><div class="timer-fill" id="timerFill"></div></div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="work-panel" id="workPanel"><div id="workSteps"></div></div>
+      <div class="actions">
+        <button class="action-btn" id="btnHint" onclick="showHint()">💡 Hint</button>
+        <button class="action-btn" id="btnWork" onclick="toggleWork()">📝 Work</button>
+        <button class="action-btn" id="btnSkip" onclick="skipProblem()">⏭ Skip</button>
+        <button class="action-btn primary" id="btnNext" onclick="nextProblem()" style="display:none;">Next →</button>
+      </div>
+    </div>
+    
+    <div class="mastery-panel">
+      <div class="mastery-title">Rule Mastery</div>
+      <div class="mastery-grid" id="masteryGrid"></div>
+    </div>
+    
+    <div class="save-section">
+      <div class="save-header">
+        <span class="save-label">Save Code (share with friends!)</span>
+      </div>
+      <div class="save-code" id="saveCode" onclick="copySaveCode()">Loading...</div>
+      <div class="save-buttons">
+        <button onclick="copySaveCode()">📋 Copy</button>
+        <button onclick="showLoadModal()">📂 Load</button>
+        <button onclick="shareSave()">🔗 Share</button>
+        <button onclick="backToStart()">🏠 Menu</button>
+      </div>
+    </div>
+    
+    <details class="reference">
+      <summary>📖 Quick Reference</summary>
+      <div class="reference-grid">
+        <div class="ref-item">d/dx [xⁿ] = nxⁿ⁻¹</div>
+        <div class="ref-item">d/dx [c] = 0</div>
+        <div class="ref-item">d/dx [sin x] = cos x</div>
+        <div class="ref-item">d/dx [cos x] = -sin x</div>
+        <div class="ref-item">d/dx [tan x] = sec²x</div>
+        <div class="ref-item">d/dx [eˣ] = eˣ</div>
+        <div class="ref-item">d/dx [ln x] = 1/x</div>
+        <div class="ref-item">(fg)′ = f′g + fg′</div>
+        <div class="ref-item">(f/g)′ = (f′g-fg′)/g²</div>
+        <div class="ref-item">d/dx [f(g)] = f′(g)·g′</div>
+      </div>
+    </details>
+  </div>
+</main>
+
+<!-- Load Modal -->
+<div class="modal" id="loadModal">
+  <div class="modal-content">
+    <div class="modal-title">📂 Load Save Code</div>
+    <input type="text" class="modal-input" id="loadInput" placeholder="Paste save code here...">
+    <div class="modal-buttons">
+      <button class="secondary" onclick="closeLoadModal()">Cancel</button>
+      <button class="primary" onclick="loadSaveCode()">Load</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DERIVATIVE DOJO v6.2 — BACKWARDS GENERATION
+   
+   KEY INSIGHT: Answer is the seed, problem is derived.
+   Same seed + same problem number = IDENTICAL problem for everyone.
+   
+   How it works:
+   1. RNG picks answer components (coefficient, exponent, function type)
+   2. We work BACKWARDS to find what function would produce that derivative
+   3. Problem is guaranteed correct because we started with the answer
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRNG — Deterministic random from seed
+// ─────────────────────────────────────────────────────────────────────────────
+function xorshift32(seed) {
+  let x = seed >>> 0 || 1;
+  return function() {
+    x ^= x << 13;
+    x ^= x >>> 17;
+    x ^= x << 5;
+    return (x >>> 0) / 4294967296;
+  };
+}
+
+function fnv1a(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+function mul32(a, b) {
+  return Math.imul(a >>> 0, b >>> 0) >>> 0;
+}
+
+function parseSeed(input) {
+  const s = (input || 'DOJO').trim().toUpperCase();
+  if (!s) return fnv1a('DOJO');
+  if (/^[0-9A-F]+$/.test(s) && s.length <= 8) {
+    const parsed = parseInt(s, 16);
+    if (!isNaN(parsed)) return parsed >>> 0;
+  }
+  return fnv1a(s);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BELT LEVELS
+// ─────────────────────────────────────────────────────────────────────────────
+const BELTS = [
+  { id: 1, name: 'White Belt', emoji: '⬜', rules: ['power'], timeLimit: 15, desc: 'Power Rule basics' },
+  { id: 2, name: 'Yellow Belt', emoji: '🟨', rules: ['power', 'constant'], timeLimit: 12, desc: 'Power + Constants' },
+  { id: 3, name: 'Orange Belt', emoji: '🟧', rules: ['power', 'trig'], timeLimit: 12, desc: 'Add Trig' },
+  { id: 4, name: 'Green Belt', emoji: '🟩', rules: ['power', 'trig', 'exp'], timeLimit: 12, desc: 'Add Exp/Log' },
+  { id: 5, name: 'Blue Belt', emoji: '🟦', rules: ['power', 'product'], timeLimit: 20, desc: 'Product Rule' },
+  { id: 6, name: 'Purple Belt', emoji: '🟪', rules: ['power', 'quotient'], timeLimit: 20, desc: 'Quotient Rule' },
+  { id: 7, name: 'Brown Belt', emoji: '🟫', rules: ['chain'], timeLimit: 20, desc: 'Chain Rule' },
+  { id: 8, name: 'Black Belt', emoji: '⬛', rules: ['power', 'trig', 'exp', 'product', 'quotient', 'chain'], timeLimit: 15, desc: 'All Rules Mixed' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FUNCTION LIBRARY — Building blocks for backwards generation
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Basic functions and their derivatives (for combining)
+const FUNCTIONS = {
+  // f(x) → f'(x)
+  poly: (coef, exp) => ({
+    f: exp === 1 ? `${coef === 1 ? '' : coef}x` : `${coef === 1 ? '' : coef}x<sup>${exp}</sup>`,
+    fp: exp === 1 ? `${coef}` : (exp === 2 ? `${coef * exp}x` : `${coef * exp}x<sup>${exp - 1}</sup>`),
+    fRaw: { type: 'poly', coef, exp },
+    fpRaw: { type: 'poly', coef: coef * exp, exp: exp - 1 }
+  }),
+  
+  sin: (coef = 1) => ({
+    f: coef === 1 ? 'sin x' : `${coef} sin x`,
+    fp: coef === 1 ? 'cos x' : `${coef} cos x`,
+    fRaw: { type: 'sin', coef },
+    fpRaw: { type: 'cos', coef }
+  }),
+  
+  cos: (coef = 1) => ({
+    f: coef === 1 ? 'cos x' : `${coef} cos x`,
+    fp: coef === 1 ? '-sin x' : `-${coef} sin x`,
+    fRaw: { type: 'cos', coef },
+    fpRaw: { type: 'sin', coef: -coef }
+  }),
+  
+  exp: (coef = 1) => ({
+    f: coef === 1 ? 'e<sup>x</sup>' : `${coef}e<sup>x</sup>`,
+    fp: coef === 1 ? 'e<sup>x</sup>' : `${coef}e<sup>x</sup>`,
+    fRaw: { type: 'exp', coef },
+    fpRaw: { type: 'exp', coef }
+  }),
+  
+  ln: (coef = 1) => ({
+    f: coef === 1 ? 'ln x' : `${coef} ln x`,
+    fp: coef === 1 ? '1/x' : `${coef}/x`,
+    fRaw: { type: 'ln', coef },
+    fpRaw: { type: 'recip', coef }
+  }),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BACKWARDS GENERATORS — Answer first, derive problem
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GENERATORS = {
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POWER RULE — Backwards: pick answer coefficients, derive original
+  // ═══════════════════════════════════════════════════════════════════════════
+  power: (rng) => {
+    const variant = Math.floor(rng() * 10);
+    
+    if (variant < 4) {
+      // Standard: answer is ax^n, original is (a/(n+1))x^(n+1)
+      // Pick answer exponent and ensure coefficient works out to integer
+      const answerExp = Math.floor(rng() * 5);  // 0-4
+      const origExp = answerExp + 1;            // 1-5
+      
+      // Pick a coefficient that's divisible by origExp
+      const multiplier = Math.floor(rng() * 4) + 1;  // 1-4
+      const answerCoef = multiplier * origExp;       // Will divide evenly
+      const origCoef = multiplier;
+      
+      // Format
+      let display, answer;
+      if (origExp === 1) {
+        display = `${origCoef === 1 ? '' : origCoef}x`;
+      } else {
+        display = `${origCoef === 1 ? '' : origCoef}x<sup>${origExp}</sup>`;
+      }
+      
+      if (answerExp === 0) {
+        answer = `${answerCoef}`;
+      } else if (answerExp === 1) {
+        answer = `${answerCoef}x`;
+      } else {
+        answer = `${answerCoef}x<sup>${answerExp}</sup>`;
+      }
+      
+      return {
+        display,
+        answer,
+        rule: 'Power Rule',
+        ruleKey: 'power',
+        work: [
+          `d/dx [${display}]`,
+          `= ${origCoef} · ${origExp} · x<sup>${origExp - 1}</sup>`,
+          `= ${answer}`
+        ]
+      };
+    }
+    
+    if (variant < 6) {
+      // Negative exponent: answer is ax^(-n), original is (a/(-n+1))x^(-n+1)
+      const answerExp = -(Math.floor(rng() * 3) + 2);  // -2 to -4
+      const origExp = answerExp + 1;                    // -1 to -3
+      
+      const multiplier = Math.floor(rng() * 3) + 1;
+      const answerCoef = multiplier * Math.abs(origExp) * (origExp < 0 ? -1 : 1);
+      const origCoef = multiplier * (origExp < 0 ? -1 : 1);
+      
+      const display = `${origCoef === 1 ? '' : origCoef === -1 ? '-' : origCoef}x<sup>${origExp}</sup>`;
+      const answer = `${answerCoef}x<sup>${answerExp}</sup>`;
+      
+      return {
+        display,
+        answer,
+        rule: 'Power Rule',
+        ruleKey: 'power',
+        work: [
+          `d/dx [${display}]`,
+          `= ${origCoef} · (${origExp}) · x<sup>${origExp - 1}</sup>`,
+          `= ${answer}`
+        ]
+      };
+    }
+    
+    if (variant < 8) {
+      // Simple: x^n where n is small
+      const n = Math.floor(rng() * 4) + 2;  // 2-5
+      const display = `x<sup>${n}</sup>`;
+      const answer = n === 2 ? '2x' : `${n}x<sup>${n - 1}</sup>`;
+      
+      return {
+        display,
+        answer,
+        rule: 'Power Rule',
+        ruleKey: 'power',
+        work: [`d/dx [x<sup>${n}</sup>]`, `= ${n}x<sup>${n - 1}</sup>`]
+      };
+    }
+    
+    if (variant === 8) {
+      // x alone
+      return {
+        display: 'x',
+        answer: '1',
+        rule: 'Power Rule',
+        ruleKey: 'power',
+        work: ['d/dx [x] = d/dx [x<sup>1</sup>]', '= 1 · x<sup>0</sup> = 1']
+      };
+    }
+    
+    // √x
+    return {
+      display: '√x',
+      answer: '1/(2√x)',
+      rule: 'Power Rule',
+      ruleKey: 'power',
+      work: ['d/dx [√x] = d/dx [x<sup>½</sup>]', '= ½ · x<sup>-½</sup>', '= 1/(2√x)']
+    };
+  },
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONSTANT RULE — Answer is always 0
+  // ═══════════════════════════════════════════════════════════════════════════
+  constant: (rng) => {
+    const options = [
+      () => {
+        const c = Math.floor(rng() * 20) + 1;
+        return { display: `${c}`, work: [`d/dx [${c}] = 0 (constant)`] };
+      },
+      () => {
+        const c = -(Math.floor(rng() * 15) + 1);
+        return { display: `${c}`, work: [`d/dx [${c}] = 0 (constant)`] };
+      },
+      () => ({ display: 'π', work: ['d/dx [π] = 0 (π ≈ 3.14159 is constant)'] }),
+      () => ({ display: 'e', work: ['d/dx [e] = 0 (e ≈ 2.71828 is constant)'] }),
+      () => {
+        const a = Math.floor(rng() * 5) + 2;
+        const b = Math.floor(rng() * 5) + 2;
+        return { display: `${a}/${b}`, work: [`d/dx [${a}/${b}] = 0 (constant)`] };
+      }
+    ];
+    
+    const pick = options[Math.floor(rng() * options.length)]();
+    return {
+      ...pick,
+      answer: '0',
+      rule: 'Constant Rule',
+      ruleKey: 'constant'
+    };
+  },
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TRIG RULE — Backwards: pick derivative, find original
+  // ═══════════════════════════════════════════════════════════════════════════
+  trig: (rng) => {
+    // Trig derivative pairs: original → derivative
+    const pairs = [
+      { orig: 'sin x', deriv: 'cos x' },
+      { orig: 'cos x', deriv: '-sin x' },
+      { orig: 'tan x', deriv: 'sec²x' },
+      { orig: 'sec x', deriv: 'sec x tan x' },
+      { orig: 'csc x', deriv: '-csc x cot x' },
+      { orig: 'cot x', deriv: '-csc²x' },
+    ];
+    
+    const pair = pairs[Math.floor(rng() * pairs.length)];
+    
+    // Maybe add coefficient
+    if (rng() > 0.4 && (pair.orig === 'sin x' || pair.orig === 'cos x')) {
+      const coef = Math.floor(rng() * 5) + 2;
+      const display = `${coef} ${pair.orig}`;
+      const answer = pair.deriv.startsWith('-') 
+        ? `-${coef} ${pair.deriv.slice(1)}`
+        : `${coef} ${pair.deriv}`;
+      
+      return {
+        display,
+        answer,
+        rule: 'Trig Rule',
+        ruleKey: 'trig',
+        work: [`d/dx [${display}]`, `= ${coef} · (${pair.deriv.replace(pair.orig.split(' ')[0], '').trim() || pair.deriv})`, `= ${answer}`]
+      };
+    }
+    
+    return {
+      display: pair.orig,
+      answer: pair.deriv,
+      rule: 'Trig Rule',
+      ruleKey: 'trig',
+      work: [`d/dx [${pair.orig}]`, `= ${pair.deriv}`]
+    };
+  },
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXP/LOG RULE — Backwards generation
+  // ═══════════════════════════════════════════════════════════════════════════
+  exp: (rng) => {
+    const variant = Math.floor(rng() * 6);
+    
+    if (variant === 0) {
+      // e^x → e^x
+      return {
+        display: 'e<sup>x</sup>',
+        answer: 'e<sup>x</sup>',
+        rule: 'Exp/Log Rule',
+        ruleKey: 'exp',
+        work: ['d/dx [e<sup>x</sup>] = e<sup>x</sup>']
+      };
+    }
+    
+    if (variant === 1) {
+      // ae^x → ae^x (backwards: pick answer coefficient)
+      const coef = Math.floor(rng() * 6) + 2;
+      return {
+        display: `${coef}e<sup>x</sup>`,
+        answer: `${coef}e<sup>x</sup>`,
+        rule: 'Exp/Log Rule',
+        ruleKey: 'exp',
+        work: [`d/dx [${coef}e<sup>x</sup>]`, `= ${coef} · e<sup>x</sup>`, `= ${coef}e<sup>x</sup>`]
+      };
+    }
+    
+    if (variant === 2) {
+      // ln x → 1/x
+      return {
+        display: 'ln x',
+        answer: '1/x',
+        rule: 'Exp/Log Rule',
+        ruleKey: 'exp',
+        work: ['d/dx [ln x] = 1/x']
+      };
+    }
+    
+    if (variant === 3) {
+      // a ln x → a/x (backwards: pick answer coefficient)
+      const coef = Math.floor(rng() * 5) + 2;
+      return {
+        display: `${coef} ln x`,
+        answer: `${coef}/x`,
+        rule: 'Exp/Log Rule',
+        ruleKey: 'exp',
+        work: [`d/dx [${coef} ln x]`, `= ${coef} · (1/x)`, `= ${coef}/x`]
+      };
+    }
+    
+    if (variant === 4) {
+      // a^x → a^x ln a
+      const bases = [2, 3, 5, 10];
+      const base = bases[Math.floor(rng() * bases.length)];
+      return {
+        display: `${base}<sup>x</sup>`,
+        answer: `${base}<sup>x</sup> ln ${base}`,
+        rule: 'Exp/Log Rule',
+        ruleKey: 'exp',
+        work: [`d/dx [${base}<sup>x</sup>]`, `= ${base}<sup>x</sup> · ln ${base}`]
+      };
+    }
+    
+    // log_a x → 1/(x ln a)
+    const bases = [2, 10];
+    const base = bases[Math.floor(rng() * bases.length)];
+    const logNotation = base === 10 ? 'log x' : `log<sub>${base}</sub> x`;
+    return {
+      display: logNotation,
+      answer: `1/(x ln ${base})`,
+      rule: 'Exp/Log Rule',
+      ruleKey: 'exp',
+      work: [`d/dx [${logNotation}]`, `= 1/(x · ln ${base})`]
+    };
+  },
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRODUCT RULE — Backwards: pick f and g, answer is f'g + fg'
+  // ═══════════════════════════════════════════════════════════════════════════
+  product: (rng) => {
+    // Function pools to pick from
+    const fPool = [
+      () => ({ f: 'x', fp: '1' }),
+      () => ({ f: 'x²', fp: '2x' }),
+      () => ({ f: 'x³', fp: '3x²' }),
+      () => {
+        const n = Math.floor(rng() * 3) + 2;
+        return { f: `x<sup>${n}</sup>`, fp: n === 2 ? '2x' : `${n}x<sup>${n-1}</sup>` };
+      },
+      () => ({ f: 'e<sup>x</sup>', fp: 'e<sup>x</sup>' }),
+    ];
+    
+    const gPool = [
+      () => ({ g: 'sin x', gp: 'cos x' }),
+      () => ({ g: 'cos x', gp: '-sin x' }),
+      () => ({ g: 'e<sup>x</sup>', gp: 'e<sup>x</sup>' }),
+      () => ({ g: 'ln x', gp: '1/x' }),
+      () => {
+        const n = Math.floor(rng() * 2) + 2;
+        return { g: `x<sup>${n}</sup>`, gp: n === 2 ? '2x' : `${n}x<sup>${n-1}</sup>` };
+      },
+    ];
+    
+    const fData = fPool[Math.floor(rng() * fPool.length)]();
+    const gData = gPool[Math.floor(rng() * gPool.length)]();
+    
+    // Avoid same function for f and g
+    if (fData.f === gData.g) {
+      return GENERATORS.product(rng);  // Retry
+    }
+    
+    const { f, fp } = fData;
+    const { g, gp } = gData;
+    
+    const display = `${f} · ${g}`;
+    const answer = `${fp}·${g} + ${f}·${gp}`;
+    
+    return {
+      display,
+      answer,
+      rule: 'Product Rule',
+      ruleKey: 'product',
+      work: [
+        `d/dx [${display}]`,
+        `Product Rule: (fg)' = f'g + fg'`,
+        `f = ${f}, f' = ${fp}`,
+        `g = ${g}, g' = ${gp}`,
+        `= (${fp})(${g}) + (${f})(${gp})`,
+        `= ${answer}`
+      ],
+      parts: { f, fp, g, gp }
+    };
+  },
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // QUOTIENT RULE — Backwards: pick f and g, answer is (f'g - fg')/g²
+  // ═══════════════════════════════════════════════════════════════════════════
+  quotient: (rng) => {
+    const fPool = [
+      () => ({ f: 'x', fp: '1' }),
+      () => ({ f: 'x²', fp: '2x' }),
+      () => ({ f: 'sin x', fp: 'cos x' }),
+      () => ({ f: 'cos x', fp: '-sin x' }),
+      () => ({ f: 'e<sup>x</sup>', fp: 'e<sup>x</sup>' }),
+      () => ({ f: 'ln x', fp: '1/x' }),
+    ];
+    
+    const gPool = [
+      () => ({ g: 'x', gp: '1' }),
+      () => ({ g: 'x+1', gp: '1' }),
+      () => ({ g: 'x²', gp: '2x' }),
+      () => ({ g: 'cos x', gp: '-sin x' }),
+      () => ({ g: 'sin x', gp: 'cos x' }),
+      () => ({ g: 'e<sup>x</sup>', gp: 'e<sup>x</sup>' }),
+    ];
+    
+    const fData = fPool[Math.floor(rng() * fPool.length)]();
+    const gData = gPool[Math.floor(rng() * gPool.length)]();
+    
+    // Avoid same function
+    if (fData.f === gData.g) {
+      return GENERATORS.quotient(rng);
+    }
+    
+    const { f, fp } = fData;
+    const { g, gp } = gData;
+    
+    const display = `${f} / ${g}`;
+    const answer = `(${fp}·${g} − ${f}·${gp}) / (${g})²`;
+    
+    return {
+      display,
+      answer,
+      rule: 'Quotient Rule',
+      ruleKey: 'quotient',
+      work: [
+        `d/dx [${display}]`,
+        `Quotient Rule: (f/g)' = (f'g − fg') / g²`,
+        `f = ${f}, f' = ${fp}`,
+        `g = ${g}, g' = ${gp}`,
+        `= (${fp}·${g} − ${f}·${gp}) / (${g})²`,
+        `= ${answer}`
+      ],
+      parts: { f, fp, g, gp }
+    };
+  },
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CHAIN RULE — Backwards: pick inner derivative and outer derivative
+  // ═══════════════════════════════════════════════════════════════════════════
+  chain: (rng) => {
+    const variant = Math.floor(rng() * 8);
+    
+    if (variant < 2) {
+      // sin(ax) → a·cos(ax)
+      // Backwards: pick 'a', answer is a·cos(ax), problem is sin(ax)
+      const a = Math.floor(rng() * 5) + 2;
+      return {
+        display: `sin(${a}x)`,
+        answer: `${a}cos(${a}x)`,
+        rule: 'Chain Rule',
+        ruleKey: 'chain',
+        work: [
+          `d/dx [sin(${a}x)]`,
+          `outer = sin(u), outer' = cos(u)`,
+          `inner = ${a}x, inner' = ${a}`,
+          `= cos(${a}x) · ${a}`,
+          `= ${a}cos(${a}x)`
+        ]
+      };
+    }
+    
+    if (variant < 4) {
+      // cos(ax) → -a·sin(ax)
+      const a = Math.floor(rng() * 5) + 2;
+      return {
+        display: `cos(${a}x)`,
+        answer: `-${a}sin(${a}x)`,
+        rule: 'Chain Rule',
+        ruleKey: 'chain',
+        work: [
+          `d/dx [cos(${a}x)]`,
+          `outer = cos(u), outer' = -sin(u)`,
+          `inner = ${a}x, inner' = ${a}`,
+          `= -sin(${a}x) · ${a}`,
+          `= -${a}sin(${a}x)`
+        ]
+      };
+    }
+    
+    if (variant < 5) {
+      // e^(ax) → a·e^(ax)
+      const a = Math.floor(rng() * 5) + 2;
+      return {
+        display: `e<sup>${a}x</sup>`,
+        answer: `${a}e<sup>${a}x</sup>`,
+        rule: 'Chain Rule',
+        ruleKey: 'chain',
+        work: [
+          `d/dx [e<sup>${a}x</sup>]`,
+          `outer = e<sup>u</sup>, outer' = e<sup>u</sup>`,
+          `inner = ${a}x, inner' = ${a}`,
+          `= e<sup>${a}x</sup> · ${a}`,
+          `= ${a}e<sup>${a}x</sup>`
+        ]
+      };
+    }
+    
+    if (variant < 6) {
+      // (ax + b)^n → an(ax + b)^(n-1)
+      // Backwards: pick answer coefficient, derive original
+      const a = Math.floor(rng() * 3) + 2;  // 2-4
+      const b = Math.floor(rng() * 5) + 1;  // 1-5
+      const n = Math.floor(rng() * 3) + 2;  // 2-4
+      const answerCoef = a * n;
+      
+      const inner = `${a}x + ${b}`;
+      return {
+        display: `(${inner})<sup>${n}</sup>`,
+        answer: `${answerCoef}(${inner})<sup>${n-1}</sup>`,
+        rule: 'Chain Rule',
+        ruleKey: 'chain',
+        work: [
+          `d/dx [(${inner})<sup>${n}</sup>]`,
+          `outer = u<sup>${n}</sup>, outer' = ${n}u<sup>${n-1}</sup>`,
+          `inner = ${inner}, inner' = ${a}`,
+          `= ${n}(${inner})<sup>${n-1}</sup> · ${a}`,
+          `= ${answerCoef}(${inner})<sup>${n-1}</sup>`
+        ]
+      };
+    }
+    
+    if (variant === 6) {
+      // ln(ax) → 1/x (the a cancels!)
+      const a = Math.floor(rng() * 5) + 2;
+      return {
+        display: `ln(${a}x)`,
+        answer: '1/x',
+        rule: 'Chain Rule',
+        ruleKey: 'chain',
+        work: [
+          `d/dx [ln(${a}x)]`,
+          `= 1/(${a}x) · ${a}`,
+          `= ${a}/(${a}x)`,
+          `= 1/x`
+        ]
+      };
+    }
+    
+    // √(ax + b) → a / (2√(ax + b))
+    const a = Math.floor(rng() * 3) + 2;
+    const b = Math.floor(rng() * 5) + 1;
+    const inner = `${a}x + ${b}`;
+    return {
+      display: `√(${inner})`,
+      answer: `${a}/(2√(${inner}))`,
+      rule: 'Chain Rule',
+      ruleKey: 'chain',
+      work: [
+        `d/dx [√(${inner})]`,
+        `= d/dx [(${inner})<sup>½</sup>]`,
+        `= ½(${inner})<sup>-½</sup> · ${a}`,
+        `= ${a}/(2√(${inner}))`
+      ]
+    };
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WRONG ANSWER GENERATION — Create plausible distractors
+// ─────────────────────────────────────────────────────────────────────────────
+
+function normalizeAnswer(ans) {
+  return ans.replace(/\u2212/g, '-').replace(/\s+/g, ' ').trim();
+}
+
+function generateWrongAnswers(problem, rng) {
+  const correct = normalizeAnswer(problem.answer);
+  const wrongs = new Set();
+  
+  // Common mistakes based on rule
+  const strategies = [];
+  
+  if (problem.ruleKey === 'power') {
+    strategies.push(
+      // Forgot to reduce exponent
+      () => correct.replace(/x<sup>(\d+)<\/sup>/, (_, n) => `x<sup>${parseInt(n)+1}</sup>`),
+      // Wrong coefficient
+      () => correct.replace(/^(-?\d+)/, (_, n) => String(parseInt(n) + 1)),
+      () => correct.replace(/^(-?\d+)/, (_, n) => String(parseInt(n) - 1)),
+      // Forgot coefficient
+      () => correct.replace(/^\d+/, ''),
+    );
+  }
+  
+  if (problem.ruleKey === 'chain') {
+    strategies.push(
+      // Forgot inner derivative
+      () => correct.replace(/^(-?\d+)/, '1'),
+      // Wrong sign
+      () => correct.startsWith('-') ? correct.slice(1) : '-' + correct,
+      // Different coefficient
+      () => correct.replace(/^(-?\d+)/, (_, n) => String(parseInt(n) * 2)),
+    );
+  }
+  
+  if (problem.ruleKey === 'product' && problem.parts) {
+    const { f, fp, g, gp } = problem.parts;
+    strategies.push(
+      // Just f'g (forgot second term)
+      () => `${fp}·${g}`,
+      // Just fg' (forgot first term)
+      () => `${f}·${gp}`,
+      // Swapped
+      () => `${f}·${g} + ${fp}·${gp}`,
+    );
+  }
+  
+  if (problem.ruleKey === 'quotient' && problem.parts) {
+    const { f, fp, g, gp } = problem.parts;
+    strategies.push(
+      // Wrong order
+      () => `(${f}·${gp} − ${fp}·${g}) / (${g})²`,
+      // Forgot squared
+      () => `(${fp}·${g} − ${f}·${gp}) / ${g}`,
+      // Wrong sign
+      () => `(${fp}·${g} + ${f}·${gp}) / (${g})²`,
+    );
+  }
+  
+  if (problem.ruleKey === 'trig') {
+    strategies.push(
+      () => correct.includes('cos') ? correct.replace('cos', 'sin') : correct.replace('sin', 'cos'),
+      () => correct.startsWith('-') ? correct.slice(1) : '-' + correct,
+    );
+  }
+  
+  if (problem.ruleKey === 'constant') {
+    strategies.push(
+      () => '1',
+      () => problem.display,
+      () => 'x',
+    );
+  }
+  
+  // Try strategies
+  for (const strat of strategies) {
+    try {
+      const wrong = normalizeAnswer(strat());
+      if (wrong && wrong !== correct && wrong.length > 0) {
+        wrongs.add(wrong);
+      }
+    } catch (e) {}
+  }
+  
+  // Fill with generic wrongs if needed
+  const fallbacks = ['0', '1', 'x', '2x', '-1', 'undefined'];
+  for (const fb of fallbacks) {
+    if (wrongs.size >= 3) break;
+    if (fb !== correct) wrongs.add(fb);
+  }
+  
+  return [...wrongs].slice(0, 3);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+let state = {
+  seed: 'DOJO',
+  seedNum: 0,
+  belt: 1,
+  problemNum: 0,
+  score: 0,
+  streak: 0,
+  currentProblem: null,
+  answered: false,
+  timeLeft: 15,
+  timerRAF: null,
+  timerStart: null,
+  timerDuration: null,
+  practiceMode: false,  // NEW: no timer in practice mode
+  mastery: {
+    power: { attempts: 0, correct: 0 },
+    constant: { attempts: 0, correct: 0 },
+    trig: { attempts: 0, correct: 0 },
+    exp: { attempts: 0, correct: 0 },
+    product: { attempts: 0, correct: 0 },
+    quotient: { attempts: 0, correct: 0 },
+    chain: { attempts: 0, correct: 0 },
+  },
+  // Persistent stats (saved to localStorage)
+  totalScore: 0,
+  totalProblems: 0,
+  totalCorrect: 0,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI REFS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const el = {
+  score: document.getElementById('score'),
+  streak: document.getElementById('streak'),
+  belt: document.getElementById('belt'),
+  startScreen: document.getElementById('startScreen'),
+  gameArea: document.getElementById('gameArea'),
+  seedInput: document.getElementById('seedInput'),
+  currentSeed: document.getElementById('currentSeed'),
+  problemId: document.getElementById('problemId'),
+  problemCard: document.getElementById('problemCard'),
+  ruleBadge: document.getElementById('ruleBadge'),
+  problemCounter: document.getElementById('problemCounter'),
+  problemText: document.getElementById('problemText'),
+  timerBar: document.getElementById('timerBar'),
+  timerFill: document.getElementById('timerFill'),
+  choices: document.getElementById('choices'),
+  feedback: document.getElementById('feedback'),
+  workPanel: document.getElementById('workPanel'),
+  workSteps: document.getElementById('workSteps'),
+  btnHint: document.getElementById('btnHint'),
+  btnWork: document.getElementById('btnWork'),
+  btnSkip: document.getElementById('btnSkip'),
+  btnNext: document.getElementById('btnNext'),
+  masteryGrid: document.getElementById('masteryGrid'),
+  saveCode: document.getElementById('saveCode'),
+  beltSelect: document.getElementById('beltSelect'),
+  loadModal: document.getElementById('loadModal'),
+  loadInput: document.getElementById('loadInput'),
+  // New elements
+  practiceBadge: document.getElementById('practiceBadge'),
+  modeChallenge: document.getElementById('modeChallenge'),
+  modePractice: document.getElementById('modePractice'),
+  tabPlay: document.getElementById('tabPlay'),
+  tabStats: document.getElementById('tabStats'),
+  tabWorksheet: document.getElementById('tabWorksheet'),
+  ruleStats: document.getElementById('ruleStats'),
+  statsTotalScore: document.getElementById('statsTotalScore'),
+  statsTotalProblems: document.getElementById('statsTotalProblems'),
+  statsAccuracy: document.getElementById('statsAccuracy'),
+  wsOutput: document.getElementById('wsOutput'),
+  wsProblems: document.getElementById('wsProblems'),
+  wsTitle: document.getElementById('wsTitle'),
+  wsMeta: document.getElementById('wsMeta'),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIMER
+// ─────────────────────────────────────────────────────────────────────────────
+
+function startTimer() {
+  // In practice mode, don't start timer
+  if (state.practiceMode) {
+    el.timerBar.classList.add('hidden');
+    return;
+  }
+  
+  el.timerBar.classList.remove('hidden');
+  const belt = BELTS[state.belt - 1];
+  state.timerDuration = belt.timeLimit * 1000;
+  state.timerStart = performance.now();
+  state.timeLeft = belt.timeLimit;
+  
+  function tick() {
+    if (state.answered) return;
+    
+    const elapsed = performance.now() - state.timerStart;
+    const remaining = Math.max(0, state.timerDuration - elapsed);
+    state.timeLeft = remaining / 1000;
+    
+    const pct = (remaining / state.timerDuration) * 100;
+    el.timerFill.style.width = pct + '%';
+    el.timerFill.className = 'timer-fill' + (pct < 25 ? ' danger' : pct < 50 ? ' warning' : '');
+    
+    if (remaining <= 0) {
+      handleTimeout();
+    } else {
+      state.timerRAF = requestAnimationFrame(tick);
+    }
+  }
+  
+  state.timerRAF = requestAnimationFrame(tick);
+}
+
+function stopTimer() {
+  if (state.timerRAF) {
+    cancelAnimationFrame(state.timerRAF);
+    state.timerRAF = null;
+  }
+}
+
+function handleTimeout() {
+  if (state.answered) return;
+  
+  state.answered = true;
+  state.streak = 0;
+  state.mastery[state.currentProblem.ruleKey].attempts++;
+  state.totalProblems++;  // Track timeout as attempt
+  
+  el.problemCard.classList.add('wrong');
+  el.feedback.className = 'feedback error';
+  el.feedback.innerHTML = `⏰ Time's up! Answer: <strong>${state.currentProblem.answer}</strong>`;
+  
+  el.choices.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (normalizeAnswer(b.innerHTML) === normalizeAnswer(state.currentProblem.answer)) {
+      b.classList.add('correct');
+    }
+  });
+  
+  el.btnHint.style.display = 'none';
+  el.btnSkip.style.display = 'none';
+  el.btnNext.style.display = '';
+  
+  saveStats();
+  updateUI();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE/LOAD
+// ─────────────────────────────────────────────────────────────────────────────
+
+function base36ToBigInt(s) {
+  let n = 0n;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    const v = c >= 48 && c <= 57 ? c - 48 : c >= 65 && c <= 90 ? c - 55 : c - 87;
+    n = n * 36n + BigInt(v);
+  }
+  return n;
+}
+
+function encodeState() {
+  let n = 0n;
+  n = (n << 32n) | BigInt(state.seedNum >>> 0);
+  n = (n << 4n) | BigInt(state.belt & 0xF);
+  n = (n << 12n) | BigInt(state.problemNum & 0xFFF);
+  n = (n << 16n) | BigInt(state.score & 0xFFFF);
+  n = (n << 8n) | BigInt(state.streak & 0xFF);
+  
+  for (const r of ['power', 'constant', 'trig', 'exp', 'product', 'quotient', 'chain']) {
+    const m = state.mastery[r];
+    const acc = m.attempts > 0 ? Math.round((m.correct / m.attempts) * 255) : 128;
+    n = (n << 8n) | BigInt(acc & 0xFF);
+  }
+  
+  let s = n.toString(36).toUpperCase();
+  while (s.length < 28) s = '0' + s;
+  s = s.slice(-28);
+  return s.match(/.{1,4}/g).join('-');
+}
+
+function decodeState(code) {
+  const clean = code.replace(/-/g, '').trim().toUpperCase();
+  if (!/^[0-9A-Z]+$/.test(clean)) throw new Error('Invalid characters');
+  
+  let n = base36ToBigInt(clean);
+  
+  const masteryAcc = {};
+  for (const r of ['chain', 'quotient', 'product', 'exp', 'trig', 'constant', 'power']) {
+    masteryAcc[r] = Number(n & 0xFFn);
+    n >>= 8n;
+  }
+  
+  const streak = Number(n & 0xFFn); n >>= 8n;
+  const score = Number(n & 0xFFFFn); n >>= 16n;
+  const problemNum = Number(n & 0xFFFn); n >>= 12n;
+  const belt = Number(n & 0xFn); n >>= 4n;
+  const seedNum = Number(n & 0xFFFFFFFFn);
+  
+  return { seedNum, belt, problemNum, score, streak, masteryAcc };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI UPDATES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateUI() {
+  el.score.textContent = state.score;
+  el.streak.textContent = state.streak;
+  el.belt.textContent = BELTS[state.belt - 1].emoji;
+  el.currentSeed.textContent = state.seed;
+  el.saveCode.textContent = encodeState();
+  
+  // Mastery grid
+  el.masteryGrid.innerHTML = '';
+  for (const r of ['power', 'constant', 'trig', 'exp', 'product', 'quotient', 'chain']) {
+    const m = state.mastery[r];
+    const pct = m.attempts > 0 ? Math.round((m.correct / m.attempts) * 100) : 0;
+    const level = pct >= 70 ? 'high' : pct >= 40 ? 'mid' : 'low';
+    
+    const item = document.createElement('div');
+    item.className = 'mastery-item';
+    item.innerHTML = `
+      <div class="mastery-name">${r}</div>
+      <div class="mastery-bar"><div class="mastery-fill ${level}" style="width:${pct}%"></div></div>
+    `;
+    el.masteryGrid.appendChild(item);
+  }
+}
+
+function initBeltSelect() {
+  el.beltSelect.innerHTML = '';
+  for (const belt of BELTS) {
+    const btn = document.createElement('button');
+    btn.className = 'belt-btn' + (belt.id === state.belt ? ' selected' : '');
+    btn.innerHTML = `
+      <span class="belt-emoji">${belt.emoji}</span>
+      <span class="belt-name">${belt.name}</span>
+      <div class="belt-desc">${belt.desc}</div>
+    `;
+    btn.onclick = () => {
+      state.belt = belt.id;
+      initBeltSelect();
+    };
+    el.beltSelect.appendChild(btn);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROBLEM GENERATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+function generateProblem() {
+  // Create deterministic seed for this specific problem
+  const problemSeed = (state.seedNum ^ mul32(state.problemNum, 2654435761)) >>> 0;
+  const rng = xorshift32(problemSeed);
+  
+  // Pick rule based on belt
+  const belt = BELTS[state.belt - 1];
+  const rules = belt.rules;
+  
+  // Weight by mastery (practice weak areas more)
+  const weights = rules.map(r => {
+    const m = state.mastery[r];
+    if (m.attempts === 0) return 1;
+    const acc = m.correct / m.attempts;
+    return 1.5 - acc;  // Lower accuracy = higher weight
+  });
+  
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  let t = rng() * totalWeight;
+  let ruleKey = rules[0];
+  
+  for (let i = 0; i < rules.length; i++) {
+    t -= weights[i];
+    if (t <= 0) {
+      ruleKey = rules[i];
+      break;
+    }
+  }
+  
+  const generator = GENERATORS[ruleKey];
+  if (!generator) return GENERATORS.power(rng);
+  
+  const problem = generator(rng);
+  problem.wrongAnswers = generateWrongAnswers(problem, rng);
+  
+  return problem;
+}
+
+function presentProblem() {
+  stopTimer();
+  
+  state.currentProblem = generateProblem();
+  state.answered = false;
+  
+  el.problemCard.className = 'problem-card';
+  el.ruleBadge.textContent = state.currentProblem.rule;
+  el.problemCounter.textContent = `Problem ${state.problemNum + 1}`;
+  el.problemId.textContent = `#${state.seedNum.toString(16).slice(-4).toUpperCase()}-${state.problemNum + 1}`;
+  el.problemText.innerHTML = `d/dx [ ${state.currentProblem.display} ]`;
+  el.feedback.className = 'feedback';
+  el.feedback.innerHTML = '';
+  el.workPanel.classList.remove('visible');
+  
+  el.btnHint.style.display = '';
+  el.btnWork.style.display = '';
+  el.btnSkip.style.display = '';
+  el.btnNext.style.display = 'none';
+  
+  // Shuffle choices
+  const choiceRng = xorshift32((state.seedNum ^ state.problemNum) >>> 0);
+  const choices = [state.currentProblem.answer, ...state.currentProblem.wrongAnswers];
+  for (let i = choices.length - 1; i > 0; i--) {
+    const j = Math.floor(choiceRng() * (i + 1));
+    [choices[i], choices[j]] = [choices[j], choices[i]];
+  }
+  
+  el.choices.innerHTML = choices.map((c, i) => 
+    `<button class="choice-btn" onclick="handleChoiceClick(this)">${c}</button>`
+  ).join('');
+  
+  startTimer();
+  updateUI();
+}
+
+window.handleChoiceClick = function(btn) {
+  if (state.answered) return;
+  handleChoice(btn);
+};
+
+function handleChoice(btn) {
+  if (state.answered) return;
+  
+  stopTimer();
+  state.answered = true;
+  
+  const chosen = normalizeAnswer(btn.innerHTML);
+  const correct = normalizeAnswer(state.currentProblem.answer);
+  const isCorrect = chosen === correct;
+  
+  // Track mastery
+  state.mastery[state.currentProblem.ruleKey].attempts++;
+  if (isCorrect) state.mastery[state.currentProblem.ruleKey].correct++;
+  
+  // Track persistent stats
+  state.totalProblems++;
+  if (isCorrect) state.totalCorrect++;
+  
+  el.choices.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (normalizeAnswer(b.innerHTML) === correct) b.classList.add('correct');
+  });
+  
+  if (isCorrect) {
+    btn.classList.add('correct');
+    el.problemCard.classList.add('correct');
+    
+    // Points only in challenge mode
+    const timeBonus = state.practiceMode ? 0 : Math.floor(state.timeLeft / 2);
+    const streakBonus = Math.min(state.streak, 5);
+    const points = state.practiceMode ? 5 : (10 + timeBonus + streakBonus);
+    
+    state.score += points;
+    state.totalScore += points;
+    state.streak++;
+    
+    el.feedback.className = 'feedback success';
+    el.feedback.innerHTML = `✓ Correct! +${points} pts${state.streak >= 3 ? ` 🔥 ${state.streak} streak!` : ''}`;
+  } else {
+    btn.classList.add('wrong');
+    el.problemCard.classList.add('wrong');
+    state.streak = 0;
+    
+    el.feedback.className = 'feedback error';
+    el.feedback.innerHTML = `✗ Answer: <strong>${state.currentProblem.answer}</strong>`;
+  }
+  
+  el.btnHint.style.display = 'none';
+  el.btnSkip.style.display = 'none';
+  el.btnNext.style.display = '';
+  
+  saveStats();  // Save after each answer
+  updateUI();
+}
+
+window.nextProblem = function() {
+  state.problemNum++;
+  presentProblem();
+};
+
+window.skipProblem = function() {
+  if (state.answered) return;
+  
+  stopTimer();
+  state.answered = true;
+  state.streak = 0;
+  state.mastery[state.currentProblem.ruleKey].attempts++;
+  state.totalProblems++;  // Track skip as attempt
+  
+  el.feedback.className = 'feedback hint';
+  el.feedback.innerHTML = `⏭ Skipped. Answer: <strong>${state.currentProblem.answer}</strong>`;
+  
+  el.btnHint.style.display = 'none';
+  el.btnSkip.style.display = 'none';
+  el.btnNext.style.display = '';
+  
+  el.choices.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (normalizeAnswer(b.innerHTML) === normalizeAnswer(state.currentProblem.answer)) {
+      b.classList.add('correct');
+    }
+  });
+  
+  saveStats();
+  updateUI();
+};
+
+window.showHint = function() {
+  el.feedback.className = 'feedback hint';
+  el.feedback.innerHTML = `💡 Rule: ${state.currentProblem.rule}`;
+};
+
+window.toggleWork = function() {
+  el.workPanel.classList.toggle('visible');
+  if (el.workPanel.classList.contains('visible')) {
+    el.workSteps.innerHTML = state.currentProblem.work.map(s => 
+      `<div class="step">${s}</div>`
+    ).join('');
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE/LOAD UI
+// ─────────────────────────────────────────────────────────────────────────────
+
+function showFeedbackTemp(type, msg) {
+  el.feedback.className = `feedback ${type}`;
+  el.feedback.innerHTML = msg;
+  setTimeout(() => {
+    if (!state.answered) {
+      el.feedback.className = 'feedback';
+      el.feedback.innerHTML = '';
+    }
+  }, 1500);
+}
+
+window.copySeed = function() {
+  navigator.clipboard.writeText(state.seed)
+    .then(() => showFeedbackTemp('success', '📋 Seed copied!'))
+    .catch(() => showFeedbackTemp('error', '❌ Copy failed'));
+};
+
+window.copySaveCode = function() {
+  const code = encodeState();
+  navigator.clipboard.writeText(code)
+    .then(() => showFeedbackTemp('success', '📋 Save code copied!'))
+    .catch(() => showFeedbackTemp('error', '❌ Copy failed'));
+};
+
+window.shareSave = function() {
+  const code = encodeState();
+  if (navigator.share) {
+    navigator.share({ title: 'Derivative Dojo', text: `🥋 Seed: ${state.seed}\nCode: ${code}` }).catch(() => {});
+  } else {
+    copySaveCode();
+  }
+};
+
+window.showLoadModal = function() {
+  el.loadModal.classList.add('visible');
+  el.loadInput.value = '';
+  el.loadInput.focus();
+};
+
+window.closeLoadModal = function() {
+  el.loadModal.classList.remove('visible');
+};
+
+if (el.loadModal) {
+  el.loadModal.addEventListener('click', (e) => {
+    if (e.target === el.loadModal) closeLoadModal();
+  });
+}
+
+window.loadSaveCode = function() {
+  const code = el.loadInput.value.trim();
+  if (!code) { alert('Enter a save code'); return; }
+  
+  try {
+    stopTimer();
+    const loaded = decodeState(code);
+    state = { 
+      ...state, 
+      ...loaded, 
+      seed: loaded.seedNum.toString(16).toUpperCase(),
+      currentProblem: null, 
+      answered: false,
+      timeLeft: 15
+    };
+    
+    closeLoadModal();
+    el.startScreen.style.display = 'none';
+    el.gameArea.style.display = 'block';
+    presentProblem();
+  } catch (e) {
+    alert('Invalid save code: ' + e.message);
+  }
+};
+
+window.randomSeed = function() {
+  const chars = 'ABCDEF0123456789';
+  let seed = '';
+  for (let i = 0; i < 6; i++) seed += chars[Math.floor(Math.random() * chars.length)];
+  el.seedInput.value = seed;
+};
+
+window.backToStart = function() {
+  stopTimer();
+  el.gameArea.style.display = 'none';
+  el.startScreen.style.display = 'block';
+  initBeltSelect();
+};
+
+window.startGame = function() {
+  state.seed = el.seedInput.value.trim().toUpperCase() || 'DOJO';
+  state.seedNum = parseSeed(state.seed);
+  state.problemNum = 0;
+  state.score = 0;
+  state.streak = 0;
+  
+  // Show/hide practice badge
+  el.practiceBadge.style.display = state.practiceMode ? 'inline' : 'none';
+  
+  el.startScreen.style.display = 'none';
+  el.gameArea.style.display = 'block';
+  
+  presentProblem();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABS & GAME MODE
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.showTab = function(tab) {
+  document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  
+  const menuTab = document.querySelector(`.menu-tab[onclick="showTab('${tab}')"]`);
+  const tabContent = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  
+  if (menuTab) menuTab.classList.add('active');
+  if (tabContent) tabContent.classList.add('active');
+  
+  if (tab === 'stats') updateStatsDisplay();
+};
+
+window.setGameMode = function(mode) {
+  state.practiceMode = (mode === 'practice');
+  el.modeChallenge.classList.toggle('active', !state.practiceMode);
+  el.modePractice.classList.toggle('active', state.practiceMode);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATS - Persistent with localStorage
+// ─────────────────────────────────────────────────────────────────────────────
+
+function loadStats() {
+  try {
+    const saved = localStorage.getItem('derivativeDojoStats');
+    if (saved) {
+      const data = JSON.parse(saved);
+      state.totalScore = data.totalScore || 0;
+      state.totalProblems = data.totalProblems || 0;
+      state.totalCorrect = data.totalCorrect || 0;
+      if (data.mastery) {
+        for (const r of Object.keys(state.mastery)) {
+          if (data.mastery[r]) {
+            state.mastery[r] = data.mastery[r];
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load stats:', e);
+  }
+}
+
+function saveStats() {
+  try {
+    localStorage.setItem('derivativeDojoStats', JSON.stringify({
+      totalScore: state.totalScore,
+      totalProblems: state.totalProblems,
+      totalCorrect: state.totalCorrect,
+      mastery: state.mastery,
+    }));
+  } catch (e) {
+    console.warn('Failed to save stats:', e);
+  }
+}
+
+function updateStatsDisplay() {
+  if (!el.statsTotalScore || !el.statsTotalProblems || !el.statsAccuracy || !el.ruleStats) return;
+  
+  el.statsTotalScore.textContent = state.totalScore.toLocaleString();
+  el.statsTotalProblems.textContent = state.totalProblems.toLocaleString();
+  
+  const acc = state.totalProblems > 0 
+    ? Math.round((state.totalCorrect / state.totalProblems) * 100) 
+    : 0;
+  el.statsAccuracy.textContent = state.totalProblems > 0 ? acc + '%' : '--%';
+  
+  // Rule stats
+  el.ruleStats.innerHTML = '';
+  for (const r of ['power', 'constant', 'trig', 'exp', 'product', 'quotient', 'chain']) {
+    const m = state.mastery[r];
+    const pct = m.attempts > 0 ? Math.round((m.correct / m.attempts) * 100) : 0;
+    const level = m.attempts === 0 ? '' : (pct >= 70 ? 'high' : pct >= 40 ? 'mid' : 'low');
+    
+    const div = document.createElement('div');
+    div.className = 'rule-stat';
+    div.innerHTML = `
+      <span class="name">${r}</span>
+      <span class="pct ${level}">${m.attempts > 0 ? pct + '%' : '--'}</span>
+    `;
+    el.ruleStats.appendChild(div);
+  }
+}
+
+window.resetStats = function() {
+  if (!confirm('Reset all statistics? This cannot be undone.')) return;
+  
+  state.totalScore = 0;
+  state.totalProblems = 0;
+  state.totalCorrect = 0;
+  state.mastery = {
+    power: { attempts: 0, correct: 0 },
+    constant: { attempts: 0, correct: 0 },
+    trig: { attempts: 0, correct: 0 },
+    exp: { attempts: 0, correct: 0 },
+    product: { attempts: 0, correct: 0 },
+    quotient: { attempts: 0, correct: 0 },
+    chain: { attempts: 0, correct: 0 },
+  };
+  
+  saveStats();
+  updateStatsDisplay();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WORKSHEET GENERATOR
+// ─────────────────────────────────────────────────────────────────────────────
+
+let currentWorksheet = [];
+
+window.generateWorksheet = function() {
+  const seedEl = document.getElementById('wsSeed');
+  const beltEl = document.getElementById('wsBelt');
+  const countEl = document.getElementById('wsCount');
+  
+  if (!seedEl || !beltEl || !countEl || !el.wsOutput || !el.wsProblems || !el.wsTitle || !el.wsMeta) {
+    console.error('Worksheet elements not found');
+    return;
+  }
+  
+  const seed = seedEl.value.trim().toUpperCase() || 'WORKSHEET';
+  const beltId = parseInt(beltEl.value);
+  const count = Math.min(50, Math.max(5, parseInt(countEl.value) || 10));
+  
+  const seedNum = parseSeed(seed);
+  const belt = BELTS[beltId - 1];
+  
+  currentWorksheet = [];
+  
+  for (let i = 0; i < count; i++) {
+    const problemSeed = (seedNum ^ mul32(i, 2654435761)) >>> 0;
+    const rng = xorshift32(problemSeed);
+    
+    // Pick rule
+    const rules = belt.rules;
+    const ruleKey = rules[Math.floor(rng() * rules.length)];
+    
+    const generator = GENERATORS[ruleKey];
+    const problem = generator(rng);
+    
+    currentWorksheet.push({
+      num: i + 1,
+      display: problem.display,
+      answer: problem.answer,
+      rule: problem.rule,
+    });
+  }
+  
+  // Render
+  el.wsTitle.textContent = `Derivative Practice - ${belt.emoji} ${belt.name}`;
+  el.wsMeta.textContent = `Seed: ${seed} • ${count} Problems • ${belt.name}`;
+  
+  el.wsProblems.innerHTML = currentWorksheet.map(p => `
+    <div class="worksheet-problem">
+      <span class="num">${p.num}.</span>
+      <span class="question">d/dx [ ${p.display} ] = </span>
+      <span class="answer">${p.answer}</span>
+    </div>
+  `).join('');
+  
+  el.wsOutput.classList.add('visible');
+  el.wsOutput.classList.remove('show-answers');
+  
+  const toggleBtn = document.getElementById('btnToggleAnswers');
+  if (toggleBtn) toggleBtn.textContent = '👁️ Show Answers';
+};
+
+window.toggleAnswers = function() {
+  if (!el.wsOutput) return;
+  el.wsOutput.classList.toggle('show-answers');
+  const showing = el.wsOutput.classList.contains('show-answers');
+  const toggleBtn = document.getElementById('btnToggleAnswers');
+  if (toggleBtn) toggleBtn.textContent = showing ? '🙈 Hide Answers' : '👁️ Show Answers';
+};
+
+window.printWorksheet = function() {
+  if (!el.wsTitle || !el.wsMeta || currentWorksheet.length === 0) {
+    alert('Please generate a worksheet first.');
+    return;
+  }
+  
+  const printContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${el.wsTitle.textContent}</title>
+      <style>
+        body { font-family: system-ui, sans-serif; padding: 40px; }
+        h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        .meta { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
+        .problem { padding: 12px 0; border-bottom: 1px solid #eee; display: flex; gap: 15px; }
+        .num { font-weight: bold; min-width: 30px; }
+        .answer { margin-left: auto; color: #666; }
+        @media print { .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <h1>${el.wsTitle.textContent}</h1>
+      <div class="meta">${el.wsMeta.textContent}</div>
+      ${currentWorksheet.map(p => `
+        <div class="problem">
+          <span class="num">${p.num}.</span>
+          <span>d/dx [ ${p.display.replace(/<sup>/g, '^').replace(/<\/sup>/g, '')} ] = _____________</span>
+        </div>
+      `).join('')}
+      <hr style="margin-top: 40px;">
+      <h2>Answer Key</h2>
+      ${currentWorksheet.map(p => `
+        <div class="problem">
+          <span class="num">${p.num}.</span>
+          <span class="answer">${p.answer.replace(/<sup>/g, '^').replace(/<\/sup>/g, '')}</span>
+        </div>
+      `).join('')}
+    </body>
+    </html>
+  `;
+  
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(printContent);
+    win.document.close();
+    win.print();
+  } else {
+    alert('Please allow popups to print the worksheet.');
+  }
+};
+
+window.copyWorksheetText = function() {
+  const lines = [
+    el.wsTitle.textContent,
+    el.wsMeta.textContent,
+    '',
+    ...currentWorksheet.map(p => 
+      `${p.num}. d/dx [ ${p.display.replace(/<[^>]+>/g, '')} ] = `
+    ),
+    '',
+    'ANSWERS:',
+    ...currentWorksheet.map(p => 
+      `${p.num}. ${p.answer.replace(/<[^>]+>/g, '')}`
+    ),
+  ];
+  
+  navigator.clipboard.writeText(lines.join('\n'))
+    .then(() => alert('Worksheet copied to clipboard!'))
+    .catch(() => alert('Failed to copy'));
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KEYBOARD
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (el.loadModal.classList.contains('visible')) {
+    if (e.key === 'Enter') loadSaveCode();
+    if (e.key === 'Escape') closeLoadModal();
+    return;
+  }
+  
+  if (el.gameArea.style.display === 'none') return;
+  
+  if (e.key >= '1' && e.key <= '4' && !state.answered) {
+    const btns = el.choices.querySelectorAll('.choice-btn');
+    if (btns[parseInt(e.key) - 1]) btns[parseInt(e.key) - 1].click();
+  }
+  
+  if (e.key === 'Enter' && state.answered) nextProblem();
+  if ((e.key === 'h' || e.key === 'H') && !state.answered) showHint();
+  if ((e.key === 's' || e.key === 'S') && !state.answered) skipProblem();
+  if (e.key === 'w' || e.key === 'W') toggleWork();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+
+function init() {
+  // Safety check - ensure all elements exist
+  if (!el.startScreen || !el.gameArea || !el.beltSelect) {
+    console.error('Required elements not found');
+    return;
+  }
+  
+  loadStats();  // Load persistent stats
+  initBeltSelect();
+  updateStatsDisplay();
+
+  // Check URL for save code
+  const params = new URLSearchParams(window.location.search);
+  const urlCode = params.get('code');
+  if (urlCode) {
+    try {
+      const loaded = decodeState(urlCode);
+      state = { ...state, ...loaded, seed: loaded.seedNum.toString(16).toUpperCase() };
+      el.seedInput.value = state.seed;
+      initBeltSelect();
+      el.startScreen.style.display = 'none';
+      el.gameArea.style.display = 'block';
+      presentProblem();
+    } catch (e) {
+      console.warn('Invalid URL code:', e);
+    }
+  }
+}
+
+// Run init when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>

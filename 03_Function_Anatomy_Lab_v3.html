@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Function Anatomy Lab: Explorer's Edition</title>
+    <style>
+        :root {
+            --gold: #d4af37;
+            --brass: #b5a642;
+            --sea: #0a192f;
+            --wave: #64ffda;
+            --current: #f39c12;
+            --pressure: #e74c3c;
+            --cargo: #9b59b6;
+            --bg: #020c1b;
+            --panel: rgba(10, 25, 47, 0.95);
+            --text: #ccd6f6;
+            --connect: rgba(255, 255, 255, 0.4);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body, html {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            touch-action: none;
+        }
+
+        #app {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport for mobile */
+            max-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* === HEADER === */
+        header {
+            padding: 0.4rem 0.8rem;
+            background: var(--panel);
+            border-bottom: 2px solid var(--brass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .title-group h1 {
+            font-size: 1rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .title-group .subtitle {
+            font-size: 0.6rem;
+            color: var(--brass);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid var(--brass);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.6rem;
+            color: var(--gold);
+            margin-left: 6px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .control-group label {
+            font-size: 0.6rem;
+            color: var(--brass);
+            text-transform: uppercase;
+        }
+
+        select, button {
+            background: var(--sea);
+            border: 1px solid var(--brass);
+            color: var(--gold);
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        select:hover, button:hover { background: rgba(212, 175, 55, 0.15); border-color: var(--gold); }
+        button.active { background: var(--gold); color: #000; }
+
+        /* Toggle Switch */
+        .switch-group { display: flex; align-items: center; gap: 4px; }
+        .switch { position: relative; width: 36px; height: 18px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #222;
+            border: 1px solid var(--brass);
+            border-radius: 18px;
+            transition: 0.3s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 2px;
+            bottom: 2px;
+            background: var(--gold);
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        input:checked + .slider:before { transform: translateX(18px); }
+        .mode-label { font-size: 0.6rem; color: var(--text); }
+
+        /* === MAIN === */
+        main {
+            display: grid;
+            gap: 2px;
+            padding: 4px;
+            background: var(--bg);
+            transition: background 0.5s;
+            position: relative;
+            overflow: hidden;
+            min-height: 0; /* Critical for grid children */
+        }
+
+        main.rank-swab { grid-template-rows: 1fr; }
+        main.rank-navigator { grid-template-rows: 1.2fr 1fr; }
+        main.rank-meteorologist { grid-template-rows: 1.2fr 1fr 1fr; }
+        main.rank-quartermaster { grid-template-rows: 1.2fr 0.9fr 0.9fr 1fr; }
+
+        .deck {
+            min-height: 0; /* Prevents grid blowout */
+            overflow: hidden;
+        }
+
+        main.concave-up { background: linear-gradient(180deg, rgba(100, 255, 218, 0.04) 0%, var(--bg) 100%); }
+        main.concave-down { background: linear-gradient(180deg, rgba(231, 76, 60, 0.06) 0%, var(--bg) 100%); }
+
+        .deck {
+            min-height: 0; /* Prevents grid blowout */
+            overflow: hidden;
+            position: relative;
+            background: var(--panel);
+            border-radius: 4px;
+            border: 1px solid rgba(181, 166, 66, 0.2);
+        }
+
+        .deck.hidden { display: none; }
+
+        .deck-label {
+            position: absolute;
+            top: 3px;
+            left: 6px;
+            font-size: 0.55rem;
+            font-weight: bold;
+            color: var(--gold);
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(2, 12, 27, 0.85);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .deck-label .math-label {
+            color: var(--text);
+            font-weight: normal;
+            margin-left: 4px;
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+        }
+
+        /* Y-axis label */
+        .y-axis-label {
+            position: absolute;
+            left: 3px;
+            font-size: 0.5rem;
+            color: var(--brass);
+            font-family: 'Courier New', monospace;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        canvas { 
+            width: 100%; 
+            height: 100%; 
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .hud-overlay {
+            position: absolute;
+            bottom: 3px;
+            right: 6px;
+            pointer-events: none;
+            font-family: 'Courier New', monospace;
+            background: rgba(2, 12, 27, 0.85);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+        }
+
+        .hud-value { color: var(--wave); }
+        .hud-value.current { color: var(--current); }
+        .hud-value.pressure { color: var(--pressure); }
+        .hud-value.cargo { color: var(--cargo); }
+
+        /* Zero line label */
+        .zero-label {
+            position: absolute;
+            left: 6px;
+            font-size: 0.5rem;
+            color: rgba(181, 166, 66, 0.6);
+            pointer-events: none;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            top: 3px;
+            right: 6px;
+            display: flex;
+            gap: 6px;
+            font-size: 0.5rem;
+            background: rgba(2, 12, 27, 0.85);
+            padding: 2px 5px;
+            border-radius: 3px;
+            z-index: 10;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 2px; }
+        .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .legend-dot.max { background: #2ecc71; }
+        .legend-dot.min { background: #3498db; }
+        .legend-dot.inflection { background: #9b59b6; }
+        .legend-dot.root { background: #e74c3c; }
+
+        /* Probe Panel */
+        .probe-panel {
+            position: absolute;
+            bottom: 4px;
+            left: 6px;
+            background: rgba(2, 12, 27, 0.95);
+            border: 1px solid var(--brass);
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 0.6rem;
+            z-index: 20;
+            min-width: 120px;
+        }
+
+        .probe-panel h3 {
+            color: var(--gold);
+            font-size: 0.65rem;
+            border-bottom: 1px solid var(--brass);
+            padding-bottom: 2px;
+            margin-bottom: 4px;
+        }
+
+        .probe-row { display: flex; justify-content: space-between; margin: 2px 0; }
+        .probe-label { color: var(--brass); }
+        .probe-value { font-family: 'Courier New', monospace; color: var(--wave); }
+        .probe-value.current { color: var(--current); }
+        .probe-value.pressure { color: var(--pressure); }
+        .probe-value.cargo { color: var(--cargo); }
+
+        .probe-insight {
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(181, 166, 66, 0.3);
+            color: var(--text);
+            font-style: italic;
+            line-height: 1.2;
+            font-size: 0.55rem;
+        }
+
+        /* Connection indicator */
+        .connection-insight {
+            margin-top: 4px;
+            padding: 3px 5px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 3px;
+            font-size: 0.55rem;
+            color: var(--gold);
+        }
+
+        /* Newton Panel */
+        .newton-panel {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(2, 12, 27, 0.95);
+            border: 1px solid var(--current);
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 0.6rem;
+            z-index: 30;
+            text-align: center;
+            display: none;
+        }
+
+        .newton-panel.visible { display: block; }
+        .newton-panel h4 { color: var(--current); margin-bottom: 4px; }
+
+        .newton-iterations {
+            font-family: 'Courier New', monospace;
+            font-size: 0.55rem;
+            max-height: 60px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .newton-iter { margin: 1px 0; }
+        .newton-iter.final { color: #2ecc71; font-weight: bold; }
+
+        /* Area Info */
+        .area-info {
+            position: absolute;
+            bottom: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(2, 12, 27, 0.9);
+            border: 1px solid var(--cargo);
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.6rem;
+            color: var(--cargo);
+            pointer-events: none;
+        }
+
+        /* Footer */
+        footer {
+            padding: 4px 10px;
+            background: var(--panel);
+            border-top: 1px solid var(--brass);
+            font-size: 0.6rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--brass);
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .footer-info { display: flex; gap: 10px; align-items: center; }
+        .weather-indicator { display: flex; align-items: center; gap: 3px; }
+
+        /* Animation indicator */
+        .anim-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 6px;
+            background: rgba(100, 255, 218, 0.2);
+            border-radius: 10px;
+            font-size: 0.55rem;
+            color: var(--wave);
+        }
+
+        .anim-indicator.hidden { display: none; }
+
+        /* Rank Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+
+        .modal {
+            background: var(--panel);
+            border: 2px solid var(--brass);
+            border-radius: 8px;
+            padding: 12px 20px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal h2 { color: var(--gold); font-size: 1rem; margin-bottom: 6px; }
+        .modal p { font-size: 0.75rem; margin-bottom: 10px; }
+
+        .rank-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .rank-btn {
+            padding: 8px;
+            background: var(--sea);
+            border: 1px solid var(--brass);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .rank-btn:hover { background: rgba(212, 175, 55, 0.15); border-color: var(--gold); }
+        .rank-btn.selected { background: rgba(212, 175, 55, 0.2); border-color: var(--gold); box-shadow: 0 0 6px rgba(212, 175, 55, 0.3); }
+        .rank-btn h3 { color: var(--gold); font-size: 0.8rem; margin-bottom: 2px; }
+        .rank-btn p { font-size: 0.65rem; color: var(--text); }
+
+        /* Instructions */
+        .instructions {
+            position: fixed;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--panel);
+            border: 1px solid var(--brass);
+            border-radius: 4px;
+            padding: 5px 12px;
+            font-size: 0.65rem;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .instructions.visible { opacity: 1; }
+        .instructions kbd { background: var(--sea); border: 1px solid var(--brass); padding: 1px 3px; border-radius: 2px; font-family: monospace; }
+
+        @media (max-width: 600px) {
+            .probe-panel { display: none !important; }
+            header { padding: 0.3rem 0.5rem; }
+            .controls { gap: 5px; }
+            .title-group h1 { font-size: 0.85rem; }
+            .legend { font-size: 0.45rem; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <header>
+        <div class="title-group">
+            <h1>⚓ Function Anatomy Lab</h1>
+            <div class="subtitle">
+                v3.0 — Relationships Revealed
+                <span class="rank-badge">🎖️ <span id="rank-name">Quartermaster</span></span>
+            </div>
+        </div>
+        <div class="controls">
+            <div class="control-group">
+                <label>Chart:</label>
+                <select id="function-select">
+                    <optgroup label="Polynomial">
+                        <option value="x^2">x²</option>
+                        <option value="x^3">x³</option>
+                        <option value="x^3-3x" selected>x³-3x</option>
+                        <option value="x^4-2x^2">x⁴-2x²</option>
+                    </optgroup>
+                    <optgroup label="Trigonometric">
+                        <option value="sin">sin(x)</option>
+                        <option value="cos">cos(x)</option>
+                    </optgroup>
+                    <optgroup label="Exponential">
+                        <option value="exp">eˣ</option>
+                        <option value="gaussian">e⁻ˣ²</option>
+                    </optgroup>
+                </select>
+            </div>
+            
+            <div class="switch-group">
+                <label class="switch">
+                    <input type="checkbox" id="mode-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span class="mode-label" id="mode-label">Sailor</span>
+            </div>
+            
+            <button id="play-btn" title="Auto-sail (animate)">▶️</button>
+            <button id="lock-btn" title="Lock scales">🔒</button>
+            <button id="newton-btn" title="Find roots">🔦</button>
+            <button id="rank-btn" title="Change rank">🎖️</button>
+            <button id="help-btn" title="Help">❓</button>
+        </div>
+    </header>
+
+    <main id="lab-main" class="rank-quartermaster">
+        <div class="deck" id="deck-f">
+            <div class="deck-label"><span id="label-f">Position</span><span class="math-label" id="math-f"></span></div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot max"></div>Peak</div>
+                <div class="legend-item"><div class="legend-dot min"></div>Valley</div>
+                <div class="legend-item"><div class="legend-dot inflection"></div>Inflect</div>
+                <div class="legend-item"><div class="legend-dot root"></div>Zero</div>
+            </div>
+            <canvas id="canvas-f"></canvas>
+            <div class="hud-overlay"><div id="val-f" class="hud-value">0.00</div></div>
+            <div class="newton-panel" id="newton-panel">
+                <h4>🔦 Root Finder</h4>
+                <div class="newton-iterations" id="newton-iterations"></div>
+                <button id="newton-close" style="margin-top:4px;font-size:0.55rem;">Close</button>
+            </div>
+        </div>
+        
+        <div class="deck" id="deck-df">
+            <div class="deck-label"><span id="label-df">Velocity</span><span class="math-label" id="math-df"></span></div>
+            <canvas id="canvas-df"></canvas>
+            <div class="hud-overlay"><div id="val-df" class="hud-value current">0.00</div></div>
+            <div class="zero-label" id="df-zero-label" style="display:none;">← f'=0 here</div>
+        </div>
+        
+        <div class="deck" id="deck-ddf">
+            <div class="deck-label"><span id="label-ddf">Acceleration</span><span class="math-label" id="math-ddf"></span></div>
+            <canvas id="canvas-ddf"></canvas>
+            <div class="hud-overlay"><div id="val-ddf" class="hud-value pressure">0.00</div></div>
+        </div>
+        
+        <div class="deck" id="deck-int">
+            <div class="deck-label"><span id="label-int">Distance</span><span class="math-label" id="math-int"></span></div>
+            <canvas id="canvas-int"></canvas>
+            <div class="hud-overlay"><div id="val-int" class="hud-value cargo">0.00</div></div>
+            <div class="area-info" id="area-info">Area: 0.00</div>
+        </div>
+        
+        <div class="probe-panel" id="probe-panel">
+            <h3>🔍 Probe</h3>
+            <div class="probe-row"><span class="probe-label">x:</span><span class="probe-value" id="probe-x">0.00</span></div>
+            <div class="probe-row"><span class="probe-label" id="pf-label">Height:</span><span class="probe-value" id="probe-f">0.00</span></div>
+            <div class="probe-row deck-df-row"><span class="probe-label" id="pdf-label">Velocity:</span><span class="probe-value current" id="probe-df">0.00</span></div>
+            <div class="probe-row deck-ddf-row"><span class="probe-label" id="pddf-label">Accel:</span><span class="probe-value pressure" id="probe-ddf">0.00</span></div>
+            <div class="probe-row deck-int-row"><span class="probe-label" id="pint-label">Distance:</span><span class="probe-value cargo" id="probe-int">0.00</span></div>
+            <div class="probe-insight" id="probe-insight">Explore...</div>
+            <div class="connection-insight" id="connection-insight" style="display:none;"></div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-info">
+            <span>⚓ v3.0</span>
+            <span id="coordinates">x: 0.00</span>
+            <span class="anim-indicator hidden" id="anim-indicator">▶️ Sailing...</span>
+        </div>
+        <div class="weather-indicator">
+            <span id="weather-icon">🌤️</span>
+            <span id="weather-text">Neutral</span>
+        </div>
+    </footer>
+</div>
+
+<div class="modal-overlay" id="rank-modal">
+    <div class="modal">
+        <h2>🎖️ Choose Your Rank</h2>
+        <p>Each rank reveals more of the ship's instruments.</p>
+        <div class="rank-options">
+            <div class="rank-btn" data-rank="swab"><h3>🧹 Swab</h3><p>Position only (f)</p></div>
+            <div class="rank-btn" data-rank="navigator"><h3>🧭 Navigator</h3><p>+ Velocity (f')</p></div>
+            <div class="rank-btn" data-rank="meteorologist"><h3>🌦️ Meteorologist</h3><p>+ Acceleration (f'')</p></div>
+            <div class="rank-btn selected" data-rank="quartermaster"><h3>📦 Quartermaster</h3><p>+ Distance (∫f)</p></div>
+        </div>
+        <button id="rank-confirm">Set Sail!</button>
+    </div>
+</div>
+
+<div class="instructions" id="instructions">
+    Drag/touch to probe • ▶️ auto-sail • 🔒 lock scales • <kbd>M</kbd> mode • <kbd>R</kbd> rank
+</div>
+
+<script>
+// === CONFIG ===
+const CONFIG = { xMin: -4, xMax: 4, criticalRadius: 5, tangentLen: 1.0 };
+
+// === FUNCTIONS (with better metaphors) ===
+const FUNCTIONS = {
+    'x^2': { f: x => x*x, df: x => 2*x, ddf: x => 2, F: x => x*x*x/3, formula: 'x²', dfF: "2x", ddfF: "2", intF: "x³/3" },
+    'x^3': { f: x => x*x*x, df: x => 3*x*x, ddf: x => 6*x, F: x => x*x*x*x/4, formula: 'x³', dfF: "3x²", ddfF: "6x", intF: "x⁴/4" },
+    'x^3-3x': { f: x => x*x*x - 3*x, df: x => 3*x*x - 3, ddf: x => 6*x, F: x => x*x*x*x/4 - 1.5*x*x, formula: 'x³-3x', dfF: "3x²-3", ddfF: "6x", intF: "x⁴/4-3x²/2" },
+    'x^4-2x^2': { f: x => Math.pow(x,4) - 2*x*x, df: x => 4*Math.pow(x,3) - 4*x, ddf: x => 12*x*x - 4, F: x => Math.pow(x,5)/5 - 2*x*x*x/3, formula: 'x⁴-2x²', dfF: "4x³-4x", ddfF: "12x²-4", intF: "x⁵/5-2x³/3" },
+    'sin': { f: x => Math.sin(x), df: x => Math.cos(x), ddf: x => -Math.sin(x), F: x => -Math.cos(x), formula: 'sin(x)', dfF: "cos(x)", ddfF: "-sin(x)", intF: "-cos(x)" },
+    'cos': { f: x => Math.cos(x), df: x => -Math.sin(x), ddf: x => -Math.cos(x), F: x => Math.sin(x), formula: 'cos(x)', dfF: "-sin(x)", ddfF: "-cos(x)", intF: "sin(x)" },
+    'exp': { f: x => Math.exp(x), df: x => Math.exp(x), ddf: x => Math.exp(x), F: x => Math.exp(x), formula: 'eˣ', dfF: "eˣ", ddfF: "eˣ", intF: "eˣ" },
+    'gaussian': { f: x => Math.exp(-x*x), df: x => -2*x*Math.exp(-x*x), ddf: x => (4*x*x-2)*Math.exp(-x*x), F: null, formula: 'e⁻ˣ²', dfF: "-2xe⁻ˣ²", ddfF: "(4x²-2)e⁻ˣ²", intF: "≈erf", needsNum: true }
+};
+
+// === STATE (world x, not pixel!) ===
+const state = {
+    func: 'x^3-3x',
+    master: false,
+    rank: 'quartermaster',
+    x: 0,  // WORLD x coordinate (GPT-5 fix)
+    critical: [],
+    inflection: [],
+    roots: [],
+    ranges: {},
+    globalRange: { min: -10, max: 10 },
+    lockScales: false,
+    newton: false,
+    newtonIters: [],
+    animating: false,
+    animSpeed: 0.02
+};
+
+// === DOM ===
+const el = {
+    cF: document.getElementById('canvas-f'), cDf: document.getElementById('canvas-df'),
+    cDdf: document.getElementById('canvas-ddf'), cInt: document.getElementById('canvas-int'),
+    dF: document.getElementById('deck-f'), dDf: document.getElementById('deck-df'),
+    dDdf: document.getElementById('deck-ddf'), dInt: document.getElementById('deck-int'),
+    labMain: document.getElementById('lab-main'),
+    funcSel: document.getElementById('function-select'), modeTog: document.getElementById('mode-toggle'),
+    modeLabel: document.getElementById('mode-label'), rankName: document.getElementById('rank-name'),
+    labF: document.getElementById('label-f'), labDf: document.getElementById('label-df'),
+    labDdf: document.getElementById('label-ddf'), labInt: document.getElementById('label-int'),
+    mathF: document.getElementById('math-f'), mathDf: document.getElementById('math-df'),
+    mathDdf: document.getElementById('math-ddf'), mathInt: document.getElementById('math-int'),
+    valF: document.getElementById('val-f'), valDf: document.getElementById('val-df'),
+    valDdf: document.getElementById('val-ddf'), valInt: document.getElementById('val-int'),
+    probeX: document.getElementById('probe-x'), probeF: document.getElementById('probe-f'),
+    probeDf: document.getElementById('probe-df'), probeDdf: document.getElementById('probe-ddf'),
+    probeInt: document.getElementById('probe-int'), probeInsight: document.getElementById('probe-insight'),
+    connectionInsight: document.getElementById('connection-insight'),
+    pfLabel: document.getElementById('pf-label'), pdfLabel: document.getElementById('pdf-label'),
+    pddfLabel: document.getElementById('pddf-label'), pintLabel: document.getElementById('pint-label'),
+    weatherIcon: document.getElementById('weather-icon'), weatherText: document.getElementById('weather-text'),
+    coords: document.getElementById('coordinates'), areaInfo: document.getElementById('area-info'),
+    rankModal: document.getElementById('rank-modal'), newtonPanel: document.getElementById('newton-panel'),
+    newtonIters: document.getElementById('newton-iterations'), instructions: document.getElementById('instructions'),
+    dfZeroLabel: document.getElementById('df-zero-label'),
+    animIndicator: document.getElementById('anim-indicator'),
+    playBtn: document.getElementById('play-btn'),
+    lockBtn: document.getElementById('lock-btn')
+};
+
+const ctx = { f: el.cF.getContext('2d'), df: el.cDf.getContext('2d'), ddf: el.cDdf.getContext('2d'), int: el.cInt.getContext('2d') };
+
+// === UTILITY (GPT-5 fixes: getBoundingClientRect for precision) ===
+function cssW(cv) { return cv.getBoundingClientRect().width; }
+function cssH(cv) { return cv.getBoundingClientRect().height; }
+
+function resize() {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    [el.cF, el.cDf, el.cDdf, el.cInt].forEach(cv => {
+        const w = cssW(cv), h = cssH(cv);
+        cv.width = Math.round(w * dpr);
+        cv.height = Math.round(h * dpr);
+        const c = cv.getContext('2d');
+        c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    });
+    findSpecial();
+    computeRanges();
+    draw();
+}
+
+function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+function xToPx(x, cv) { return ((x - CONFIG.xMin) / (CONFIG.xMax - CONFIG.xMin)) * cssW(cv); }
+function pxToX(px, cv) { return CONFIG.xMin + (px / cssW(cv)) * (CONFIG.xMax - CONFIG.xMin); }
+function yToPx(y, cv, yMin, yMax) { const h = cssH(cv), p = h * 0.08; return p + (h - 2*p) * (1 - (y - yMin) / (yMax - yMin)); }
+
+// GPT-5 fix: safer padding
+function padOf(range) { return Math.max(0.1, Math.abs(range) * 0.15); }
+
+function numInt(fn, a, b, n = 100) {
+    const h = (b - a) / n;
+    let s = 0;
+    for (let i = 0; i < n; i++) s += (fn(a + i*h) + fn(a + (i+1)*h)) * h / 2;
+    return s;
+}
+
+// === COMPUTE RANGES (separate from draw for clarity) ===
+function computeRanges() {
+    const fn = FUNCTIONS[state.func];
+    if (!fn) return;
+    
+    // Sample by fixed steps, not pixels (Grok suggestion)
+    const samples = 200;
+    let yMin = Infinity, yMax = -Infinity;
+    let dyMin = Infinity, dyMax = -Infinity;
+    let ddyMin = Infinity, ddyMax = -Infinity;
+    let intMin = Infinity, intMax = -Infinity;
+    
+    for (let i = 0; i <= samples; i++) {
+        const x = CONFIG.xMin + (i / samples) * (CONFIG.xMax - CONFIG.xMin);
+        const y = fn.f(x), dy = fn.df(x), ddy = fn.ddf(x);
+        if (isFinite(y)) { yMin = Math.min(yMin, y); yMax = Math.max(yMax, y); }
+        if (isFinite(dy)) { dyMin = Math.min(dyMin, dy); dyMax = Math.max(dyMax, dy); }
+        if (isFinite(ddy)) { ddyMin = Math.min(ddyMin, ddy); ddyMax = Math.max(ddyMax, ddy); }
+        const iv = fn.needsNum ? numInt(fn.f, 0, x) : fn.F(x) - fn.F(0); // Start integral at 0, not xMin (Claude fix)
+        if (isFinite(iv)) { intMin = Math.min(intMin, iv); intMax = Math.max(intMax, iv); }
+    }
+    
+    // Apply padding
+    yMin -= padOf(yMax - yMin); yMax += padOf(yMax - yMin);
+    dyMin -= padOf(dyMax - dyMin); dyMax += padOf(dyMax - dyMin);
+    ddyMin -= padOf(ddyMax - ddyMin); ddyMax += padOf(ddyMax - ddyMin);
+    intMin -= padOf(intMax - intMin); intMax += padOf(intMax - intMin);
+    
+    state.ranges = { yMin, yMax, dyMin, dyMax, ddyMin, ddyMax, intMin, intMax };
+    
+    // Global range for lock mode (Claude suggestion)
+    const allMin = Math.min(yMin, dyMin, ddyMin, intMin);
+    const allMax = Math.max(yMax, dyMax, ddyMax, intMax);
+    state.globalRange = { min: allMin - padOf(allMax - allMin), max: allMax + padOf(allMax - allMin) };
+}
+
+// === SPECIAL POINTS ===
+function findSpecial() {
+    state.critical = []; state.inflection = []; state.roots = [];
+    const fn = FUNCTIONS[state.func];
+    if (!fn) return;
+    
+    const step = 0.015;
+    for (let x = CONFIG.xMin + step; x < CONFIG.xMax - step; x += step) {
+        // Roots
+        const f = fn.f(x), fP = fn.f(x - step);
+        if ((fP <= 0 && f >= 0) || (fP >= 0 && f <= 0)) {
+            let rx = x;
+            for (let i = 0; i < 10; i++) { const fv = fn.f(rx), dfv = fn.df(rx); if (Math.abs(dfv) > 0.001) rx -= fv / dfv; }
+            if (rx > CONFIG.xMin && rx < CONFIG.xMax) state.roots.push({ x: rx });
+        }
+        // Critical points
+        const df = fn.df(x), dfP = fn.df(x - step);
+        if ((dfP <= 0 && df >= 0) || (dfP >= 0 && df <= 0)) {
+            let cx = x;
+            for (let i = 0; i < 5; i++) { const d = fn.df(cx), dd = fn.ddf(cx); if (Math.abs(dd) > 0.001) cx -= d / dd; }
+            if (cx > CONFIG.xMin && cx < CONFIG.xMax) state.critical.push({ x: cx, y: fn.f(cx), type: fn.ddf(cx) < 0 ? 'max' : 'min' });
+        }
+        // Inflection
+        const ddf = fn.ddf(x), ddfP = fn.ddf(x - step);
+        if ((ddfP <= 0 && ddf >= 0) || (ddfP >= 0 && ddf <= 0)) state.inflection.push({ x, y: fn.f(x) });
+    }
+}
+
+// === DRAW ===
+function draw() {
+    const fn = FUNCTIONS[state.func];
+    if (!fn) return;
+    
+    const r = state.ranges;
+    const useGlobal = state.lockScales;
+    const gMin = state.globalRange.min, gMax = state.globalRange.max;
+    
+    // Clear all
+    Object.values(ctx).forEach((c, i) => {
+        const cv = [el.cF, el.cDf, el.cDdf, el.cInt][i];
+        c.clearRect(0, 0, cssW(cv), cssH(cv));
+    });
+    
+    const showDf = ['navigator', 'meteorologist', 'quartermaster'].includes(state.rank);
+    const showDdf = ['meteorologist', 'quartermaster'].includes(state.rank);
+    const showInt = state.rank === 'quartermaster';
+    
+    // f(x)
+    const fMin = useGlobal ? gMin : r.yMin, fMax = useGlobal ? gMax : r.yMax;
+    drawGrid(ctx.f, el.cF, fMin, fMax);
+    drawCurve(ctx.f, el.cF, fn.f, fMin, fMax, '#64ffda', 2.5);
+    drawSpecial(ctx.f, el.cF, fMin, fMax);
+    if (showDf) drawTangent(ctx.f, el.cF, fn, fMin, fMax);
+    
+    // f'(x)
+    if (showDf) {
+        const dfMin = useGlobal ? gMin : r.dyMin, dfMax = useGlobal ? gMax : r.dyMax;
+        drawGrid(ctx.df, el.cDf, dfMin, dfMax);
+        drawCurve(ctx.df, el.cDf, fn.df, dfMin, dfMax, '#f39c12', 2);
+        drawCriticalOnDf(ctx.df, el.cDf, dfMin, dfMax);
+        drawProbeOnPanel(ctx.df, el.cDf, fn.df(state.x), dfMin, dfMax, '#f39c12');
+    }
+    
+    // f''(x)
+    if (showDdf) {
+        const ddfMin = useGlobal ? gMin : r.ddyMin, ddfMax = useGlobal ? gMax : r.ddyMax;
+        drawGrid(ctx.ddf, el.cDdf, ddfMin, ddfMax);
+        drawCurve(ctx.ddf, el.cDdf, fn.ddf, ddfMin, ddfMax, '#e74c3c', 2);
+        drawProbeOnPanel(ctx.ddf, el.cDdf, fn.ddf(state.x), ddfMin, ddfMax, '#e74c3c');
+    }
+    
+    // ∫f(x) — start from 0 (Claude fix)
+    if (showInt) {
+        const intMin = useGlobal ? gMin : r.intMin, intMax = useGlobal ? gMax : r.intMax;
+        drawGrid(ctx.int, el.cInt, intMin, intMax);
+        drawArea(ctx.f, el.cF, fn.f, fMin, fMax);
+        const intFn = x => fn.needsNum ? numInt(fn.f, 0, x) : fn.F(x) - fn.F(0);
+        drawCurve(ctx.int, el.cInt, intFn, intMin, intMax, '#9b59b6', 2);
+        drawProbeOnPanel(ctx.int, el.cInt, intFn(state.x), intMin, intMax, '#9b59b6');
+    }
+    
+    // Newton visualization
+    if (state.newton && state.newtonIters.length) drawNewton(ctx.f, el.cF, fn, fMin, fMax);
+    
+    // Relationship lines (Claude's key insight!)
+    if (showDf) drawRelationshipLines(fn);
+    
+    // Probe line on all visible canvases
+    drawProbe();
+    
+    updateHUD(fn);
+}
+
+function drawCurve(c, cv, fn, yMin, yMax, color, lw) {
+    const w = cssW(cv);
+    c.strokeStyle = color;
+    c.lineWidth = lw;
+    c.beginPath();
+    for (let px = 0; px < w; px++) {
+        const x = pxToX(px, cv), y = fn(x), py = yToPx(y, cv, yMin, yMax);
+        px === 0 ? c.moveTo(px, py) : isFinite(py) && c.lineTo(px, py);
+    }
+    c.stroke();
+}
+
+function drawGrid(c, cv, yMin, yMax) {
+    const w = cssW(cv), h = cssH(cv);
+    c.strokeStyle = 'rgba(181,166,66,0.08)';
+    c.lineWidth = 1;
+    
+    // Dynamic grid lines (Grok suggestion)
+    const xLines = Math.max(4, Math.floor(w / 80));
+    const xStep = (CONFIG.xMax - CONFIG.xMin) / xLines;
+    for (let x = CONFIG.xMin; x <= CONFIG.xMax; x += xStep) {
+        const px = xToPx(x, cv);
+        c.beginPath(); c.moveTo(px, 0); c.lineTo(px, h); c.stroke();
+    }
+    
+    const yLines = Math.max(2, Math.floor(h / 50));
+    const yStep = (yMax - yMin) / yLines;
+    for (let y = yMin; y <= yMax; y += yStep) {
+        const py = yToPx(y, cv, yMin, yMax);
+        c.beginPath(); c.moveTo(0, py); c.lineTo(w, py); c.stroke();
+    }
+    
+    // Zero line
+    if (yMin < 0 && yMax > 0) {
+        const zy = yToPx(0, cv, yMin, yMax);
+        c.strokeStyle = 'rgba(181,166,66,0.25)';
+        c.lineWidth = 1.5;
+        c.beginPath(); c.moveTo(0, zy); c.lineTo(w, zy); c.stroke();
+    }
+}
+
+function drawSpecial(c, cv, yMin, yMax) {
+    // Critical points
+    state.critical.forEach(pt => {
+        const px = xToPx(pt.x, cv), py = yToPx(pt.y, cv, yMin, yMax);
+        c.beginPath();
+        c.arc(px, py, CONFIG.criticalRadius, 0, Math.PI * 2);
+        c.fillStyle = pt.type === 'max' ? '#2ecc71' : '#3498db';
+        c.fill();
+        c.strokeStyle = 'white';
+        c.lineWidth = 1.5;
+        c.stroke();
+    });
+    
+    // Inflection
+    state.inflection.forEach(pt => {
+        const px = xToPx(pt.x, cv), py = yToPx(pt.y, cv, yMin, yMax);
+        c.beginPath();
+        c.arc(px, py, CONFIG.criticalRadius - 1.5, 0, Math.PI * 2);
+        c.fillStyle = '#9b59b6';
+        c.fill();
+    });
+    
+    // Roots
+    state.roots.forEach(pt => {
+        const px = xToPx(pt.x, cv), py = yToPx(0, cv, yMin, yMax);
+        c.beginPath();
+        c.arc(px, py, 3.5, 0, Math.PI * 2);
+        c.fillStyle = '#e74c3c';
+        c.fill();
+    });
+}
+
+function drawCriticalOnDf(c, cv, dyMin, dyMax) {
+    state.critical.forEach(pt => {
+        const px = xToPx(pt.x, cv), py = yToPx(0, cv, dyMin, dyMax);
+        c.beginPath();
+        c.arc(px, py, 4, 0, Math.PI * 2);
+        c.fillStyle = pt.type === 'max' ? '#2ecc71' : '#3498db';
+        c.fill();
+        c.strokeStyle = 'white';
+        c.lineWidth = 1;
+        c.stroke();
+    });
+}
+
+function drawTangent(c, cv, fn, yMin, yMax) {
+    const x = state.x, y = fn.f(x), slope = fn.df(x);
+    if (!isFinite(y) || !isFinite(slope)) return;
+    
+    const px = xToPx(x, cv), py = yToPx(y, cv, yMin, yMax);
+    const dx = CONFIG.tangentLen;
+    const x1 = x - dx, x2 = x + dx;
+    const y1 = y + slope * (x1 - x), y2 = y + slope * (x2 - x);
+    const px1 = xToPx(x1, cv), px2 = xToPx(x2, cv);
+    const py1 = yToPx(y1, cv, yMin, yMax), py2 = yToPx(y2, cv, yMin, yMax);
+    
+    c.strokeStyle = 'rgba(255,255,255,0.6)';
+    c.lineWidth = 2;
+    c.setLineDash([4, 3]);
+    c.beginPath();
+    c.moveTo(px1, py1);
+    c.lineTo(px2, py2);
+    c.stroke();
+    c.setLineDash([]);
+    
+    // Point on curve
+    c.beginPath();
+    c.arc(px, py, 4, 0, Math.PI * 2);
+    c.fillStyle = 'white';
+    c.fill();
+}
+
+function drawProbeOnPanel(c, cv, val, yMin, yMax, color) {
+    const px = xToPx(state.x, cv), py = yToPx(val, cv, yMin, yMax);
+    if (!isFinite(py)) return;
+    c.beginPath();
+    c.arc(px, py, 4, 0, Math.PI * 2);
+    c.fillStyle = color;
+    c.fill();
+    c.strokeStyle = 'white';
+    c.lineWidth = 1;
+    c.stroke();
+}
+
+function drawArea(c, cv, fn, yMin, yMax) {
+    const startX = 0; // Start area from 0 (Claude fix)
+    const startPx = xToPx(startX, cv), endPx = xToPx(state.x, cv);
+    const zeroY = yToPx(0, cv, yMin, yMax);
+    
+    c.fillStyle = 'rgba(155,89,182,0.15)';
+    c.beginPath();
+    c.moveTo(startPx, zeroY);
+    
+    const step = state.x > startX ? 1 : -1;
+    for (let px = startPx; step > 0 ? px <= endPx : px >= endPx; px += step) {
+        const x = pxToX(px, cv), y = fn(x), py = yToPx(y, cv, yMin, yMax);
+        c.lineTo(px, py);
+    }
+    
+    c.lineTo(endPx, zeroY);
+    c.closePath();
+    c.fill();
+}
+
+// === RELATIONSHIP LINES (Claude's key insight!) ===
+function drawRelationshipLines(fn) {
+    const df = fn.df(state.x);
+    
+    // Near a critical point? Show the connection!
+    const nearCritical = state.critical.find(pt => Math.abs(pt.x - state.x) < 0.15);
+    
+    if (nearCritical) {
+        // Draw connecting line from f(x) peak/valley down to f'(x)=0
+        const c = ctx.f;
+        const cv = el.cF;
+        const r = state.ranges;
+        const fMin = state.lockScales ? state.globalRange.min : r.yMin;
+        const fMax = state.lockScales ? state.globalRange.max : r.yMax;
+        
+        const px = xToPx(nearCritical.x, cv);
+        const py = yToPx(nearCritical.y, cv, fMin, fMax);
+        
+        // Pulsing highlight on the critical point
+        c.beginPath();
+        c.arc(px, py, CONFIG.criticalRadius + 3, 0, Math.PI * 2);
+        c.strokeStyle = nearCritical.type === 'max' ? 'rgba(46,204,113,0.5)' : 'rgba(52,152,219,0.5)';
+        c.lineWidth = 2;
+        c.stroke();
+        
+        // Show connection insight
+        el.connectionInsight.style.display = 'block';
+        if (state.master) {
+            el.connectionInsight.innerHTML = nearCritical.type === 'max' 
+                ? "📍 f'=0 & f''<0 → Maximum"
+                : "📍 f'=0 & f''>0 → Minimum";
+        } else {
+            el.connectionInsight.innerHTML = nearCritical.type === 'max'
+                ? "📍 Velocity=0 + Slowing → Peak!"
+                : "📍 Velocity=0 + Speeding up → Valley!";
+        }
+    } else {
+        el.connectionInsight.style.display = 'none';
+    }
+}
+
+function drawNewton(c, cv, fn, yMin, yMax) {
+    c.strokeStyle = 'rgba(243,156,18,0.5)';
+    c.lineWidth = 1.5;
+    
+    state.newtonIters.forEach((it, i) => {
+        const px = xToPx(it.x, cv), py = yToPx(it.y, cv, yMin, yMax);
+        const zy = yToPx(0, cv, yMin, yMax);
+        const slope = fn.df(it.x);
+        if (Math.abs(slope) < 0.001) return;
+        const xInt = it.x - it.y / slope, pxInt = xToPx(xInt, cv);
+        
+        c.setLineDash([3, 3]);
+        c.beginPath(); c.moveTo(px, py); c.lineTo(pxInt, zy); c.stroke();
+        
+        if (i < state.newtonIters.length - 1) {
+            const ny = fn.f(xInt), pyN = yToPx(ny, cv, yMin, yMax);
+            c.beginPath(); c.moveTo(pxInt, zy); c.lineTo(pxInt, pyN); c.stroke();
+        }
+        c.setLineDash([]);
+        
+        c.beginPath();
+        c.arc(px, py, 3, 0, Math.PI * 2);
+        c.fillStyle = i === state.newtonIters.length - 1 ? '#2ecc71' : '#f39c12';
+        c.fill();
+    });
+}
+
+function drawProbe() {
+    const canvases = [el.cF];
+    if (['navigator', 'meteorologist', 'quartermaster'].includes(state.rank)) canvases.push(el.cDf);
+    if (['meteorologist', 'quartermaster'].includes(state.rank)) canvases.push(el.cDdf);
+    if (state.rank === 'quartermaster') canvases.push(el.cInt);
+    
+    canvases.forEach(cv => {
+        const c = cv.getContext('2d');
+        const px = xToPx(state.x, cv);
+        c.setLineDash([4, 4]);
+        c.strokeStyle = 'rgba(255,255,255,0.4)';
+        c.lineWidth = 1.5;
+        c.beginPath();
+        c.moveTo(px, 0);
+        c.lineTo(px, cssH(cv));
+        c.stroke();
+        c.setLineDash([]);
+    });
+}
+
+// === HUD UPDATE ===
+function updateHUD(fn) {
+    const x = state.x, f = fn.f(x), df = fn.df(x), ddf = fn.ddf(x);
+    const iv = fn.needsNum ? numInt(fn.f, 0, x) : fn.F(x) - fn.F(0);
+    const fmt = v => isFinite(v) ? v.toFixed(2) : '—';
+    
+    el.valF.textContent = state.master ? `f=${fmt(f)}` : fmt(f);
+    el.valDf.textContent = state.master ? `f'=${fmt(df)}` : fmt(df);
+    el.valDdf.textContent = state.master ? `f''=${fmt(ddf)}` : fmt(ddf);
+    el.valInt.textContent = state.master ? `∫f=${fmt(iv)}` : fmt(iv);
+    
+    el.probeX.textContent = fmt(x);
+    el.probeF.textContent = fmt(f);
+    el.probeDf.textContent = fmt(df);
+    el.probeDdf.textContent = fmt(ddf);
+    el.probeInt.textContent = fmt(iv);
+    el.coords.textContent = `x: ${fmt(x)}`;
+    el.areaInfo.textContent = state.master ? `∫₀ˣf = ${fmt(iv)}` : `Area: ${fmt(iv)}`;
+    
+    // Insight with better velocity/acceleration metaphors (Claude suggestion)
+    let insight = '';
+    if (Math.abs(df) < 0.12) {
+        if (ddf < -0.1) insight = state.master ? "🏔️ Max: f'=0, f''<0" : "🏔️ Stopped at peak! Acceleration negative.";
+        else if (ddf > 0.1) insight = state.master ? "🏝️ Min: f'=0, f''>0" : "🏝️ Stopped at valley! About to speed up.";
+        else insight = state.master ? "📍 Stationary" : "📍 Momentarily still...";
+    } else if (Math.abs(ddf) < 0.1) {
+        insight = state.master ? "🔄 Inflection" : "🔄 Acceleration changing sign!";
+    } else if (Math.abs(f) < 0.1) {
+        insight = state.master ? "🎯 Root" : "🎯 Crossing zero!";
+    } else if (df > 0.3) {
+        insight = state.master ? "📈 Increasing" : (ddf > 0 ? "📈 Rising & speeding up!" : "📈 Rising but slowing...");
+    } else if (df < -0.3) {
+        insight = state.master ? "📉 Decreasing" : (ddf < 0 ? "📉 Falling & speeding up!" : "📉 Falling but slowing...");
+    }
+    el.probeInsight.textContent = insight || (state.master ? "Explore..." : "Sail on...");
+    
+    // Weather (acceleration-based)
+    if (ddf > 0.1) {
+        el.weatherIcon.textContent = '🚀';
+        el.weatherText.textContent = state.master ? "f''>0" : "Speeding up";
+        el.labMain.className = `rank-${state.rank} concave-up`;
+    } else if (ddf < -0.1) {
+        el.weatherIcon.textContent = '🪂';
+        el.weatherText.textContent = state.master ? "f''<0" : "Slowing down";
+        el.labMain.className = `rank-${state.rank} concave-down`;
+    } else {
+        el.weatherIcon.textContent = '⚖️';
+        el.weatherText.textContent = state.master ? "f''≈0" : "Constant speed";
+        el.labMain.className = `rank-${state.rank}`;
+    }
+}
+
+// === NEWTON'S METHOD ===
+function runNewton(startX) {
+    const fn = FUNCTIONS[state.func];
+    if (!fn) return;
+    state.newtonIters = [];
+    let x = startX;
+    for (let i = 0; i < 12; i++) {
+        const y = fn.f(x), dy = fn.df(x);
+        state.newtonIters.push({ x, y });
+        if (Math.abs(y) < 0.0001 || Math.abs(dy) < 0.0001) break;
+        x = x - y / dy;
+        if (x < CONFIG.xMin - 2 || x > CONFIG.xMax + 2) break;
+    }
+    el.newtonIters.innerHTML = state.newtonIters.map((it, i) =>
+        `<div class="newton-iter ${i === state.newtonIters.length - 1 ? 'final' : ''}">${i + 1}. x=${it.x.toFixed(4)}</div>`
+    ).join('');
+    el.newtonPanel.classList.add('visible');
+    state.newton = true;
+    draw();
+}
+
+// === ANIMATION (Claude suggestion) ===
+function startAnimation() {
+    state.animating = true;
+    el.playBtn.classList.add('active');
+    el.playBtn.textContent = '⏸️';
+    el.animIndicator.classList.remove('hidden');
+}
+
+function stopAnimation() {
+    state.animating = false;
+    el.playBtn.classList.remove('active');
+    el.playBtn.textContent = '▶️';
+    el.animIndicator.classList.add('hidden');
+}
+
+function animationTick() {
+    if (!state.animating) return;
+    state.x += state.animSpeed;
+    if (state.x > CONFIG.xMax) state.x = CONFIG.xMin;
+    draw();
+}
+
+// === RANK ===
+function setRank(rank) {
+    state.rank = rank;
+    const names = { swab: '🧹 Swab', navigator: '🧭 Navigator', meteorologist: '🌦️ Meteorologist', quartermaster: '📦 Quartermaster' };
+    el.rankName.textContent = names[rank];
+    el.labMain.className = `rank-${rank}`;
+    el.dDf.classList.toggle('hidden', rank === 'swab');
+    el.dDdf.classList.toggle('hidden', ['swab', 'navigator'].includes(rank));
+    el.dInt.classList.toggle('hidden', rank !== 'quartermaster');
+    document.querySelectorAll('.deck-df-row').forEach(r => r.style.display = rank === 'swab' ? 'none' : 'flex');
+    document.querySelectorAll('.deck-ddf-row').forEach(r => r.style.display = ['swab', 'navigator'].includes(rank) ? 'none' : 'flex');
+    document.querySelectorAll('.deck-int-row').forEach(r => r.style.display = rank !== 'quartermaster' ? 'none' : 'flex');
+    document.querySelectorAll('.rank-btn').forEach(b => b.classList.toggle('selected', b.dataset.rank === rank));
+    resize();
+}
+
+function updateLabels() {
+    const fn = FUNCTIONS[state.func];
+    if (state.master) {
+        el.labF.textContent = 'f(x)'; el.labDf.textContent = "f'(x)"; el.labDdf.textContent = "f''(x)"; el.labInt.textContent = '∫f dx';
+        el.pfLabel.textContent = 'f:'; el.pdfLabel.textContent = "f':"; el.pddfLabel.textContent = "f'':"; el.pintLabel.textContent = '∫f:';
+        el.modeLabel.textContent = 'Master';
+        if (fn) { el.mathF.textContent = fn.formula; el.mathDf.textContent = fn.dfF; el.mathDdf.textContent = fn.ddfF; el.mathInt.textContent = fn.intF; }
+    } else {
+        el.labF.textContent = 'Position'; el.labDf.textContent = 'Velocity'; el.labDdf.textContent = 'Acceleration'; el.labInt.textContent = 'Distance';
+        el.pfLabel.textContent = 'Height:'; el.pdfLabel.textContent = 'Velocity:'; el.pddfLabel.textContent = 'Accel:'; el.pintLabel.textContent = 'Distance:';
+        el.modeLabel.textContent = 'Sailor';
+        el.mathF.textContent = el.mathDf.textContent = el.mathDdf.textContent = el.mathInt.textContent = '';
+    }
+}
+
+// === EVENT HANDLERS ===
+
+// Mouse & touch handling (Grok: touch support)
+function handlePointer(e, cv) {
+    const rect = cv.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const localPx = clientX - rect.left;
+    state.x = clamp(pxToX(localPx, cv), CONFIG.xMin, CONFIG.xMax);
+    draw();
+}
+
+[el.cF, el.cDf, el.cDdf, el.cInt].forEach(cv => {
+    cv.addEventListener('mousemove', e => handlePointer(e, cv));
+    cv.addEventListener('touchmove', e => { e.preventDefault(); handlePointer(e, cv); }, { passive: false });
+    cv.addEventListener('touchstart', e => { e.preventDefault(); handlePointer(e, cv); }, { passive: false });
+});
+
+el.funcSel.addEventListener('change', e => {
+    state.func = e.target.value;
+    state.newton = false;
+    el.newtonPanel.classList.remove('visible');
+    findSpecial();
+    computeRanges();
+    updateLabels();
+    draw();
+});
+
+el.modeTog.addEventListener('change', e => { state.master = e.target.checked; updateLabels(); draw(); });
+
+el.playBtn.addEventListener('click', () => state.animating ? stopAnimation() : startAnimation());
+
+el.lockBtn.addEventListener('click', () => {
+    state.lockScales = !state.lockScales;
+    el.lockBtn.classList.toggle('active', state.lockScales);
+    draw();
+});
+
+document.getElementById('newton-btn').addEventListener('click', () => {
+    if (state.newton) { state.newton = false; el.newtonPanel.classList.remove('visible'); draw(); }
+    else runNewton(state.x);
+});
+
+document.getElementById('newton-close').addEventListener('click', () => {
+    state.newton = false;
+    el.newtonPanel.classList.remove('visible');
+    draw();
+});
+
+document.getElementById('rank-btn').addEventListener('click', () => el.rankModal.classList.add('visible'));
+
+document.querySelectorAll('.rank-btn').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.rank-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+}));
+
+document.getElementById('rank-confirm').addEventListener('click', () => {
+    const sel = document.querySelector('.rank-btn.selected');
+    if (sel) setRank(sel.dataset.rank);
+    el.rankModal.classList.remove('visible');
+});
+
+document.getElementById('help-btn').addEventListener('click', () => {
+    el.instructions.classList.toggle('visible');
+    setTimeout(() => el.instructions.classList.remove('visible'), 4000);
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'm' || e.key === 'M') { el.modeTog.checked = !el.modeTog.checked; state.master = el.modeTog.checked; updateLabels(); draw(); }
+    else if (e.key === 'r' || e.key === 'R') el.rankModal.classList.toggle('visible');
+    else if (e.key === ' ') { e.preventDefault(); state.animating ? stopAnimation() : startAnimation(); }
+    else if (e.key === 'l' || e.key === 'L') { state.lockScales = !state.lockScales; el.lockBtn.classList.toggle('active', state.lockScales); draw(); }
+    else if (e.key === 'Escape') { el.rankModal.classList.remove('visible'); el.newtonPanel.classList.remove('visible'); state.newton = false; draw(); }
+    else if (e.key === 'ArrowLeft') { state.x = clamp(state.x - 0.1, CONFIG.xMin, CONFIG.xMax); draw(); }
+    else if (e.key === 'ArrowRight') { state.x = clamp(state.x + 0.1, CONFIG.xMin, CONFIG.xMax); draw(); }
+});
+
+// === INIT ===
+window.addEventListener('resize', resize);
+resize();
+updateLabels();
+setRank('quartermaster');
+
+// Main loop
+(function loop() {
+    animationTick();
+    requestAnimationFrame(loop);
+})();
+
+el.instructions.classList.add('visible');
+setTimeout(() => el.instructions.classList.remove('visible'), 3500);
+</script>
+</body>
+</html>

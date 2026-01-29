@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Volumes of Revolution - Calculus 2</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    :root {
+      --bg: #0f0f13;
+      --panel: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.08);
+      --text: #e8e8e8;
+      --muted: #888;
+      --accent: #7cf3a0;
+      --accent2: #7cc4f3;
+      --warn: #f3c77c;
+      --disk: rgba(124, 243, 160, 0.6);
+      --washer: rgba(124, 196, 243, 0.6);
+      --shell: rgba(243, 199, 124, 0.6);
+    }
+    
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    
+    header {
+      padding: 10px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    header h1 span {
+      color: var(--accent);
+    }
+    
+    .header-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    button {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+    
+    button:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--accent);
+    }
+    
+    button.active {
+      background: rgba(124, 243, 160, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    button.small {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+    }
+    
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) 1fr;
+      gap: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      .left-section {
+        max-height: 60vh;
+      }
+    }
+    
+    .left-section {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+    }
+    
+    .canvas-2d-container {
+      position: relative;
+      height: 280px;
+      min-height: 200px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .canvas-label {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.6);
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      z-index: 10;
+    }
+    
+    .draw-mode-toggle {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+      z-index: 10;
+    }
+    
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    .canvas-3d-container {
+      position: relative;
+      flex: 1;
+      min-height: 300px;
+    }
+    
+    .axis-indicator {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.6);
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      z-index: 10;
+    }
+    
+    .drawing-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+    
+    .drawing-hint.hidden {
+      display: none;
+    }
+    
+    .controls-section {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    
+    .panel {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    
+    .panel h3 {
+      margin: 0 0 8px 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .panel-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    
+    .panel-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .panel-row label {
+      font-size: 0.8rem;
+      min-width: 55px;
+    }
+    
+    .panel-row select, .panel-row input[type="range"] {
+      flex: 1;
+    }
+    
+    select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+    }
+    
+    input[type="range"] {
+      -webkit-appearance: none;
+      background: var(--border);
+      height: 5px;
+      border-radius: 3px;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    .value-display {
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      min-width: 35px;
+      text-align: right;
+      color: var(--accent);
+    }
+    
+    .curve-presets {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    
+    .curve-presets button {
+      padding: 4px 8px;
+      font-size: 0.7rem;
+    }
+    
+    .volume-display {
+      background: rgba(124, 243, 160, 0.08);
+      border: 1px solid rgba(124, 243, 160, 0.2);
+      border-radius: 6px;
+      padding: 10px;
+    }
+    
+    .volume-display .integral {
+      font-family: ui-monospace, monospace;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: var(--accent2);
+    }
+    
+    .volume-display .result {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .volume-display .result span {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    
+    .comparison-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      margin-top: 3px;
+    }
+    
+    .comparison-row .mono {
+      font-family: ui-monospace, monospace;
+    }
+    
+    .method-info {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.3;
+    }
+    
+    /* Collapsible panels */
+    details.collapsible {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0;
+    }
+    
+    details.collapsible summary {
+      padding: 8px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    details.collapsible summary::-webkit-details-marker {
+      display: none;
+    }
+    
+    details.collapsible summary::before {
+      content: '▶';
+      display: inline-block;
+      margin-right: 6px;
+      font-size: 0.6rem;
+      transition: transform 0.2s;
+    }
+    
+    details.collapsible[open] summary::before {
+      transform: rotate(90deg);
+    }
+    
+    details.collapsible[open] > summary {
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .setup-steps {
+      padding: 10px 12px;
+    }
+    
+    .setup-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+    
+    .setup-step:last-child {
+      margin-bottom: 0;
+    }
+    
+    .step-num {
+      background: var(--accent);
+      color: var(--bg);
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    
+    .pitfall-box {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .pitfall-box:last-child {
+      border-bottom: none;
+    }
+    
+    .pitfall-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+    
+    .pitfall-wrong {
+      font-family: ui-monospace, monospace;
+      font-size: 0.7rem;
+      color: #f87171;
+      margin-bottom: 2px;
+    }
+    
+    .pitfall-right {
+      font-family: ui-monospace, monospace;
+      font-size: 0.7rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    
+    .pitfall-why, .pitfall-tip {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    
+    .pitfall-tip {
+      font-style: normal;
+      margin-top: 2px;
+    }
+    
+    #helpModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    #helpModal.open {
+      display: flex;
+    }
+    
+    #helpCard {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 550px;
+      max-height: 80vh;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+    
+    #helpCard h3 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+    
+    #helpCard ul {
+      padding-left: 18px;
+    }
+    
+    #helpCard li {
+      margin-bottom: 5px;
+    }
+    
+    #helpCard code {
+      background: rgba(255,255,255,0.1);
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-size: 0.85em;
+    }
+    
+    .points-list {
+      max-height: 80px;
+      overflow-y: auto;
+      font-size: 0.7rem;
+      font-family: ui-monospace, monospace;
+      background: rgba(0,0,0,0.3);
+      border-radius: 4px;
+      padding: 6px;
+      margin-top: 6px;
+    }
+    
+    .point-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 0;
+    }
+    
+    .point-item button {
+      padding: 1px 5px;
+      font-size: 0.65rem;
+      background: rgba(255,100,100,0.2);
+      border-color: rgba(255,100,100,0.3);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏺 Volumes of <span>Revolution</span> — Calc 2</h1>
+    <div class="header-controls">
+      <button id="btnClear">Clear</button>
+      <button id="btnAnimate" class="active">Spin: ON</button>
+      <button id="btnHelp">Help</button>
+    </div>
+  </header>
+  
+  <main>
+    <div class="left-section">
+      <div class="canvas-2d-container">
+        <div class="canvas-label">2D Curve</div>
+        <div class="draw-mode-toggle">
+          <button id="btnModeDraw" class="small active">✏️ Draw</button>
+          <button id="btnModePoints" class="small">📍 Points</button>
+        </div>
+        <div class="drawing-hint" id="drawingHint">Click to draw or place points<br/>or select a preset below</div>
+        <canvas id="canvas2d"></canvas>
+      </div>
+      
+      <div class="controls-section">
+        <div class="panel">
+          <h3>Curve</h3>
+          <div class="curve-presets">
+            <button data-curve="sqrt">√x</button>
+            <button data-curve="parabola">x²</button>
+            <button data-curve="sine">sin(x)</button>
+            <button data-curve="line">Linear</button>
+            <button data-curve="semicircle">Semicircle</button>
+          </div>
+          <div class="panel-row">
+            <label>Axis</label>
+            <select id="selAxis">
+              <option value="x">Around x-axis</option>
+              <option value="y">Around y-axis</option>
+            </select>
+          </div>
+          <div class="panel-row">
+            <label>Offset</label>
+            <input type="range" id="rngAxisOffset" min="-2" max="2" step="0.1" value="0"/>
+            <span class="value-display" id="axisOffsetDisplay">0</span>
+          </div>
+          <div class="panel-row">
+            <label>Bounds</label>
+            <span class="value-display" id="boundsDisplay">x: 0 to 2</span>
+          </div>
+          <div id="pointsList" class="points-list" style="display:none;"></div>
+        </div>
+        
+        <div class="panel">
+          <h3>Method</h3>
+          <div class="panel-row">
+            <label>Type</label>
+            <select id="selMethod">
+              <option value="disk">Disk</option>
+              <option value="washer">Washer</option>
+              <option value="shell">Shell</option>
+            </select>
+          </div>
+          <div class="panel-row">
+            <label>Slices</label>
+            <input type="range" id="rngSlices" min="4" max="100" value="20"/>
+            <span class="value-display" id="slicesDisplay">20</span>
+          </div>
+          <div class="panel-row">
+            <label>View</label>
+            <select id="selShow">
+              <option value="solid">Solid</option>
+              <option value="slices" selected>Slices</option>
+              <option value="wireframe">Wireframe</option>
+            </select>
+          </div>
+          <div class="method-info" id="methodInfo">
+            <strong>Disk:</strong> V = π∫[f(x)]² dx
+          </div>
+        </div>
+        
+        <div class="panel">
+          <h3>Volume</h3>
+          <div class="volume-display">
+            <div class="integral" id="integralDisplay">V = π ∫₀² [f(x)]² dx</div>
+            <div class="result"><span id="volumeValue">0.000</span> <span>units³</span></div>
+            <div style="margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.1);">
+              <div class="comparison-row">
+                <span>Approx (n=<span id="sliceCountDisplay">20</span>):</span>
+                <span class="mono" id="approxValue" style="color:var(--warn);">0.000</span>
+              </div>
+              <div class="comparison-row">
+                <span>High-res (n=1000):</span>
+                <span class="mono" id="exactValue" style="color:var(--accent);">0.000</span>
+              </div>
+              <div class="comparison-row">
+                <span>Error:</span>
+                <span class="mono" id="errorValue">0.00%</span>
+              </div>
+            </div>
+          </div>
+          <div class="method-info" id="approxInfo">↑ Increase slices to reduce error</div>
+        </div>
+        
+        <details class="panel collapsible">
+          <summary><h3 style="display:inline;cursor:pointer;">📝 Integral Setup</h3></summary>
+          <div class="setup-steps" id="integralSetup">
+            <div class="setup-step"><span class="step-num">1</span> <span id="setupAxis">Axis: x-axis (y = 0)</span></div>
+            <div class="setup-step"><span class="step-num">2</span> <span id="setupMethod">Method: Disk</span></div>
+            <div class="setup-step"><span class="step-num">3</span> <span id="setupRadius">R(x) = |f(x) - 0| = f(x)</span></div>
+            <div class="setup-step"><span class="step-num">4</span> <span id="setupIntegral">V = π∫[R(x)]² dx</span></div>
+            <div class="setup-step"><span class="step-num">5</span> <span id="setupResult">≈ 0.000 units³</span></div>
+          </div>
+        </details>
+        
+        <details class="panel collapsible">
+          <summary><h3 style="display:inline;cursor:pointer;">⚠️ Common Pitfalls</h3></summary>
+          <div class="pitfall-box">
+            <div class="pitfall-title">Washer Method Mistake</div>
+            <div class="pitfall-wrong">❌ V = π∫[f(x) - g(x)]² dx</div>
+            <div class="pitfall-right">✓ V = π∫([f(x)]² - [g(x)]²) dx</div>
+            <div class="pitfall-why">Subtract <em>areas</em>, not radii!</div>
+          </div>
+          <div class="pitfall-box">
+            <div class="pitfall-title">Axis Offset Mistake</div>
+            <div class="pitfall-wrong">❌ R = f(x) when axis is y = k</div>
+            <div class="pitfall-right">✓ R = |f(x) - k|</div>
+            <div class="pitfall-why">Radius = distance to axis</div>
+          </div>
+          <div class="pitfall-box">
+            <div class="pitfall-title">Shell vs Disk Choice</div>
+            <div class="pitfall-tip">💡 Use <strong>shells</strong> when integrating parallel to axis</div>
+            <div class="pitfall-tip">💡 Use <strong>disks</strong> when integrating perpendicular to axis</div>
+          </div>
+        </details>
+      </div>
+    </div>
+    
+    <div class="canvas-3d-container">
+      <div class="canvas-label">3D Solid of Revolution</div>
+      <canvas id="canvas3d"></canvas>
+      <div class="axis-indicator" id="axisIndicator">Revolve: x-axis</div>
+    </div>
+  </main>
+  
+  <div id="helpModal">
+    <div id="helpCard">
+      <h3>Volumes of Revolution — Calc 2</h3>
+      
+      <p><strong>Draw Modes:</strong></p>
+      <ul>
+        <li><strong>✏️ Draw:</strong> Freehand sketch a curve</li>
+        <li><strong>📍 Points:</strong> Click to place control points, curve connects them</li>
+      </ul>
+      
+      <p><strong>Methods:</strong></p>
+      <ul>
+        <li><strong>Disk:</strong> <code>V = π∫[R(x)]² dx</code> — perpendicular slices</li>
+        <li><strong>Washer:</strong> <code>V = π∫([R]² - [r]²) dx</code> — disk with hole</li>
+        <li><strong>Shell:</strong> <code>V = 2π∫x·f(x) dx</code> — cylindrical shells</li>
+      </ul>
+      
+      <p><strong>Key Insight:</strong> As n→∞, slice approximation → true integral!</p>
+      
+      <button id="btnCloseHelp">Close</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+  
+  // === CONFIGURATION ===
+  const CFG = {
+    CURVE_POINTS: 200,
+    DEFAULT_X_MIN: 0,
+    DEFAULT_X_MAX: 2,
+    DEFAULT_Y_MAX: 2,
+    ROTATION_SPEED: 0.5
+  };
+  
+  // === ELEMENTS ===
+  const canvas2d = document.getElementById('canvas2d');
+  const canvas3d = document.getElementById('canvas3d');
+  const ctx2d = canvas2d.getContext('2d');
+  const ctx3d = canvas3d.getContext('2d');
+  
+  const el = {
+    selAxis: document.getElementById('selAxis'),
+    rngAxisOffset: document.getElementById('rngAxisOffset'),
+    axisOffsetDisplay: document.getElementById('axisOffsetDisplay'),
+    selMethod: document.getElementById('selMethod'),
+    selShow: document.getElementById('selShow'),
+    rngSlices: document.getElementById('rngSlices'),
+    slicesDisplay: document.getElementById('slicesDisplay'),
+    boundsDisplay: document.getElementById('boundsDisplay'),
+    integralDisplay: document.getElementById('integralDisplay'),
+    volumeValue: document.getElementById('volumeValue'),
+    approxValue: document.getElementById('approxValue'),
+    exactValue: document.getElementById('exactValue'),
+    errorValue: document.getElementById('errorValue'),
+    sliceCountDisplay: document.getElementById('sliceCountDisplay'),
+    methodInfo: document.getElementById('methodInfo'),
+    approxInfo: document.getElementById('approxInfo'),
+    axisIndicator: document.getElementById('axisIndicator'),
+    drawingHint: document.getElementById('drawingHint'),
+    pointsList: document.getElementById('pointsList'),
+    setupAxis: document.getElementById('setupAxis'),
+    setupMethod: document.getElementById('setupMethod'),
+    setupRadius: document.getElementById('setupRadius'),
+    setupIntegral: document.getElementById('setupIntegral'),
+    setupResult: document.getElementById('setupResult'),
+    btnClear: document.getElementById('btnClear'),
+    btnAnimate: document.getElementById('btnAnimate'),
+    btnHelp: document.getElementById('btnHelp'),
+    btnCloseHelp: document.getElementById('btnCloseHelp'),
+    btnModeDraw: document.getElementById('btnModeDraw'),
+    btnModePoints: document.getElementById('btnModePoints'),
+    helpModal: document.getElementById('helpModal')
+  };
+  
+  // === STATE ===
+  const state = {
+    curve: [],
+    controlPoints: [],  // For point mode
+    xMin: CFG.DEFAULT_X_MIN,
+    xMax: CFG.DEFAULT_X_MAX,
+    yMax: CFG.DEFAULT_Y_MAX,
+    
+    axis: 'x',  // 'x' or 'y'
+    axisOffset: 0,  // Revolve around y=k (for x-axis) or x=k (for y-axis)
+    method: 'disk',
+    showMode: 'slices',
+    numSlices: 20,
+    
+    animating: true,
+    rotationAngle: 0,
+    
+    drawMode: 'draw',  // 'draw' or 'points'
+    isDrawing: false,
+    rawDrawPoints: [],
+    
+    width2d: 400,
+    height2d: 280,
+    width3d: 400,
+    height3d: 400
+  };
+  
+  // === UTILITY FUNCTIONS ===
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  
+  function graphToCanvas2d(gx, gy) {
+    const padding = 40;
+    const w = state.width2d - padding * 2;
+    const h = state.height2d - padding * 2;
+    const xRange = state.xMax - state.xMin;
+    const yRange = state.yMax;
+    
+    const cx = padding + (gx - state.xMin) / xRange * w;
+    const cy = state.height2d - padding - (gy / yRange) * h;
+    return { x: cx, y: cy };
+  }
+  
+  function canvasToGraph2d(cx, cy) {
+    const padding = 40;
+    const w = state.width2d - padding * 2;
+    const h = state.height2d - padding * 2;
+    const xRange = state.xMax - state.xMin;
+    const yRange = state.yMax;
+    
+    const gx = state.xMin + (cx - padding) / w * xRange;
+    const gy = (state.height2d - padding - cy) / h * yRange;
+    return { x: gx, y: gy };
+  }
+  
+  function sampleCurve(x) {
+    if (state.curve.length < 2) return 0;
+    
+    for (let i = 0; i < state.curve.length - 1; i++) {
+      if (state.curve[i].x <= x && state.curve[i + 1].x >= x) {
+        const t = (x - state.curve[i].x) / (state.curve[i + 1].x - state.curve[i].x);
+        return lerp(state.curve[i].y, state.curve[i + 1].y, t);
+      }
+    }
+    
+    if (x < state.curve[0].x) return state.curve[0].y;
+    return state.curve[state.curve.length - 1].y;
+  }
+  
+  // === CONTROL POINTS MODE ===
+  function buildCurveFromPoints() {
+    if (state.controlPoints.length < 2) {
+      state.curve = [];
+      return;
+    }
+    
+    // Sort by x
+    const sorted = [...state.controlPoints].sort((a, b) => a.x - b.x);
+    
+    // Create smooth curve through points using Catmull-Rom spline
+    state.curve = [];
+    const n = CFG.CURVE_POINTS;
+    
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const p0 = sorted[Math.max(0, i - 1)];
+      const p1 = sorted[i];
+      const p2 = sorted[i + 1];
+      const p3 = sorted[Math.min(sorted.length - 1, i + 2)];
+      
+      const steps = Math.ceil(n / (sorted.length - 1));
+      for (let j = 0; j < steps; j++) {
+        const t = j / steps;
+        
+        // Catmull-Rom interpolation
+        const t2 = t * t;
+        const t3 = t2 * t;
+        
+        const x = 0.5 * ((2 * p1.x) +
+          (-p0.x + p2.x) * t +
+          (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
+          (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+        
+        const y = 0.5 * ((2 * p1.y) +
+          (-p0.y + p2.y) * t +
+          (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
+          (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3);
+        
+        if (state.curve.length === 0 || x > state.curve[state.curve.length - 1].x) {
+          state.curve.push({ x, y: Math.max(0, y) });
+        }
+      }
+    }
+    
+    // Add last point
+    const last = sorted[sorted.length - 1];
+    if (state.curve.length === 0 || last.x > state.curve[state.curve.length - 1].x) {
+      state.curve.push({ x: last.x, y: Math.max(0, last.y) });
+    }
+    
+    // Update bounds
+    state.xMin = Math.max(0, sorted[0].x - 0.2);
+    state.xMax = sorted[sorted.length - 1].x + 0.2;
+    state.yMax = Math.max(...state.curve.map(p => p.y)) * 1.2 + 0.5;
+    
+    updateBoundsDisplay();
+    renderPointsList();
+  }
+  
+  function renderPointsList() {
+    if (state.drawMode !== 'points') {
+      el.pointsList.style.display = 'none';
+      return;
+    }
+    
+    el.pointsList.style.display = 'block';
+    
+    if (state.controlPoints.length === 0) {
+      el.pointsList.innerHTML = '<span style="color:var(--muted);">No points yet</span>';
+      return;
+    }
+    
+    const sorted = [...state.controlPoints].sort((a, b) => a.x - b.x);
+    el.pointsList.innerHTML = sorted.map((p, i) => `
+      <div class="point-item">
+        <span>P${i + 1}: (${p.x.toFixed(2)}, ${p.y.toFixed(2)})</span>
+        <button data-idx="${state.controlPoints.indexOf(p)}">×</button>
+      </div>
+    `).join('');
+    
+    // Add delete handlers
+    el.pointsList.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        state.controlPoints.splice(idx, 1);
+        buildCurveFromPoints();
+      });
+    });
+  }
+  
+  // === PRESET CURVES ===
+  function setCurve(name) {
+    state.curve = [];
+    state.controlPoints = [];
+    const n = CFG.CURVE_POINTS;
+    
+    switch (name) {
+      case 'sqrt':
+        state.xMin = 0;
+        state.xMax = 4;
+        state.yMax = 2.5;
+        for (let i = 0; i <= n; i++) {
+          const x = (i / n) * 4;
+          state.curve.push({ x, y: Math.sqrt(x) });
+        }
+        break;
+        
+      case 'parabola':
+        state.xMin = 0;
+        state.xMax = 2;
+        state.yMax = 4.5;
+        for (let i = 0; i <= n; i++) {
+          const x = (i / n) * 2;
+          state.curve.push({ x, y: x * x });
+        }
+        break;
+        
+      case 'sine':
+        state.xMin = 0;
+        state.xMax = Math.PI;
+        state.yMax = 1.5;
+        for (let i = 0; i <= n; i++) {
+          const x = (i / n) * Math.PI;
+          state.curve.push({ x, y: Math.sin(x) });
+        }
+        break;
+        
+      case 'line':
+        state.xMin = 0;
+        state.xMax = 3;
+        state.yMax = 3;
+        for (let i = 0; i <= n; i++) {
+          const x = (i / n) * 3;
+          state.curve.push({ x, y: x * 0.8 + 0.2 });
+        }
+        break;
+        
+      case 'semicircle':
+        state.xMin = -1;
+        state.xMax = 1;
+        state.yMax = 1.2;
+        for (let i = 0; i <= n; i++) {
+          const x = -1 + (i / n) * 2;
+          state.curve.push({ x, y: Math.sqrt(Math.max(0, 1 - x * x)) });
+        }
+        break;
+    }
+    
+    el.drawingHint.classList.add('hidden');
+    updateBoundsDisplay();
+    renderPointsList();
+  }
+  
+  // === DRAWING ===
+  function getCanvasCoords(e) {
+    const rect = canvas2d.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (canvas2d.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas2d.height / rect.height)
+    };
+  }
+  
+  function handleCanvasClick(e) {
+    if (state.drawMode === 'points') {
+      const coords = getCanvasCoords(e);
+      const graph = canvasToGraph2d(coords.x, coords.y);
+      
+      if (graph.y >= 0) {
+        state.controlPoints.push({ x: graph.x, y: graph.y });
+        buildCurveFromPoints();
+        el.drawingHint.classList.add('hidden');
+      }
+    }
+  }
+  
+  function startDrawing(e) {
+    if (state.drawMode !== 'draw') return;
+    
+    state.isDrawing = true;
+    state.rawDrawPoints = [];
+    
+    const coords = getCanvasCoords(e);
+    state.rawDrawPoints.push(coords);
+    el.drawingHint.classList.add('hidden');
+  }
+  
+  function continueDrawing(e) {
+    if (!state.isDrawing || state.drawMode !== 'draw') return;
+    
+    const coords = getCanvasCoords(e);
+    state.rawDrawPoints.push(coords);
+  }
+  
+  function endDrawing() {
+    if (!state.isDrawing) return;
+    state.isDrawing = false;
+    
+    if (state.rawDrawPoints.length < 2) return;
+    
+    const graphPoints = state.rawDrawPoints.map(p => canvasToGraph2d(p.x, p.y));
+    graphPoints.sort((a, b) => a.x - b.x);
+    
+    state.curve = [];
+    let lastX = -Infinity;
+    for (const p of graphPoints) {
+      if (p.x > lastX && p.y >= 0) {
+        state.curve.push({ x: p.x, y: Math.max(0, p.y) });
+        lastX = p.x;
+      }
+    }
+    
+    if (state.curve.length > 1) {
+      state.xMin = Math.max(0, state.curve[0].x - 0.1);
+      state.xMax = state.curve[state.curve.length - 1].x + 0.1;
+      state.yMax = Math.max(...state.curve.map(p => p.y)) * 1.2 + 0.5;
+    }
+    
+    state.controlPoints = [];
+    updateBoundsDisplay();
+    renderPointsList();
+  }
+  
+  // === VOLUME CALCULATION ===
+  
+  // Find all x-intersections of curve at height y (for non-monotone curves like semicircle)
+  function xIntersectionsAtY(y) {
+    const C = state.curve;
+    if (C.length < 2) return [];
+    
+    const xs = [];
+    for (let i = 0; i < C.length - 1; i++) {
+      const a = C[i], b = C[i + 1];
+      if (Math.max(a.y, b.y) < y || Math.min(a.y, b.y) > y) continue;
+      const dy = b.y - a.y;
+      if (Math.abs(dy) < 1e-12) continue;
+      const t = (y - a.y) / dy;
+      if (t >= 0 && t <= 1) {
+        xs.push(a.x + t * (b.x - a.x));
+      }
+    }
+    xs.sort((u, v) => u - v);
+    
+    // Pair up using even-odd fill rule
+    const intervals = [];
+    for (let i = 0; i + 1 < xs.length; i += 2) {
+      const L = Math.max(xs[i], state.xMin);
+      const R = Math.min(xs[i + 1], state.xMax);
+      if (R > L) intervals.push([L, R]);
+    }
+    return intervals;
+  }
+  
+  // Shell around x-axis: height = total width of region at y
+  function shellWidthAtY(y) {
+    const intervals = xIntersectionsAtY(y);
+    let width = 0;
+    for (const [L, R] of intervals) width += (R - L);
+    return width;
+  }
+  
+  // Annular area for y-axis disk/washer at height y
+  function annulusAreaAtY(y, axisOffset) {
+    const intervals = xIntersectionsAtY(y);
+    if (intervals.length === 0) return 0;
+    
+    let area = 0;
+    for (const [L, R] of intervals) {
+      const dL = Math.abs(L - axisOffset);
+      const dR = Math.abs(R - axisOffset);
+      // If interval straddles the axis, inner radius is 0
+      const inner = (L <= axisOffset && R >= axisOffset) ? 0 : Math.min(dL, dR);
+      const outer = Math.max(dL, dR);
+      area += Math.PI * (outer * outer - inner * inner);
+    }
+    return area;
+  }
+  
+  function sampleXofY(targetY) {
+    const C = state.curve;
+    if (C.length < 2) return 0;
+    
+    for (let i = 0; i < C.length - 1; i++) {
+      const a = C[i], b = C[i + 1];
+      if ((a.y - targetY) * (b.y - targetY) <= 0 && Math.abs(b.y - a.y) > 1e-9) {
+        const t = (targetY - a.y) / (b.y - a.y);
+        return a.x + t * (b.x - a.x);
+      }
+    }
+    
+    if (targetY <= C[0].y) return C[0].x;
+    return C[C.length - 1].x;
+  }
+  
+  function getYBounds() {
+    if (state.curve.length < 2) return { yMin: 0, yMax: 1 };
+    const ys = state.curve.map(p => p.y);
+    return { yMin: Math.max(0, Math.min(...ys)), yMax: Math.max(...ys) };
+  }
+  
+  function calculateVolume() {
+    if (state.curve.length < 2) return { volume: 0, slices: [], exact: 0, warning: null };
+    
+    const n = state.numSlices;
+    const ax = state.axis;
+    const method = state.method;
+    const k = state.axisOffset;  // Axis offset: revolve around y=k (x-axis) or x=k (y-axis)
+    
+    let volume = 0;
+    const slices = [];
+    let warning = null;
+    
+    if (ax === 'x') {
+      // Revolve around y = k
+      if (method === 'disk' || method === 'washer') {
+        // Disk/Washer: V = π∫[R(x)]² dx where R = |f(x) - k|
+        const a = state.xMin, b = state.xMax;
+        const dx = (b - a) / n;
+        
+        for (let i = 0; i < n; i++) {
+          const xL = a + i * dx;
+          const xR = a + (i + 1) * dx;
+          const xM = (xL + xR) / 2;
+          const fx = sampleCurve(xM);
+          
+          // R = distance from curve to axis
+          const R = Math.abs(fx - k);
+          // For washer with offset axis: inner radius is distance from y=0 (or y=min) to axis
+          // If axis is below curve, washer has hole from axis to y=0
+          let r = 0;
+          if (method === 'washer') {
+            // If axis (y=k) is below the curve, there's a gap (washer)
+            if (k < 0) r = Math.abs(0 - k);  // Hole from y=0 to y=k
+            else if (k < fx) r = Math.abs(0 - k);  // Hole from y=0 to y=k when k is between 0 and curve
+          }
+          
+          const dV = Math.PI * Math.max(0, R * R - r * r) * dx;
+          volume += dV;
+          slices.push({
+            x: xM, xLeft: xL, xRight: xR,
+            y: fx, outerRadius: R, innerRadius: r,
+            volume: dV, type: 'disk'
+          });
+        }
+      } else {
+        // Shell around x-axis (y = k): V = 2π∫|y - k| * width(y) dy
+        const { yMin, yMax } = getYBounds();
+        const dy = (yMax - yMin) / n;
+        
+        if (dy < 1e-9) warning = "Curve too flat for shell method";
+        
+        for (let i = 0; i < n; i++) {
+          const yL = yMin + i * dy;
+          const yR = yMin + (i + 1) * dy;
+          const yM = (yL + yR) / 2;
+          const shellRadius = Math.abs(yM - k);
+          const shellHeight = shellWidthAtY(yM);  // Interval-based width for non-monotone curves
+          
+          const dV = 2 * Math.PI * shellRadius * shellHeight * dy;
+          volume += dV;
+          slices.push({
+            y: yM, yLeft: yL, yRight: yR,
+            height: shellHeight, radius: shellRadius,
+            volume: dV, type: 'shell'
+          });
+        }
+      }
+    } else {
+      // Revolve around x = k
+      if (method === 'shell') {
+        // Shell around y-axis (x = k): V = 2π∫|x - k| * f(x) dx
+        const a = state.xMin, b = state.xMax;
+        const dx = (b - a) / n;
+        
+        for (let i = 0; i < n; i++) {
+          const xL = a + i * dx;
+          const xR = a + (i + 1) * dx;
+          const xM = (xL + xR) / 2;
+          const shellRadius = Math.abs(xM - k);
+          const shellHeight = Math.abs(sampleCurve(xM));
+          
+          const dV = 2 * Math.PI * shellRadius * shellHeight * dx;
+          volume += dV;
+          slices.push({
+            x: xM, xLeft: xL, xRight: xR,
+            height: shellHeight, radius: shellRadius,
+            volume: dV, type: 'shell'
+          });
+        }
+      } else {
+        // Disk/Washer around y-axis (x = k): use interval-based area
+        const { yMin, yMax } = getYBounds();
+        const dy = (yMax - yMin) / n;
+        
+        for (let i = 0; i < n; i++) {
+          const yL = yMin + i * dy;
+          const yR = yMin + (i + 1) * dy;
+          const yM = (yL + yR) / 2;
+          
+          const area = annulusAreaAtY(yM, k);
+          const dV = area * dy;
+          volume += dV;
+          
+          // Get intervals for rendering info
+          const intervals = xIntersectionsAtY(yM);
+          let outerR = 0, innerR = 0;
+          if (intervals.length > 0) {
+            const [L, R] = intervals[0];
+            const dL = Math.abs(L - k), dR = Math.abs(R - k);
+            outerR = Math.max(dL, dR);
+            innerR = (L <= k && R >= k) ? 0 : Math.min(dL, dR);
+          }
+          
+          slices.push({
+            y: yM, yLeft: yL, yRight: yR,
+            outerRadius: outerR, innerRadius: innerR,
+            volume: dV, type: 'disk'
+          });
+        }
+      }
+    }
+    
+    // Calculate "exact" volume with high resolution
+    const exactN = 1000;
+    let exact = 0;
+    
+    if (ax === 'x' && (method === 'disk' || method === 'washer')) {
+      const dx = (state.xMax - state.xMin) / exactN;
+      for (let i = 0; i < exactN; i++) {
+        const x = state.xMin + (i + 0.5) * dx;
+        const fx = sampleCurve(x);
+        const R = Math.abs(fx - k);
+        let r = 0;
+        if (method === 'washer' && k < 0) r = Math.abs(0 - k);
+        else if (method === 'washer' && k < fx) r = Math.abs(0 - k);
+        exact += Math.PI * Math.max(0, R * R - r * r) * dx;
+      }
+    } else if (ax === 'x' && method === 'shell') {
+      const { yMin, yMax } = getYBounds();
+      const dy = (yMax - yMin) / exactN;
+      for (let i = 0; i < exactN; i++) {
+        const y = yMin + (i + 0.5) * dy;
+        exact += 2 * Math.PI * Math.abs(y - k) * shellWidthAtY(y) * dy;
+      }
+    } else if (ax === 'y' && method === 'shell') {
+      const dx = (state.xMax - state.xMin) / exactN;
+      for (let i = 0; i < exactN; i++) {
+        const x = state.xMin + (i + 0.5) * dx;
+        exact += 2 * Math.PI * Math.abs(x - k) * Math.abs(sampleCurve(x)) * dx;
+      }
+    } else {
+      const { yMin, yMax } = getYBounds();
+      const dy = (yMax - yMin) / exactN;
+      for (let i = 0; i < exactN; i++) {
+        const y = yMin + (i + 0.5) * dy;
+        exact += annulusAreaAtY(y, k) * dy;
+      }
+    }
+    
+    return { volume, slices, exact, warning };
+  }
+  
+  // === RENDERING: 2D VIEW ===
+  function draw2D() {
+    const w = state.width2d;
+    const h = state.height2d;
+    const padding = 40;
+    
+    ctx2d.fillStyle = '#0a0a0e';
+    ctx2d.fillRect(0, 0, w, h);
+    
+    // Grid
+    ctx2d.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx2d.lineWidth = 1;
+    
+    const gridStepX = (state.xMax - state.xMin) / 8;
+    const gridStepY = state.yMax / 8;
+    
+    for (let gx = state.xMin; gx <= state.xMax; gx += gridStepX) {
+      const p = graphToCanvas2d(gx, 0);
+      ctx2d.beginPath();
+      ctx2d.moveTo(p.x, padding);
+      ctx2d.lineTo(p.x, h - padding);
+      ctx2d.stroke();
+    }
+    
+    for (let gy = 0; gy <= state.yMax; gy += gridStepY) {
+      const p = graphToCanvas2d(state.xMin, gy);
+      ctx2d.beginPath();
+      ctx2d.moveTo(padding, p.y);
+      ctx2d.lineTo(w - padding, p.y);
+      ctx2d.stroke();
+    }
+    
+    // Axes
+    ctx2d.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx2d.lineWidth = 1.5;
+    
+    const origin = graphToCanvas2d(Math.max(0, state.xMin), 0);
+    ctx2d.beginPath();
+    ctx2d.moveTo(padding, origin.y);
+    ctx2d.lineTo(w - padding, origin.y);
+    ctx2d.stroke();
+    
+    const yAxisX = graphToCanvas2d(Math.max(0, state.xMin), 0);
+    ctx2d.beginPath();
+    ctx2d.moveTo(yAxisX.x, h - padding);
+    ctx2d.lineTo(yAxisX.x, padding);
+    ctx2d.stroke();
+    
+    // Labels
+    ctx2d.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx2d.font = '10px system-ui';
+    ctx2d.textAlign = 'center';
+    ctx2d.fillText('x', w - padding + 12, origin.y + 3);
+    ctx2d.fillText('y', yAxisX.x, padding - 8);
+    
+    // Slices preview
+    if (state.curve.length > 1 && state.showMode === 'slices') {
+      const { slices } = calculateVolume();
+      
+      ctx2d.fillStyle = state.method === 'disk' ? 'rgba(124, 243, 160, 0.15)' :
+                        state.method === 'washer' ? 'rgba(124, 196, 243, 0.15)' :
+                        'rgba(243, 199, 124, 0.15)';
+      ctx2d.strokeStyle = state.method === 'disk' ? 'rgba(124, 243, 160, 0.4)' :
+                          state.method === 'washer' ? 'rgba(124, 196, 243, 0.4)' :
+                          'rgba(243, 199, 124, 0.4)';
+      ctx2d.lineWidth = 1;
+      
+      for (const slice of slices) {
+        if (slice.x !== undefined) {
+          const pLeft = graphToCanvas2d(slice.xLeft, 0);
+          const pRight = graphToCanvas2d(slice.xRight, 0);
+          const pTop = graphToCanvas2d(slice.x, slice.y || slice.height || 0);
+          
+          ctx2d.beginPath();
+          ctx2d.rect(pLeft.x, pTop.y, pRight.x - pLeft.x, origin.y - pTop.y);
+          ctx2d.fill();
+          ctx2d.stroke();
+        }
+      }
+    }
+    
+    // Curve
+    if (state.curve.length > 1) {
+      ctx2d.fillStyle = 'rgba(124, 243, 160, 0.08)';
+      ctx2d.beginPath();
+      const first = graphToCanvas2d(state.curve[0].x, state.curve[0].y);
+      ctx2d.moveTo(first.x, origin.y);
+      ctx2d.lineTo(first.x, first.y);
+      
+      for (let i = 1; i < state.curve.length; i++) {
+        const p = graphToCanvas2d(state.curve[i].x, state.curve[i].y);
+        ctx2d.lineTo(p.x, p.y);
+      }
+      
+      const last = graphToCanvas2d(state.curve[state.curve.length - 1].x, 0);
+      ctx2d.lineTo(last.x, origin.y);
+      ctx2d.closePath();
+      ctx2d.fill();
+      
+      ctx2d.strokeStyle = '#7cf3a0';
+      ctx2d.lineWidth = 2.5;
+      ctx2d.lineCap = 'round';
+      ctx2d.beginPath();
+      ctx2d.moveTo(first.x, first.y);
+      for (let i = 1; i < state.curve.length; i++) {
+        const p = graphToCanvas2d(state.curve[i].x, state.curve[i].y);
+        ctx2d.lineTo(p.x, p.y);
+      }
+      ctx2d.stroke();
+    }
+    
+    // Control points (in points mode)
+    if (state.drawMode === 'points') {
+      ctx2d.fillStyle = '#f3c77c';
+      ctx2d.strokeStyle = '#fff';
+      ctx2d.lineWidth = 2;
+      
+      for (const pt of state.controlPoints) {
+        const p = graphToCanvas2d(pt.x, pt.y);
+        ctx2d.beginPath();
+        ctx2d.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        ctx2d.fill();
+        ctx2d.stroke();
+      }
+    }
+    
+    // Drawing stroke
+    if (state.isDrawing && state.rawDrawPoints.length > 1) {
+      ctx2d.strokeStyle = '#fff';
+      ctx2d.lineWidth = 2;
+      ctx2d.beginPath();
+      ctx2d.moveTo(state.rawDrawPoints[0].x, state.rawDrawPoints[0].y);
+      for (let i = 1; i < state.rawDrawPoints.length; i++) {
+        ctx2d.lineTo(state.rawDrawPoints[i].x, state.rawDrawPoints[i].y);
+      }
+      ctx2d.stroke();
+    }
+    
+    // Axis of revolution indicator (with offset)
+    ctx2d.strokeStyle = 'rgba(243, 124, 124, 0.6)';
+    ctx2d.setLineDash([4, 4]);
+    ctx2d.lineWidth = 2;
+    ctx2d.beginPath();
+    if (state.axis === 'x') {
+      // Horizontal line at y = axisOffset
+      const axisY = graphToCanvas2d(0, state.axisOffset);
+      ctx2d.moveTo(padding, axisY.y);
+      ctx2d.lineTo(w - padding, axisY.y);
+    } else {
+      // Vertical line at x = axisOffset
+      const axisX = graphToCanvas2d(state.axisOffset, 0);
+      ctx2d.moveTo(axisX.x, padding);
+      ctx2d.lineTo(axisX.x, h - padding);
+    }
+    ctx2d.stroke();
+    ctx2d.setLineDash([]);
+  }
+  
+  // === RENDERING: 3D VIEW ===
+  function draw3D() {
+    const w = state.width3d;
+    const h = state.height3d;
+    const cx = w / 2;
+    const cy = h / 2;
+    
+    ctx3d.fillStyle = '#0a0a0e';
+    ctx3d.fillRect(0, 0, w, h);
+    
+    if (state.curve.length < 2) {
+      ctx3d.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx3d.font = '14px system-ui';
+      ctx3d.textAlign = 'center';
+      ctx3d.fillText('Draw a curve to see the 3D solid', cx, cy);
+      return;
+    }
+    
+    const angle = state.rotationAngle;
+    const { yMin, yMax } = getYBounds();
+    const maxDim = Math.max(state.xMax - state.xMin, yMax, 2);
+    const scale = Math.min(w, h) * 0.32 / maxDim;
+    
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+    
+    drawAxes3D(angle, scale, cx, cy);
+    
+    const centerX = (state.xMin + state.xMax) / 2;
+    
+    if (state.showMode === 'solid' || state.showMode === 'slices') {
+      drawSolidSurface(angle, scale, cx, cy, centerX, cosA, sinA);
+    }
+    
+    if (state.showMode === 'slices') {
+      const { slices } = calculateVolume();
+      drawSlices3D(slices, angle, scale, cx, cy, centerX, cosA, sinA);
+    } else if (state.showMode === 'wireframe') {
+      drawWireframe(angle, scale, cx, cy, centerX, cosA, sinA);
+    }
+    
+    drawProfileCurve(angle, scale, cx, cy, centerX, cosA, sinA);
+  }
+  
+  function drawSolidSurface(angle, scale, cx, cy, centerX, cosA, sinA) {
+    const segments = 36;
+    const sliceCount = 30;
+    const k = state.axisOffset;  // Axis offset
+    
+    const surface = [];
+    
+    if (state.axis === 'x') {
+      // Revolve around y = k: sample along x, radius = |f(x) - k|
+      for (let i = 0; i <= sliceCount; i++) {
+        const t = i / sliceCount;
+        const x = state.xMin + t * (state.xMax - state.xMin);
+        const fx = sampleCurve(x);
+        const r = Math.abs(fx - k);
+        const row = [];
+        
+        for (let j = 0; j <= segments; j++) {
+          const theta = (j / segments) * Math.PI * 2;
+          const x3 = x - centerX;
+          // Rotate around y=k: the radius orbits around that line
+          const y3 = k + r * Math.cos(theta);
+          const z3 = r * Math.sin(theta);
+          
+          const rx = x3 * cosA - z3 * sinA;
+          const rz = x3 * sinA + z3 * cosA;
+          
+          row.push({
+            px: cx + rx * scale,
+            py: cy - y3 * scale * 0.85 + rz * scale * 0.35,
+            depth: rz
+          });
+        }
+        surface.push(row);
+      }
+    } else {
+      // Revolve around x = k: sample along y, radius = distance from curve to x=k
+      const { yMin, yMax } = getYBounds();
+      const yRange = yMax - yMin;
+      
+      for (let i = 0; i <= sliceCount; i++) {
+        const t = i / sliceCount;
+        const y = yMin + t * yRange;
+        const intervals = xIntersectionsAtY(y);
+        // Use the first interval for rendering (simplified)
+        let r = 0.001;
+        if (intervals.length > 0) {
+          const [L, R] = intervals[0];
+          // Outer radius from axis
+          r = Math.max(Math.abs(L - k), Math.abs(R - k));
+        }
+        const row = [];
+        
+        for (let j = 0; j <= segments; j++) {
+          const theta = (j / segments) * Math.PI * 2;
+          // Rotate around x=k
+          const x3 = k + r * Math.cos(theta);
+          const y3 = y;
+          const z3 = r * Math.sin(theta);
+          
+          const rx = (x3 - centerX) * cosA - z3 * sinA;
+          const rz = (x3 - centerX) * sinA + z3 * cosA;
+          
+          row.push({
+            px: cx + rx * scale,
+            py: cy - y3 * scale * 0.85 + rz * scale * 0.35,
+            depth: rz
+          });
+        }
+        surface.push(row);
+      }
+    }
+    
+    const quads = [];
+    for (let i = 0; i < surface.length - 1; i++) {
+      for (let j = 0; j < segments; j++) {
+        const p00 = surface[i][j];
+        const p01 = surface[i][j + 1];
+        const p10 = surface[i + 1][j];
+        const p11 = surface[i + 1][j + 1];
+        
+        quads.push({
+          points: [p00, p01, p11, p10],
+          depth: (p00.depth + p01.depth + p10.depth + p11.depth) / 4
+        });
+      }
+    }
+    
+    quads.sort((a, b) => a.depth - b.depth);
+    
+    for (const quad of quads) {
+      const shade = 0.3 + 0.4 * (1 - (quad.depth + 2) / 4);
+      const alpha = 0.7;
+      
+      let baseColor;
+      if (state.method === 'disk') {
+        baseColor = `rgba(${Math.floor(124 * shade)}, ${Math.floor(243 * shade)}, ${Math.floor(160 * shade)}, ${alpha})`;
+      } else if (state.method === 'washer') {
+        baseColor = `rgba(${Math.floor(124 * shade)}, ${Math.floor(196 * shade)}, ${Math.floor(243 * shade)}, ${alpha})`;
+      } else {
+        baseColor = `rgba(${Math.floor(243 * shade)}, ${Math.floor(199 * shade)}, ${Math.floor(124 * shade)}, ${alpha})`;
+      }
+      
+      ctx3d.fillStyle = baseColor;
+      ctx3d.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx3d.lineWidth = 0.5;
+      
+      ctx3d.beginPath();
+      ctx3d.moveTo(quad.points[0].px, quad.points[0].py);
+      for (let k = 1; k < quad.points.length; k++) {
+        ctx3d.lineTo(quad.points[k].px, quad.points[k].py);
+      }
+      ctx3d.closePath();
+      ctx3d.fill();
+      ctx3d.stroke();
+    }
+  }
+  
+  function drawSlices3D(slices, angle, scale, cx, cy, centerX, cosA, sinA) {
+    const segments = 24;
+    const k = state.axisOffset;
+    
+    // Sort slices by depth for proper rendering
+    const sortedSlices = slices.map(s => {
+      let depth;
+      if (state.axis === 'x') {
+        const x = (s.x !== undefined ? s.x : 0) - centerX;
+        depth = x * sinA;
+      } else {
+        depth = 0;
+      }
+      return { ...s, sortDepth: depth };
+    }).sort((a, b) => a.sortDepth - b.sortDepth);
+    
+    for (const slice of sortedSlices) {
+      const R = slice.outerRadius || slice.radius || slice.y || 0;
+      const r = slice.innerRadius || 0;
+      
+      const color = state.method === 'washer' ? 'rgba(124, 196, 243, 0.5)' : 
+                    state.method === 'shell' ? 'rgba(243, 199, 124, 0.5)' : 'rgba(124, 243, 160, 0.5)';
+      const stroke = state.method === 'washer' ? 'rgba(124, 196, 243, 0.9)' :
+                     state.method === 'shell' ? 'rgba(243, 199, 124, 0.9)' : 'rgba(124, 243, 160, 0.9)';
+      
+      ctx3d.fillStyle = color;
+      ctx3d.strokeStyle = stroke;
+      ctx3d.lineWidth = 1;
+      
+      if (state.axis === 'x') {
+        // Disk perpendicular to x-axis, centered at y=k
+        const x = (slice.x !== undefined ? slice.x : 0) - centerX;
+        
+        ctx3d.beginPath();
+        for (let i = 0; i <= segments; i++) {
+          const theta = (i / segments) * Math.PI * 2;
+          const y3 = k + R * Math.cos(theta);
+          const z3 = R * Math.sin(theta);
+          
+          const rx = x * cosA - z3 * sinA;
+          const rz = x * sinA + z3 * cosA;
+          const px = cx + rx * scale;
+          const py = cy - y3 * scale * 0.85 + rz * scale * 0.35;
+          
+          if (i === 0) ctx3d.moveTo(px, py);
+          else ctx3d.lineTo(px, py);
+        }
+        ctx3d.closePath();
+        ctx3d.fill();
+        ctx3d.stroke();
+        
+        // Inner hole for washer
+        if (r > 0.01) {
+          ctx3d.fillStyle = '#0a0a0e';
+          ctx3d.beginPath();
+          for (let i = 0; i <= segments; i++) {
+            const theta = (i / segments) * Math.PI * 2;
+            const y3 = k + r * Math.cos(theta);
+            const z3 = r * Math.sin(theta);
+            
+            const rx = x * cosA - z3 * sinA;
+            const rz = x * sinA + z3 * cosA;
+            const px = cx + rx * scale;
+            const py = cy - y3 * scale * 0.85 + rz * scale * 0.35;
+            
+            if (i === 0) ctx3d.moveTo(px, py);
+            else ctx3d.lineTo(px, py);
+          }
+          ctx3d.closePath();
+          ctx3d.fill();
+          ctx3d.stroke();
+        }
+      } else {
+        // Disk perpendicular to y-axis (horizontal), centered at x=k
+        const y = slice.y !== undefined ? slice.y : 0;
+        
+        ctx3d.beginPath();
+        for (let i = 0; i <= segments; i++) {
+          const theta = (i / segments) * Math.PI * 2;
+          const x3 = (k + R * Math.cos(theta)) - centerX;
+          const z3 = R * Math.sin(theta);
+          
+          const rx = x3 * cosA - z3 * sinA;
+          const rz = x3 * sinA + z3 * cosA;
+          const px = cx + rx * scale;
+          const py = cy - y * scale * 0.85 + rz * scale * 0.35;
+          
+          if (i === 0) ctx3d.moveTo(px, py);
+          else ctx3d.lineTo(px, py);
+        }
+        ctx3d.closePath();
+        ctx3d.fill();
+        ctx3d.stroke();
+        
+        // Inner hole for washer
+        if (r > 0.01) {
+          ctx3d.fillStyle = '#0a0a0e';
+          ctx3d.beginPath();
+          for (let i = 0; i <= segments; i++) {
+            const theta = (i / segments) * Math.PI * 2;
+            const x3 = (k + r * Math.cos(theta)) - centerX;
+            const z3 = r * Math.sin(theta);
+            
+            const rx = x3 * cosA - z3 * sinA;
+            const rz = x3 * sinA + z3 * cosA;
+            const px = cx + rx * scale;
+            const py = cy - y * scale * 0.85 + rz * scale * 0.35;
+            
+            if (i === 0) ctx3d.moveTo(px, py);
+            else ctx3d.lineTo(px, py);
+          }
+          ctx3d.closePath();
+          ctx3d.fill();
+          ctx3d.stroke();
+        }
+      }
+    }
+  }
+  
+  function drawWireframe(angle, scale, cx, cy, centerX, cosA, sinA) {
+    const rings = 16;
+    const segments = 24;
+    
+    ctx3d.strokeStyle = 'rgba(124, 243, 160, 0.35)';
+    ctx3d.lineWidth = 0.5;
+    
+    if (state.axis === 'x') {
+      // Longitude lines (along the curve)
+      for (let j = 0; j < segments; j++) {
+        const theta = (j / segments) * Math.PI * 2;
+        
+        ctx3d.beginPath();
+        for (let i = 0; i <= rings; i++) {
+          const t = i / rings;
+          const x = state.xMin + t * (state.xMax - state.xMin);
+          const r = sampleCurve(x);
+          
+          const x3 = x - centerX;
+          const y3 = r * Math.cos(theta);
+          const z3 = r * Math.sin(theta);
+          
+          const rx = x3 * cosA - z3 * sinA;
+          const rz = x3 * sinA + z3 * cosA;
+          const px = cx + rx * scale;
+          const py = cy - y3 * scale * 0.85 + rz * scale * 0.35;
+          
+          if (i === 0) ctx3d.moveTo(px, py);
+          else ctx3d.lineTo(px, py);
+        }
+        ctx3d.stroke();
+      }
+      
+      // Latitude rings
+      for (let i = 0; i <= rings; i++) {
+        const t = i / rings;
+        const x = state.xMin + t * (state.xMax - state.xMin);
+        const r = sampleCurve(x);
+        
+        ctx3d.beginPath();
+        for (let j = 0; j <= segments; j++) {
+          const theta = (j / segments) * Math.PI * 2;
+          
+          const x3 = x - centerX;
+          const y3 = r * Math.cos(theta);
+          const z3 = r * Math.sin(theta);
+          
+          const rx = x3 * cosA - z3 * sinA;
+          const rz = x3 * sinA + z3 * cosA;
+          const px = cx + rx * scale;
+          const py = cy - y3 * scale * 0.85 + rz * scale * 0.35;
+          
+          if (j === 0) ctx3d.moveTo(px, py);
+          else ctx3d.lineTo(px, py);
+        }
+        ctx3d.stroke();
+      }
+    } else {
+      // Y-axis revolution
+      const { yMin, yMax } = getYBounds();
+      
+      // Longitude lines
+      for (let j = 0; j < segments; j++) {
+        const theta = (j / segments) * Math.PI * 2;
+        
+        ctx3d.beginPath();
+        for (let i = 0; i <= rings; i++) {
+          const t = i / rings;
+          const y = yMin + t * (yMax - yMin);
+          const r = Math.abs(sampleXofY(y));
+          
+          const x3 = r * Math.cos(theta);
+          const z3 = r * Math.sin(theta);
+          
+          const rx = x3 * cosA - z3 * sinA;
+          const rz = x3 * sinA + z3 * cosA;
+          const px = cx + rx * scale;
+          const py = cy - y * scale * 0.85 + rz * scale * 0.35;
+          
+          if (i === 0) ctx3d.moveTo(px, py);
+          else ctx3d.lineTo(px, py);
+        }
+        ctx3d.stroke();
+      }
+      
+      // Latitude rings (horizontal circles)
+      for (let i = 0; i <= rings; i++) {
+        const t = i / rings;
+        const y = yMin + t * (yMax - yMin);
+        const r = Math.abs(sampleXofY(y));
+        
+        ctx3d.beginPath();
+        for (let j = 0; j <= segments; j++) {
+          const theta = (j / segments) * Math.PI * 2;
+          
+          const x3 = r * Math.cos(theta);
+          const z3 = r * Math.sin(theta);
+          
+          const rx = x3 * cosA - z3 * sinA;
+          const rz = x3 * sinA + z3 * cosA;
+          const px = cx + rx * scale;
+          const py = cy - y * scale * 0.85 + rz * scale * 0.35;
+          
+          if (j === 0) ctx3d.moveTo(px, py);
+          else ctx3d.lineTo(px, py);
+        }
+        ctx3d.stroke();
+      }
+    }
+  }
+  
+  function drawProfileCurve(angle, scale, cx, cy, centerX, cosA, sinA) {
+    ctx3d.strokeStyle = '#7cf3a0';
+    ctx3d.lineWidth = 2;
+    
+    if (state.axis === 'x') {
+      // Draw curve in x-y plane
+      ctx3d.beginPath();
+      for (let i = 0; i < state.curve.length; i++) {
+        const x = state.curve[i].x - centerX;
+        const y = state.curve[i].y;
+        
+        const rx = x * cosA;
+        const rz = x * sinA;
+        const px = cx + rx * scale;
+        const py = cy - y * scale * 0.85 + rz * scale * 0.35;
+        
+        if (i === 0) ctx3d.moveTo(px, py);
+        else ctx3d.lineTo(px, py);
+      }
+      ctx3d.stroke();
+    } else {
+      // Draw curve for y-axis revolution
+      const { yMin, yMax } = getYBounds();
+      const steps = 50;
+      
+      ctx3d.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const y = yMin + t * (yMax - yMin);
+        const x = sampleXofY(y);
+        
+        // Draw on the front (z=0, so just x rotated)
+        const rx = x * cosA;
+        const rz = x * sinA;
+        const px = cx + rx * scale;
+        const py = cy - y * scale * 0.85 + rz * scale * 0.35;
+        
+        if (i === 0) ctx3d.moveTo(px, py);
+        else ctx3d.lineTo(px, py);
+      }
+      ctx3d.stroke();
+    }
+  }
+  
+  function drawAxes3D(angle, scale, cx, cy) {
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+    const len = 1.2;
+    
+    ctx3d.lineWidth = 1.5;
+    
+    ctx3d.strokeStyle = 'rgba(243, 124, 124, 0.5)';
+    ctx3d.beginPath();
+    ctx3d.moveTo(cx - len * cosA * scale, cy + len * sinA * scale * 0.35);
+    ctx3d.lineTo(cx + len * cosA * scale, cy - len * sinA * scale * 0.35);
+    ctx3d.stroke();
+    
+    ctx3d.strokeStyle = 'rgba(124, 243, 160, 0.5)';
+    ctx3d.beginPath();
+    ctx3d.moveTo(cx, cy);
+    ctx3d.lineTo(cx, cy - len * scale * 0.85);
+    ctx3d.stroke();
+    
+    ctx3d.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx3d.font = '10px system-ui';
+    ctx3d.fillText('x', cx + len * cosA * scale + 8, cy - len * sinA * scale * 0.35);
+    ctx3d.fillText('y', cx + 4, cy - len * scale * 0.85 - 4);
+  }
+  
+  // === UI UPDATES ===
+  function updateBoundsDisplay() {
+    const xMin = state.xMin.toFixed(1);
+    const xMax = state.xMax.toFixed(1);
+    el.boundsDisplay.textContent = `x: ${xMin} to ${xMax}`;
+  }
+  
+  function updateVolumeDisplay() {
+    const { volume, exact, warning } = calculateVolume();
+    el.volumeValue.textContent = volume.toFixed(3);
+    el.approxValue.textContent = volume.toFixed(3);
+    el.exactValue.textContent = exact.toFixed(3);
+    el.sliceCountDisplay.textContent = state.numSlices;
+    
+    const error = exact > 1e-9 ? Math.abs((volume - exact) / exact) * 100 : 0;
+    el.errorValue.textContent = error.toFixed(2) + '%';
+    el.errorValue.style.color = error < 1 ? 'var(--accent)' : error < 5 ? 'var(--warn)' : '#f87171';
+    
+    const xMin = state.xMin.toFixed(1);
+    const xMax = state.xMax.toFixed(1);
+    const { yMin, yMax } = getYBounds();
+    const yMinStr = yMin.toFixed(1);
+    const yMaxStr = yMax.toFixed(1);
+    const k = state.axisOffset;
+    const kStr = k === 0 ? '' : (k > 0 ? ` - ${k.toFixed(1)}` : ` + ${Math.abs(k).toFixed(1)}`);
+    
+    if (state.axis === 'x') {
+      if (state.method === 'disk') {
+        el.integralDisplay.innerHTML = `V = π ∫<sub>${xMin}</sub><sup>${xMax}</sup> [f(x)${kStr}]² dx`;
+      } else if (state.method === 'washer') {
+        el.integralDisplay.innerHTML = `V = π ∫<sub>${xMin}</sub><sup>${xMax}</sup> ([R]² - [r]²) dx`;
+      } else {
+        el.integralDisplay.innerHTML = `V = 2π ∫<sub>${yMinStr}</sub><sup>${yMaxStr}</sup> |y${kStr}|·w(y) dy`;
+      }
+    } else {
+      if (state.method === 'shell') {
+        const kStrX = k === 0 ? '' : (k > 0 ? ` - ${k.toFixed(1)}` : ` + ${Math.abs(k).toFixed(1)}`);
+        el.integralDisplay.innerHTML = `V = 2π ∫<sub>${xMin}</sub><sup>${xMax}</sup> |x${kStrX}|·f(x) dx`;
+      } else if (state.method === 'disk') {
+        el.integralDisplay.innerHTML = `V = π ∫<sub>${yMinStr}</sub><sup>${yMaxStr}</sup> [g(y)]² dy`;
+      } else {
+        el.integralDisplay.innerHTML = `V = π ∫<sub>${yMinStr}</sub><sup>${yMaxStr}</sup> ([R]² - [r]²) dy`;
+      }
+    }
+    
+    if (warning) {
+      el.approxInfo.innerHTML = `<span style="color:var(--warn)">⚠️ ${warning}</span>`;
+    } else {
+      el.approxInfo.textContent = error < 1 ? '✓ Excellent!' : error < 5 ? '↑ Try more slices' : '↑ Increase slices';
+    }
+    
+    // Update Integral Setup panel
+    updateIntegralSetup(volume, exact);
+  }
+  
+  function updateIntegralSetup(volume, exact) {
+    const k = state.axisOffset;
+    const kStr = k === 0 ? '0' : k.toFixed(1);
+    const xMin = state.xMin.toFixed(1);
+    const xMax = state.xMax.toFixed(1);
+    const { yMin, yMax } = getYBounds();
+    const yMinStr = yMin.toFixed(1);
+    const yMaxStr = yMax.toFixed(1);
+    
+    // Step 1: Axis
+    if (state.axis === 'x') {
+      el.setupAxis.textContent = `Axis: x-axis (y = ${kStr})`;
+    } else {
+      el.setupAxis.textContent = `Axis: y-axis (x = ${kStr})`;
+    }
+    
+    // Step 2: Method
+    const methodNames = { disk: 'Disk', washer: 'Washer', shell: 'Shell' };
+    el.setupMethod.textContent = `Method: ${methodNames[state.method]}`;
+    
+    // Step 3: Radius formula
+    if (state.axis === 'x') {
+      if (state.method === 'disk' || state.method === 'washer') {
+        if (k === 0) {
+          el.setupRadius.textContent = 'R(x) = f(x)';
+        } else {
+          el.setupRadius.textContent = `R(x) = |f(x) - ${kStr}|`;
+        }
+      } else {
+        if (k === 0) {
+          el.setupRadius.textContent = 'r = y, h = width at y';
+        } else {
+          el.setupRadius.textContent = `r = |y - ${kStr}|, h = width at y`;
+        }
+      }
+    } else {
+      if (state.method === 'shell') {
+        if (k === 0) {
+          el.setupRadius.textContent = 'r = x, h = f(x)';
+        } else {
+          el.setupRadius.textContent = `r = |x - ${kStr}|, h = f(x)`;
+        }
+      } else {
+        if (k === 0) {
+          el.setupRadius.textContent = 'R(y) = g(y) where x = g(y)';
+        } else {
+          el.setupRadius.textContent = `R(y) = |g(y) - ${kStr}|`;
+        }
+      }
+    }
+    
+    // Step 4: Integral formula
+    if (state.axis === 'x') {
+      if (state.method === 'disk') {
+        el.setupIntegral.innerHTML = `V = π∫<sub>${xMin}</sub><sup>${xMax}</sup> [R(x)]² dx`;
+      } else if (state.method === 'washer') {
+        el.setupIntegral.innerHTML = `V = π∫<sub>${xMin}</sub><sup>${xMax}</sup> ([R]² - [r]²) dx`;
+      } else {
+        el.setupIntegral.innerHTML = `V = 2π∫<sub>${yMinStr}</sub><sup>${yMaxStr}</sup> r · h dy`;
+      }
+    } else {
+      if (state.method === 'shell') {
+        el.setupIntegral.innerHTML = `V = 2π∫<sub>${xMin}</sub><sup>${xMax}</sup> r · h dx`;
+      } else {
+        el.setupIntegral.innerHTML = `V = π∫<sub>${yMinStr}</sub><sup>${yMaxStr}</sup> [R(y)]² dy`;
+      }
+    }
+    
+    // Step 5: Result
+    el.setupResult.innerHTML = `≈ <strong>${exact.toFixed(4)}</strong> units³`;
+  }
+  
+  function updateMethodInfo() {
+    const k = state.axisOffset;
+    const kNote = k !== 0 ? ` (offset: ${state.axis === 'x' ? 'y' : 'x'}=${k.toFixed(1)})` : '';
+    const infos = {
+      disk: `<strong>Disk:</strong> V = π∫[R]² d${state.axis === 'x' ? 'x' : 'y'}${kNote}`,
+      washer: `<strong>Washer:</strong> V = π∫([R]² - [r]²) — Use offset to create hole`,
+      shell: `<strong>Shell:</strong> V = 2π∫r·h d${state.axis === 'x' ? 'y' : 'x'}${kNote}`
+    };
+    el.methodInfo.innerHTML = infos[state.method];
+  }
+  
+  // === MAIN LOOP ===
+  function resizeCanvases() {
+    const container2d = canvas2d.parentElement;
+    const container3d = canvas3d.parentElement;
+    
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    
+    state.width2d = container2d.clientWidth;
+    state.height2d = container2d.clientHeight;
+    canvas2d.width = state.width2d * dpr;
+    canvas2d.height = state.height2d * dpr;
+    canvas2d.style.width = state.width2d + 'px';
+    canvas2d.style.height = state.height2d + 'px';
+    ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+    
+    state.width3d = container3d.clientWidth;
+    state.height3d = container3d.clientHeight;
+    canvas3d.width = state.width3d * dpr;
+    canvas3d.height = state.height3d * dpr;
+    canvas3d.style.width = state.width3d + 'px';
+    canvas3d.style.height = state.height3d + 'px';
+    ctx3d.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  
+  let lastTime = 0;
+  function animate(time) {
+    const dt = Math.min(0.1, (time - lastTime) / 1000);
+    lastTime = time;
+    
+    if (state.animating) {
+      state.rotationAngle += CFG.ROTATION_SPEED * dt;
+    }
+    
+    draw2D();
+    draw3D();
+    updateVolumeDisplay();
+    
+    requestAnimationFrame(animate);
+  }
+  
+  // === EVENT HANDLERS ===
+  canvas2d.addEventListener('click', handleCanvasClick);
+  canvas2d.addEventListener('mousedown', startDrawing);
+  canvas2d.addEventListener('mousemove', continueDrawing);
+  canvas2d.addEventListener('mouseup', endDrawing);
+  canvas2d.addEventListener('mouseleave', endDrawing);
+  
+  canvas2d.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (state.drawMode === 'points') {
+      handleCanvasClick({ clientX: touch.clientX, clientY: touch.clientY });
+    } else {
+      startDrawing({ clientX: touch.clientX, clientY: touch.clientY });
+    }
+  });
+  canvas2d.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    continueDrawing({ clientX: touch.clientX, clientY: touch.clientY });
+  });
+  canvas2d.addEventListener('touchend', endDrawing);
+  
+  document.querySelectorAll('[data-curve]').forEach(btn => {
+    btn.addEventListener('click', () => setCurve(btn.dataset.curve));
+  });
+  
+  el.btnModeDraw.addEventListener('click', () => {
+    state.drawMode = 'draw';
+    el.btnModeDraw.classList.add('active');
+    el.btnModePoints.classList.remove('active');
+    el.pointsList.style.display = 'none';
+  });
+  
+  el.btnModePoints.addEventListener('click', () => {
+    state.drawMode = 'points';
+    el.btnModePoints.classList.add('active');
+    el.btnModeDraw.classList.remove('active');
+    renderPointsList();
+  });
+  
+  el.selAxis.addEventListener('change', () => {
+    state.axis = el.selAxis.value;
+    el.axisIndicator.textContent = `Revolve: ${state.axis}-axis` + (state.axisOffset !== 0 ? ` (${state.axis === 'x' ? 'y' : 'x'}=${state.axisOffset})` : '');
+    updateMethodInfo();
+  });
+  
+  el.rngAxisOffset.addEventListener('input', () => {
+    state.axisOffset = parseFloat(el.rngAxisOffset.value);
+    el.axisOffsetDisplay.textContent = state.axisOffset.toFixed(1);
+    el.axisIndicator.textContent = `Revolve: ${state.axis}-axis` + (state.axisOffset !== 0 ? ` (${state.axis === 'x' ? 'y' : 'x'}=${state.axisOffset})` : '');
+    updateMethodInfo();
+  });
+  
+  el.selMethod.addEventListener('change', () => {
+    state.method = el.selMethod.value;
+    updateMethodInfo();
+  });
+  
+  el.selShow.addEventListener('change', () => {
+    state.showMode = el.selShow.value;
+  });
+  
+  el.rngSlices.addEventListener('input', () => {
+    state.numSlices = parseInt(el.rngSlices.value);
+    el.slicesDisplay.textContent = state.numSlices;
+  });
+  
+  el.btnClear.addEventListener('click', () => {
+    state.curve = [];
+    state.controlPoints = [];
+    state.xMin = CFG.DEFAULT_X_MIN;
+    state.xMax = CFG.DEFAULT_X_MAX;
+    state.yMax = CFG.DEFAULT_Y_MAX;
+    el.drawingHint.classList.remove('hidden');
+    updateBoundsDisplay();
+    renderPointsList();
+  });
+  
+  el.btnAnimate.addEventListener('click', () => {
+    state.animating = !state.animating;
+    el.btnAnimate.classList.toggle('active', state.animating);
+    el.btnAnimate.textContent = state.animating ? 'Spin: ON' : 'Spin: OFF';
+  });
+  
+  el.btnHelp.addEventListener('click', () => el.helpModal.classList.add('open'));
+  el.btnCloseHelp.addEventListener('click', () => el.helpModal.classList.remove('open'));
+  el.helpModal.addEventListener('click', (e) => {
+    if (e.target === el.helpModal) el.helpModal.classList.remove('open');
+  });
+  
+  window.addEventListener('resize', resizeCanvases);
+  
+  // === INIT ===
+  resizeCanvases();
+  setCurve('sqrt');
+  updateMethodInfo();
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Derivative Dojo — Master the Rules</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --panel: #1a1a1a;
+    --border: rgba(255,255,255,0.1);
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #ff6b4a;
+    --accent2: #4af0ff;
+    --success: #4aff7f;
+    --warning: #ffd44a;
+    --error: #ff4a6a;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Header */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .logo h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+  }
+  
+  .logo h1 span { color: var(--accent); }
+  
+  .header-stats {
+    display: flex;
+    gap: 20px;
+  }
+  
+  .stat {
+    text-align: center;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  
+  .stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+  }
+  
+  .stat-value.score { color: var(--warning); }
+  .stat-value.streak { color: var(--accent); }
+  .stat-value.level { color: var(--accent2); }
+  
+  /* Main Layout */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  /* Problem Card */
+  .problem-card {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 30px 40px;
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+  }
+  
+  .problem-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  
+  .problem-text {
+    font-size: 2rem;
+    font-family: ui-monospace, monospace;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  
+  .rule-hint {
+    font-size: 0.85rem;
+    color: var(--accent2);
+    opacity: 0.7;
+  }
+  
+  /* Answer Area */
+  .answer-area {
+    max-width: 600px;
+    width: 100%;
+  }
+  
+  .answer-input-wrap {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .answer-input {
+    flex: 1;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 1.3rem;
+    font-family: ui-monospace, monospace;
+    color: var(--text);
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  
+  .answer-input:focus {
+    outline: none;
+    border-color: var(--accent2);
+  }
+  
+  .answer-input.correct {
+    border-color: var(--success);
+    background: rgba(74, 255, 127, 0.1);
+  }
+  
+  .answer-input.incorrect {
+    border-color: var(--error);
+    background: rgba(255, 74, 106, 0.1);
+  }
+  
+  .submit-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #000;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+  
+  .submit-btn:hover {
+    opacity: 0.9;
+  }
+  
+  .submit-btn:active {
+    transform: scale(0.98);
+  }
+  
+  /* Multiple Choice */
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .choice-btn {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-family: ui-monospace, monospace;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  
+  .choice-btn:hover {
+    border-color: var(--accent2);
+    background: rgba(74, 240, 255, 0.1);
+  }
+  
+  .choice-btn.correct {
+    border-color: var(--success);
+    background: rgba(74, 255, 127, 0.2);
+  }
+  
+  .choice-btn.incorrect {
+    border-color: var(--error);
+    background: rgba(255, 74, 106, 0.2);
+  }
+  
+  .choice-btn.revealed {
+    border-color: var(--success);
+    background: rgba(74, 255, 127, 0.1);
+  }
+  
+  .choice-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  
+  /* Feedback */
+  .feedback {
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  
+  .feedback-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  
+  .feedback-text.correct { color: var(--success); }
+  .feedback-text.incorrect { color: var(--error); }
+  
+  .feedback-detail {
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+  }
+  
+  /* Timer Bar */
+  .timer-bar {
+    width: 100%;
+    max-width: 600px;
+    height: 6px;
+    background: var(--panel);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  
+  .timer-fill {
+    height: 100%;
+    background: var(--accent2);
+    transition: width 0.1s linear;
+  }
+  
+  .timer-fill.warning { background: var(--warning); }
+  .timer-fill.danger { background: var(--error); }
+  
+  /* Streak Indicator */
+  .streak-indicator {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+  
+  .streak-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.2s;
+  }
+  
+  .streak-dot.filled {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  
+  /* Combo Display */
+  .combo {
+    font-size: 0.9rem;
+    color: var(--accent);
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  .combo.visible { opacity: 1; }
+  
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .control-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .control-btn:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  
+  .control-btn.active {
+    background: rgba(74, 240, 255, 0.15);
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  
+  /* Level Select Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  
+  .modal-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .modal h2 {
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  
+  .level-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .level-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .level-btn:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: var(--accent);
+  }
+  
+  .level-btn.current {
+    border-color: var(--accent);
+    background: rgba(255, 107, 74, 0.15);
+  }
+  
+  .level-name {
+    font-weight: 600;
+  }
+  
+  .level-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  
+  .level-best {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    color: var(--warning);
+  }
+  
+  /* Start Screen */
+  .start-screen {
+    text-align: center;
+    max-width: 500px;
+  }
+  
+  .start-screen h2 {
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+  
+  .start-screen p {
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  
+  .start-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    padding: 16px 48px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #000;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  
+  .start-btn:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Rules Reference */
+  .rules-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    max-width: 600px;
+    width: 100%;
+  }
+  
+  .rules-panel h3 {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    font-size: 0.85rem;
+    font-family: ui-monospace, monospace;
+  }
+  
+  .rule-item {
+    background: rgba(0,0,0,0.3);
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+  
+  .rule-item .from { color: var(--muted); }
+  .rule-item .to { color: var(--accent2); }
+  
+  /* Work Breakdown */
+  .work-panel {
+    background: rgba(74, 240, 255, 0.08);
+    border: 1px solid rgba(74, 240, 255, 0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    max-width: 600px;
+    width: 100%;
+    display: none;
+  }
+  
+  .work-panel.visible { display: block; }
+  
+  .work-panel h4 {
+    font-size: 0.75rem;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  
+  .work-steps {
+    font-family: ui-monospace, monospace;
+    font-size: 0.9rem;
+  }
+  
+  .work-step {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  
+  .work-step:last-child { border-bottom: none; }
+  
+  .work-step .step-rule { color: var(--muted); font-size: 0.8rem; }
+  
+  /* Responsive */
+  @media (max-width: 600px) {
+    .problem-text { font-size: 1.5rem; }
+    .answer-input { font-size: 1.1rem; padding: 12px; }
+    .choices { grid-template-columns: 1fr; }
+    .header-stats { gap: 12px; }
+  }
+  
+  /* Animations */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  @keyframes slideUp {
+    from { transform: translateY(15px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes comboPopup {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    40% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  }
+  
+  .choice-btn.incorrect {
+    animation: shake 0.4s ease;
+  }
+  
+  .choice-btn.correct {
+    animation: pulse 0.3s ease;
+  }
+  
+  .feedback {
+    animation: slideUp 0.25s ease;
+  }
+  
+  .combo {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 2.5rem;
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 100;
+    text-shadow: 0 0 30px var(--accent);
+  }
+  
+  .combo.visible {
+    animation: comboPopup 1s ease-out;
+  }
+  
+  .choice-num {
+    opacity: 0.5;
+    margin-right: 8px;
+    font-size: 0.85em;
+  }
+  
+  /* Progress Counter */
+  .problem-counter {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  
+  /* Rule Chips */
+  .rule-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  
+  .rule-chip {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  
+  .rule-chip:hover {
+    border-color: var(--accent2);
+    background: rgba(74, 240, 255, 0.1);
+  }
+  
+  .rule-chip.correct {
+    border-color: var(--success);
+    background: rgba(74, 255, 127, 0.2);
+  }
+  
+  .rule-chip.incorrect {
+    border-color: var(--error);
+    background: rgba(255, 74, 106, 0.2);
+  }
+  
+  /* Mistake Explanation */
+  .mistake-box {
+    background: rgba(255, 212, 74, 0.1);
+    border: 1px solid var(--warning);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 8px;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+  
+  .mistake-box summary {
+    cursor: pointer;
+    color: var(--warning);
+    font-weight: 600;
+  }
+  
+  .mistake-explanation {
+    margin-top: 8px;
+    color: var(--text);
+    line-height: 1.5;
+    white-space: pre-line;
+  }
+  
+  /* Timer Section with Character */
+  .timer-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 600px;
+  }
+  
+  .timer-number {
+    font-family: ui-monospace, monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent2);
+    min-width: 40px;
+    text-align: right;
+  }
+  
+  .timer-number.warning { color: var(--warning); }
+  .timer-number.danger { 
+    color: var(--error);
+    animation: pulse 0.5s ease infinite;
+  }
+  
+  /* Hint Button */
+  .hint-btn {
+    background: rgba(255,209,102,0.15);
+    border: 1px solid var(--warning);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--warning);
+    transition: all 0.15s;
+  }
+  
+  .hint-btn:hover {
+    background: rgba(255,209,102,0.25);
+  }
+  
+  /* Milestone Celebration */
+  .celebration-toast {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--accent), var(--warning));
+    color: #000;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    z-index: 200;
+    animation: celebrationPop 3s ease-out forwards;
+    box-shadow: 0 10px 40px rgba(255, 107, 74, 0.5);
+    text-align: center;
+  }
+  
+  @keyframes celebrationPop {
+    0% { transform: translateX(-50%) scale(0) rotate(-10deg); opacity: 0; }
+    10% { transform: translateX(-50%) scale(1.2) rotate(5deg); opacity: 1; }
+    20% { transform: translateX(-50%) scale(1) rotate(0); }
+    80% { transform: translateX(-50%) scale(1) rotate(0); opacity: 1; }
+    100% { transform: translateX(-50%) scale(0.8) rotate(0); opacity: 0; }
+  }
+  
+  /* Retry Button */
+  .retry-btn {
+    background: rgba(74, 240, 255, 0.15);
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+  }
+  
+  .retry-btn:hover {
+    background: rgba(74, 240, 255, 0.25);
+  }
+  
+  /* Dojo Character */
+  .dojo-character {
+    width: 50px;
+    height: 50px;
+    font-size: 36px;
+    text-align: center;
+    line-height: 50px;
+    flex-shrink: 0;
+    transition: transform 0.1s;
+  }
+  
+  .dojo-character.idle {
+    animation: dojoIdle 2s ease-in-out infinite;
+  }
+  
+  .dojo-character.kick {
+    animation: dojoKick 0.5s ease-out;
+  }
+  
+  .dojo-character.punch {
+    animation: dojoPunch 0.4s ease-out;
+  }
+  
+  .dojo-character.bow {
+    animation: dojoBow 0.8s ease-in-out;
+  }
+  
+  .dojo-character.sad {
+    animation: dojoSad 0.6s ease-out;
+  }
+  
+  @keyframes dojoIdle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  
+  @keyframes dojoKick {
+    0% { transform: rotate(0deg) translateY(0); }
+    30% { transform: rotate(-20deg) translateY(-10px); }
+    50% { transform: rotate(15deg) translateY(-5px); }
+    100% { transform: rotate(0deg) translateY(0); }
+  }
+  
+  @keyframes dojoPunch {
+    0% { transform: scale(1) translateX(0); }
+    40% { transform: scale(1.3) translateX(10px); }
+    100% { transform: scale(1) translateX(0); }
+  }
+  
+  @keyframes dojoBow {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(20deg) translateY(5px); }
+  }
+  
+  @keyframes dojoSad {
+    0% { transform: translateY(0) rotate(0); }
+    25% { transform: translateY(3px) rotate(-5deg); }
+    50% { transform: translateY(0) rotate(5deg); }
+    75% { transform: translateY(3px) rotate(-3deg); }
+    100% { transform: translateY(0) rotate(0); }
+  }
+  
+  .timer-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--panel);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  /* Mastery Panel */
+  .mastery-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+    max-width: 600px;
+    width: 100%;
+  }
+  
+  .mastery-panel h4 {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  
+  .mastery-bars {
+    display: grid;
+    gap: 6px;
+  }
+  
+  .mastery-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .mastery-label {
+    font-size: 0.75rem;
+    width: 70px;
+    color: var(--muted);
+  }
+  
+  .mastery-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .mastery-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  
+  .mastery-fill.weak { background: var(--error); }
+  .mastery-fill.okay { background: var(--warning); }
+  .mastery-fill.good { background: var(--success); }
+  
+  .mastery-pct {
+    font-size: 0.7rem;
+    width: 35px;
+    text-align: right;
+    font-family: ui-monospace, monospace;
+  }
+  
+  /* Stats Modal */
+  .stats-modal .modal {
+    max-width: 400px;
+  }
+  
+  .stats-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .stats-box {
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  
+  .stats-box-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+  }
+  
+  .stats-box-value.gold { color: var(--warning); }
+  .stats-box-value.green { color: var(--success); }
+  .stats-box-value.blue { color: var(--accent2); }
+  
+  .stats-box-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  
+  /* Options Modal */
+  .options-modal .modal {
+    max-width: 400px;
+  }
+  
+  .option-group {
+    margin-bottom: 16px;
+  }
+  
+  .option-group h4 {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  
+  .option-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .option-row:last-child {
+    border-bottom: none;
+  }
+  
+  .option-label {
+    font-size: 0.9rem;
+  }
+  
+  /* Toggle Switch */
+  .toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .toggle.active {
+    background: var(--accent);
+  }
+  
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.2s;
+  }
+  
+  .toggle.active::after {
+    left: 22px;
+  }
+  
+  /* Character Picker */
+  .character-picker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .char-option {
+    width: 50px;
+    height: 50px;
+    font-size: 32px;
+    line-height: 50px;
+    text-align: center;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  
+  .char-option:hover {
+    background: rgba(255,255,255,0.1);
+    transform: scale(1.1);
+  }
+  
+  .char-option.selected {
+    border-color: var(--accent);
+    background: rgba(124, 243, 160, 0.15);
+  }
+  
+  /* Reset Button */
+  .danger-btn {
+    background: rgba(255, 74, 106, 0.2);
+    border: 1px solid var(--error);
+    color: var(--error);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  .danger-btn:hover {
+    background: rgba(255, 74, 106, 0.3);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <h1>🥋 Derivative <span>Dojo</span></h1>
+  </div>
+  <div class="header-stats">
+    <div class="stat">
+      <div class="stat-label">Score</div>
+      <div class="stat-value score" id="score">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Streak</div>
+      <div class="stat-value streak" id="streak">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Level</div>
+      <div class="stat-value level" id="levelDisplay">1</div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- Start Screen -->
+  <div class="start-screen" id="startScreen">
+    <h2>🥋 Derivative Dojo</h2>
+    <p>Master derivative rules through speed training.<br>Build streaks, earn combos, level up!</p>
+    <button class="start-btn" id="btnStart">Begin Training</button>
+    <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: center;">
+      <button class="control-btn" id="btnSelectLevel">Select Level</button>
+      <button class="control-btn" id="btnStartStats">📊 Stats</button>
+      <button class="control-btn" id="btnStartOptions">⚙️ Options</button>
+    </div>
+  </div>
+  
+  <!-- Game Area (hidden initially) -->
+  <div id="gameArea" style="display: none; width: 100%; flex-direction: column; align-items: center; gap: 16px;">
+    
+    <div class="timer-section">
+      <div class="dojo-character idle" id="dojoChar">🥋</div>
+      <div class="timer-bar">
+        <div class="timer-fill" id="timerFill" style="width: 100%"></div>
+      </div>
+      <div class="timer-number" id="timerNumber">15s</div>
+    </div>
+    
+    <div class="problem-card">
+      <div class="problem-counter" id="problemCounter">Question 1/10</div>
+      <div class="problem-label">Find the derivative:</div>
+      <div class="problem-text" id="problemText">d/dx [ x² ]</div>
+      <div class="rule-hint" id="ruleHint">Power Rule</div>
+    </div>
+    
+    <div class="streak-indicator" id="streakDots">
+      <div class="streak-dot"></div>
+      <div class="streak-dot"></div>
+      <div class="streak-dot"></div>
+      <div class="streak-dot"></div>
+      <div class="streak-dot"></div>
+    </div>
+    <div class="combo" id="combo">🔥 x2 COMBO!</div>
+    
+    <div class="answer-area" id="answerArea">
+      <div class="rule-chips" id="ruleChips" style="display:none;"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+    
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    
+    <div class="work-panel" id="workPanel">
+      <h4>Step-by-step</h4>
+      <div class="work-steps" id="workSteps"></div>
+    </div>
+    
+    <div class="controls">
+      <button class="control-btn" id="btnStats">📊 Stats</button>
+      <button class="control-btn" id="btnOptions">⚙️ Options</button>
+      <button class="control-btn" id="btnSkip">Skip →</button>
+      <button class="control-btn" id="btnShowWork">Show Work</button>
+      <button class="control-btn" id="btnPractice">Practice Mode</button>
+      <button class="control-btn" id="btnLevels">Levels</button>
+      <button class="control-btn" id="btnPause">Pause</button>
+    </div>
+    
+    <div class="rules-panel" id="rulesPanel">
+      <h3>Quick Reference</h3>
+      <div class="rules-grid" id="rulesGrid"></div>
+    </div>
+    
+    <div class="mastery-panel" id="masteryPanel" style="display:none;">
+      <h4>Your Mastery</h4>
+      <div class="mastery-bars" id="masteryBars"></div>
+    </div>
+    
+  </div>
+</main>
+
+<!-- Level Select Modal -->
+<div class="modal-overlay" id="levelModal">
+  <div class="modal">
+    <h2>Select Level</h2>
+    <div class="level-grid" id="levelGrid"></div>
+    <div style="text-align: center; margin-top: 16px;">
+      <button class="control-btn" id="btnCloseLevel">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Modal -->
+<div class="modal-overlay stats-modal" id="statsModal">
+  <div class="modal">
+    <h2>📊 Your Progress</h2>
+    
+    <div class="stats-summary" id="statsSummary">
+      <div class="stats-box">
+        <div class="stats-box-value gold" id="currentScore">0</div>
+        <div class="stats-box-label">Current Score</div>
+      </div>
+      <div class="stats-box">
+        <div class="stats-box-value blue" id="bestScore">0</div>
+        <div class="stats-box-label">Best Score (Lvl)</div>
+      </div>
+      <div class="stats-box">
+        <div class="stats-box-value green" id="totalCorrect">0</div>
+        <div class="stats-box-label">All-Time Correct</div>
+      </div>
+      <div class="stats-box">
+        <div class="stats-box-value" id="overallAccuracy">0%</div>
+        <div class="stats-box-label">Accuracy</div>
+      </div>
+    </div>
+    
+    <h3 style="font-size: 0.9rem; margin-bottom: 8px;">Mastery by Rule</h3>
+    <div class="mastery-bars" id="statsModalMastery"></div>
+    
+    <div style="text-align: center; margin-top: 16px; display: flex; gap: 10px; justify-content: center;">
+      <button class="control-btn" id="btnCopySummary">📋 Copy Summary</button>
+      <button class="control-btn" id="btnCloseStats">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Options Modal -->
+<div class="modal-overlay options-modal" id="optionsModal">
+  <div class="modal">
+    <h2>⚙️ Options</h2>
+    
+    <div class="option-group">
+      <h4>Gameplay</h4>
+      <div class="option-row">
+        <span class="option-label">Show Rule Chips</span>
+        <div class="toggle active" id="toggleRuleChips"></div>
+      </div>
+      <div class="option-row">
+        <span class="option-label">Show Quick Reference</span>
+        <div class="toggle active" id="toggleReference"></div>
+      </div>
+    </div>
+    
+    <div class="option-group">
+      <h4>Choose Your Sensei</h4>
+      <div class="character-picker" id="charPicker"></div>
+    </div>
+    
+    <div class="option-group">
+      <h4>Data</h4>
+      <button class="danger-btn" id="btnResetProgress">Reset All Progress</button>
+    </div>
+    
+    <div style="text-align: center; margin-top: 16px;">
+      <button class="control-btn" id="btnCloseOptions">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  
+  // === LEVELS ===
+  const levels = [
+    {
+      id: 1,
+      name: 'White Belt',
+      desc: 'Power Rule basics',
+      rules: ['power'],
+      timeLimit: 15,
+      problems: 10
+    },
+    {
+      id: 2,
+      name: 'Yellow Belt',
+      desc: 'Power Rule + Constants',
+      rules: ['power', 'constant'],
+      timeLimit: 12,
+      problems: 10
+    },
+    {
+      id: 3,
+      name: 'Orange Belt',
+      desc: 'Add Trig derivatives',
+      rules: ['power', 'constant', 'trig'],
+      timeLimit: 12,
+      problems: 12
+    },
+    {
+      id: 4,
+      name: 'Green Belt',
+      desc: 'Add Exp & Log',
+      rules: ['power', 'constant', 'trig', 'exp'],
+      timeLimit: 12,
+      problems: 12
+    },
+    {
+      id: 5,
+      name: 'Blue Belt',
+      desc: 'Product Rule',
+      rules: ['power', 'product'],
+      timeLimit: 20,
+      problems: 10
+    },
+    {
+      id: 6,
+      name: 'Purple Belt',
+      desc: 'Quotient Rule',
+      rules: ['power', 'trig', 'quotient'],
+      timeLimit: 20,
+      problems: 10
+    },
+    {
+      id: 7,
+      name: 'Brown Belt',
+      desc: 'Chain Rule (single)',
+      rules: ['chain-simple'],
+      timeLimit: 20,
+      problems: 10
+    },
+    {
+      id: 8,
+      name: 'Red Belt',
+      desc: 'Chain Rule (complex)',
+      rules: ['chain-complex'],
+      timeLimit: 25,
+      problems: 10
+    },
+    {
+      id: 9,
+      name: 'Black Belt',
+      desc: 'All rules mixed',
+      rules: ['power', 'trig', 'exp', 'product', 'quotient', 'chain-simple', 'chain-complex'],
+      timeLimit: 20,
+      problems: 15
+    },
+    {
+      id: 10,
+      name: 'Grand Master',
+      desc: 'Speed round — all rules',
+      rules: ['power', 'trig', 'exp', 'product', 'quotient', 'chain-simple', 'chain-complex'],
+      timeLimit: 10,
+      problems: 20
+    }
+  ];
+  
+  // === PROBLEM GENERATORS ===
+  
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  
+  function randChoice(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+  
+  // Mastery-weighted rule picker - biases toward weak rules
+  function pickRule(levelRules) {
+    const weights = levelRules.map(r => {
+      const m = state.mastery[r] || { attempts: 0, correct: 0 };
+      // Laplace smoothing: (correct + 1) / (attempts + 2)
+      const acc = (m.correct + 1) / (m.attempts + 2);
+      // Higher weight for lower accuracy (min 0.2 so strong rules still appear)
+      return Math.max(0.2, 1 - acc);
+    });
+    
+    const total = weights.reduce((a, b) => a + b, 0);
+    let t = Math.random() * total;
+    
+    for (let i = 0; i < levelRules.length; i++) {
+      t -= weights[i];
+      if (t <= 0) return levelRules[i];
+    }
+    return levelRules[levelRules.length - 1];
+  }
+  
+  // Format monomial properly (hide x^1, handle x^0)
+  function fmtMono(coef, exp) {
+    if (coef === 0) return '0';
+    if (exp === 0) return `${coef}`;
+    if (exp < 0) {
+      // Negative exponent: show x^-2 etc
+      return coef === 1 ? `x<sup>${exp}</sup>` : 
+             coef === -1 ? `-x<sup>${exp}</sup>` :
+             `${coef}x<sup>${exp}</sup>`;
+    }
+    if (exp === 1) return coef === 1 ? 'x' : coef === -1 ? '-x' : `${coef}x`;
+    return coef === 1 ? `x<sup>${exp}</sup>` : 
+           coef === -1 ? `-x<sup>${exp}</sup>` :
+           `${coef}x<sup>${exp}</sup>`;
+  }
+  
+  // Format coefficient
+  function coef(n, first = false) {
+    if (n === 1) return first ? '' : '+';
+    if (n === -1) return '-';
+    if (n > 0) return first ? String(n) : '+' + n;
+    return String(n);
+  }
+  
+  function sup(n) {
+    return `<sup>${n}</sup>`;
+  }
+  
+  // Problem generators by rule type
+  const generators = {
+    power: () => {
+      // Add negative exponents sometimes
+      const useNegative = Math.random() < 0.25;
+      const n = useNegative ? -randInt(1, 3) : randInt(2, 7);
+      const c = randChoice([1, 2, 3, 4, 5]);
+      const cStr = c === 1 ? '' : c;
+      const ansCoef = c * n;
+      const ansExp = n - 1;
+      const answerDisplay = fmtMono(ansCoef, ansExp);
+      
+      // Display for negative exponents
+      const displayExp = n < 0 ? `x<sup>${n}</sup>` : `x<sup>${n}</sup>`;
+      const displayStr = c === 1 ? displayExp : `${c}${displayExp}`;
+      
+      return {
+        question: `${cStr}x${sup(n)}`,
+        answer: answerDisplay.replace(/<[^>]*>/g, ''),
+        display: displayStr,
+        answerDisplay: answerDisplay,
+        rule: 'Power Rule',
+        ruleKey: 'power',
+        work: [
+          `d/dx [${displayStr}]`,
+          `= ${c} · ${n} · x<sup>${n}-1</sup>`,
+          `= ${c} · ${n} · x<sup>${ansExp}</sup>`,
+          `= ${answerDisplay}`
+        ],
+        commonMistakes: [
+          {
+            pattern: fmtMono(c * n, n), // Forgot to reduce exponent
+            hint: 'Almost! You forgot to reduce the exponent by 1.',
+            explanation: `Power rule: d/dx[xⁿ] = n·x^(n-1)\n\nYou got the coefficient right (${c}·${n} = ${c*n})\nBut the exponent should be ${n}-1 = ${ansExp}, not ${n}`
+          },
+          {
+            pattern: fmtMono(n, ansExp), // Forgot the coefficient
+            hint: 'Close! Don\'t forget to multiply by the original coefficient.',
+            explanation: `When there's a coefficient in front:\nd/dx[${c}x^${n}] = ${c} · ${n} · x^${ansExp}\n\nYou need to keep the ${c} and multiply it by ${n}`
+          }
+        ]
+      };
+    },
+    
+    constant: () => {
+      const c = randInt(2, 20);
+      return {
+        question: `${c}`,
+        answer: `0`,
+        display: `${c}`,
+        answerDisplay: `0`,
+        rule: 'Constant Rule',
+        ruleKey: 'constant',
+        work: [
+          `d/dx [${c}]`,
+          `= 0 (derivative of constant is 0)`
+        ],
+        commonMistakes: [
+          {
+            pattern: `${c}`,
+            hint: 'Constants have no x — their rate of change is zero!',
+            explanation: `A constant like ${c} doesn't change as x changes.\nImagine the graph: y = ${c} is a flat horizontal line.\nFlat line = zero slope = derivative is 0.`
+          },
+          {
+            pattern: '1',
+            hint: 'The derivative of a constant is 0, not 1.',
+            explanation: `Common confusion! d/dx[x] = 1, but d/dx[${c}] = 0.\n\nThe "1" rule only applies when you have x¹.`
+          }
+        ]
+      };
+    },
+    
+    trig: () => {
+      const funcs = [
+        { f: 'sin(x)', d: 'cos(x)', name: 'sin x', deriv: 'cos x', wrongSign: '-cos x' },
+        { f: 'cos(x)', d: '-sin(x)', name: 'cos x', deriv: '-sin x', wrongSign: 'sin x' },
+        { f: 'tan(x)', d: 'sec²(x)', name: 'tan x', deriv: 'sec<sup>2</sup>x', wrongSign: '-sec<sup>2</sup>x' },
+        { f: 'sec(x)', d: 'sec(x)tan(x)', name: 'sec x', deriv: 'sec x tan x', wrongSign: '-sec x tan x' },
+        { f: 'csc(x)', d: '-csc(x)cot(x)', name: 'csc x', deriv: '-csc x cot x', wrongSign: 'csc x cot x' },
+        { f: 'cot(x)', d: '-csc²(x)', name: 'cot x', deriv: '-csc<sup>2</sup>x', wrongSign: 'csc<sup>2</sup>x' }
+      ];
+      const func = randChoice(funcs);
+      return {
+        question: func.f,
+        answer: func.d,
+        display: func.name,
+        answerDisplay: func.deriv,
+        rule: 'Trig Derivative',
+        ruleKey: 'trig',
+        work: [
+          `d/dx [${func.name}]`,
+          `= ${func.deriv}`
+        ],
+        commonMistakes: [
+          {
+            pattern: func.wrongSign,
+            hint: 'Watch the negative sign! Co-functions (cos, cot, csc) have negatives.',
+            explanation: `Memory trick for trig derivatives:\n\n• sin → cos (positive)\n• cos → -sin (NEGATIVE!)\n• tan → sec²\n• sec → sec·tan\n• csc → -csc·cot (NEGATIVE!)\n• cot → -csc² (NEGATIVE!)\n\nNotice: functions starting with "co" have negative derivatives.`
+          }
+        ]
+      };
+    },
+    
+    exp: () => {
+      const type = randChoice(['exp', 'ln', 'exp', 'ln']); // Equal weight
+      if (type === 'exp') {
+        return {
+          question: 'e^x',
+          answer: 'e^x',
+          display: 'e<sup>x</sup>',
+          answerDisplay: 'e<sup>x</sup>',
+          rule: 'Exponential Rule',
+          ruleKey: 'exp',
+          work: [
+            `d/dx [e<sup>x</sup>]`,
+            `= e<sup>x</sup> (e^x is its own derivative!)`
+          ],
+          commonMistakes: [
+            {
+              pattern: 'xe^(x-1)',
+              hint: 'This isn\'t power rule! e^x is special.',
+              explanation: `e^x is NOT like x^n!\n\nPower rule: d/dx[x^n] = n·x^(n-1)\nExponential: d/dx[e^x] = e^x\n\ne^x is the only function that equals its own derivative!`
+            },
+            {
+              pattern: '1',
+              hint: 'e^x doesn\'t become 1. It stays as e^x!',
+              explanation: `e^x is special: it's its own derivative.\n\nd/dx[e^x] = e^x\n\nThe whole function stays the same!`
+            }
+          ]
+        };
+      } else {
+        return {
+          question: 'ln(x)',
+          answer: '1/x',
+          display: 'ln x',
+          answerDisplay: '1/x',
+          rule: 'Logarithm Rule',
+          ruleKey: 'exp',
+          work: [
+            `d/dx [ln x]`,
+            `= 1/x`
+          ],
+          commonMistakes: [
+            {
+              pattern: 'x',
+              hint: 'ln and e are inverses, but their derivatives are different!',
+              explanation: `d/dx[ln x] = 1/x, not x.\n\nMemory trick: The derivative "divides" — you get 1 over what's inside the ln.`
+            }
+          ]
+        };
+      }
+    },
+    
+    // IMPROVED: Product rule now requires the actual rule
+    product: () => {
+      const problems = [
+        {
+          display: 'x² · sin x',
+          f: 'x²', fPrime: '2x',
+          g: 'sin x', gPrime: 'cos x',
+          answer: '2x·sin x + x²·cos x',
+          halfAnswer: '2x·sin x',
+          work: [
+            `d/dx [x² · sin x]`,
+            `= f'·g + f·g'`,
+            `= (2x)(sin x) + (x²)(cos x)`,
+            `= 2x·sin x + x²·cos x`
+          ]
+        },
+        {
+          display: 'x · e<sup>x</sup>',
+          f: 'x', fPrime: '1',
+          g: 'e<sup>x</sup>', gPrime: 'e<sup>x</sup>',
+          answer: 'e<sup>x</sup> + x·e<sup>x</sup>',
+          halfAnswer: 'e<sup>x</sup>',
+          work: [
+            `d/dx [x · e<sup>x</sup>]`,
+            `= f'·g + f·g'`,
+            `= (1)(e<sup>x</sup>) + (x)(e<sup>x</sup>)`,
+            `= e<sup>x</sup> + x·e<sup>x</sup>`
+          ]
+        },
+        {
+          display: 'x³ · cos x',
+          f: 'x³', fPrime: '3x²',
+          g: 'cos x', gPrime: '-sin x',
+          answer: '3x²·cos x − x³·sin x',
+          halfAnswer: '3x²·cos x',
+          work: [
+            `d/dx [x³ · cos x]`,
+            `= f'·g + f·g'`,
+            `= (3x²)(cos x) + (x³)(−sin x)`,
+            `= 3x²·cos x − x³·sin x`
+          ]
+        },
+        {
+          display: 'e<sup>x</sup> · sin x',
+          f: 'e<sup>x</sup>', fPrime: 'e<sup>x</sup>',
+          g: 'sin x', gPrime: 'cos x',
+          answer: 'e<sup>x</sup>·sin x + e<sup>x</sup>·cos x',
+          halfAnswer: 'e<sup>x</sup>·sin x',
+          work: [
+            `d/dx [e<sup>x</sup> · sin x]`,
+            `= f'·g + f·g'`,
+            `= (e<sup>x</sup>)(sin x) + (e<sup>x</sup>)(cos x)`,
+            `= e<sup>x</sup>·sin x + e<sup>x</sup>·cos x`
+          ]
+        },
+        {
+          display: 'x² · ln x',
+          f: 'x²', fPrime: '2x',
+          g: 'ln x', gPrime: '1/x',
+          answer: '2x·ln x + x',
+          halfAnswer: '2x·ln x',
+          work: [
+            `d/dx [x² · ln x]`,
+            `= f'·g + f·g'`,
+            `= (2x)(ln x) + (x²)(1/x)`,
+            `= 2x·ln x + x`
+          ]
+        }
+      ];
+      
+      const p = randChoice(problems);
+      return {
+        question: p.display,
+        answer: p.answer.replace(/<[^>]*>/g, ''),
+        display: p.display,
+        answerDisplay: p.answer,
+        rule: 'Product Rule: (fg)\' = f\'g + fg\'',
+        ruleKey: 'product',
+        work: p.work,
+        commonMistakes: [
+          {
+            pattern: p.halfAnswer,
+            hint: 'You found f\'·g but forgot +fg\'! Product rule has TWO terms.',
+            explanation: `Product rule: (f·g)' = f'·g + f·g'\n                         ^^^^   ^^^^\n                         You got this  Forgot this!\n\nYou correctly found: ${p.fPrime}·${p.g}\nBut you need to ADD: ${p.f}·${p.gPrime}\n\nFull answer: ${p.answer}`
+          },
+          {
+            pattern: `${p.fPrime}·${p.gPrime}`,
+            hint: 'Don\'t multiply the derivatives! It\'s f\'g + fg\', not f\'·g\'',
+            explanation: `Common mistake! Product rule is NOT:\n❌ (f·g)' = f'·g'\n\n✓ Correct: (f·g)' = f'·g + f·g'\n\nYou keep one function original in each term.`
+          }
+        ]
+      };
+    },
+    
+    // IMPROVED: Quotient rule now requires the actual rule
+    quotient: () => {
+      const problems = [
+        {
+          display: 'sin x / x',
+          f: 'sin x', fPrime: 'cos x',
+          g: 'x', gPrime: '1',
+          answer: '(x·cos x − sin x)/x²',
+          wrongOrder: '(sin x − x·cos x)/x²',
+          work: [
+            `d/dx [sin x / x]`,
+            `= (f'g − fg')/g²`,
+            `= (cos x · x − sin x · 1)/x²`,
+            `= (x·cos x − sin x)/x²`
+          ]
+        },
+        {
+          display: 'x² / (x+1)',
+          f: 'x²', fPrime: '2x',
+          g: 'x+1', gPrime: '1',
+          answer: '(2x(x+1) − x²)/(x+1)²',
+          wrongOrder: '(x² − 2x(x+1))/(x+1)²',
+          work: [
+            `d/dx [x² / (x+1)]`,
+            `= (f'g − fg')/g²`,
+            `= (2x(x+1) − x²·1)/(x+1)²`,
+            `= (2x(x+1) − x²)/(x+1)²`
+          ]
+        },
+        {
+          display: 'e<sup>x</sup> / x',
+          f: 'e<sup>x</sup>', fPrime: 'e<sup>x</sup>',
+          g: 'x', gPrime: '1',
+          answer: '(x·e<sup>x</sup> − e<sup>x</sup>)/x²',
+          wrongOrder: '(e<sup>x</sup> − x·e<sup>x</sup>)/x²',
+          work: [
+            `d/dx [e<sup>x</sup> / x]`,
+            `= (f'g − fg')/g²`,
+            `= (e<sup>x</sup>·x − e<sup>x</sup>·1)/x²`,
+            `= (x·e<sup>x</sup> − e<sup>x</sup>)/x²`
+          ]
+        },
+        {
+          display: 'x / cos x',
+          f: 'x', fPrime: '1',
+          g: 'cos x', gPrime: '-sin x',
+          answer: '(cos x + x·sin x)/cos²x',
+          wrongOrder: '(−x·sin x − cos x)/cos²x',
+          work: [
+            `d/dx [x / cos x]`,
+            `= (f'g − fg')/g²`,
+            `= (1·cos x − x·(−sin x))/cos²x`,
+            `= (cos x + x·sin x)/cos²x`
+          ]
+        }
+      ];
+      
+      const p = randChoice(problems);
+      return {
+        question: p.display,
+        answer: p.answer.replace(/<[^>]*>/g, ''),
+        display: p.display,
+        answerDisplay: p.answer,
+        rule: 'Quotient Rule: (f/g)\' = (f\'g − fg\')/g²',
+        ruleKey: 'quotient',
+        work: p.work,
+        commonMistakes: [
+          {
+            pattern: p.wrongOrder,
+            hint: 'Order matters! It\'s f\'g − fg\', not fg\' − f\'g',
+            explanation: `Quotient rule: (f/g)' = (f'g − fg')/g²\n\nMemory trick: "Low d-high minus high d-low, over low squared"\n\n• Low = g (denominator)\n• High = f (numerator)\n• d = derivative\n\nSo: g·f' − f·g', all over g²`
+          },
+          {
+            pattern: p.answer.replace('/x²', '').replace('/(x+1)²', '').replace('/cos²x', ''),
+            hint: 'Don\'t forget to divide by g²!',
+            explanation: `Quotient rule: (f/g)' = (f'g − fg')/g²\n                                    ^^^^\n                                    You forgot this!\n\nThe whole thing must be divided by the denominator squared.`
+          }
+        ]
+      };
+    },
+    
+    // IMPROVED: More chain rule variety
+    'chain-simple': () => {
+      const problems = [
+        {
+          display: 'sin(x²)',
+          answer: '2x·cos(x²)',
+          missingInner: 'cos(x²)',
+          work: [
+            `d/dx [sin(x²)]`,
+            `Let u = x², du/dx = 2x`,
+            `= cos(u) · du/dx`,
+            `= cos(x²) · 2x`,
+            `= 2x·cos(x²)`
+          ]
+        },
+        {
+          display: 'cos(3x)',
+          answer: '−3sin(3x)',
+          missingInner: '−sin(3x)',
+          work: [
+            `d/dx [cos(3x)]`,
+            `Let u = 3x, du/dx = 3`,
+            `= −sin(u) · du/dx`,
+            `= −sin(3x) · 3`,
+            `= −3sin(3x)`
+          ]
+        },
+        {
+          display: 'e<sup>2x</sup>',
+          answer: '2e<sup>2x</sup>',
+          missingInner: 'e<sup>2x</sup>',
+          work: [
+            `d/dx [e<sup>2x</sup>]`,
+            `Let u = 2x, du/dx = 2`,
+            `= e<sup>u</sup> · du/dx`,
+            `= e<sup>2x</sup> · 2`,
+            `= 2e<sup>2x</sup>`
+          ]
+        },
+        {
+          display: '(x+1)³',
+          answer: '3(x+1)²',
+          missingInner: '3(x+1)²',
+          work: [
+            `d/dx [(x+1)³]`,
+            `Let u = x+1, du/dx = 1`,
+            `= 3u² · du/dx`,
+            `= 3(x+1)² · 1`,
+            `= 3(x+1)²`
+          ]
+        },
+        {
+          display: 'ln(x²)',
+          answer: '2/x',
+          missingInner: '1/x²',
+          work: [
+            `d/dx [ln(x²)]`,
+            `Let u = x², du/dx = 2x`,
+            `= (1/u) · du/dx`,
+            `= (1/x²) · 2x`,
+            `= 2/x`
+          ]
+        },
+        {
+          display: '√(x²+1)',
+          answer: 'x/√(x²+1)',
+          missingInner: '1/(2√(x²+1))',
+          work: [
+            `d/dx [√(x²+1)]`,
+            `= d/dx [(x²+1)<sup>1/2</sup>]`,
+            `Let u = x²+1, du/dx = 2x`,
+            `= (1/2)u<sup>−1/2</sup> · 2x`,
+            `= x/√(x²+1)`
+          ]
+        },
+        {
+          display: 'sin(2x)',
+          answer: '2cos(2x)',
+          missingInner: 'cos(2x)',
+          work: [
+            `d/dx [sin(2x)]`,
+            `Let u = 2x, du/dx = 2`,
+            `= cos(u) · 2`,
+            `= 2cos(2x)`
+          ]
+        },
+        {
+          display: 'e<sup>−x</sup>',
+          answer: '−e<sup>−x</sup>',
+          missingInner: 'e<sup>−x</sup>',
+          work: [
+            `d/dx [e<sup>−x</sup>]`,
+            `Let u = −x, du/dx = −1`,
+            `= e<sup>u</sup> · (−1)`,
+            `= −e<sup>−x</sup>`
+          ]
+        },
+        {
+          display: 'tan(2x)',
+          answer: '2sec<sup>2</sup>(2x)',
+          missingInner: 'sec<sup>2</sup>(2x)',
+          work: [
+            `d/dx [tan(2x)]`,
+            `Let u = 2x, du/dx = 2`,
+            `= sec<sup>2</sup>(u) · 2`,
+            `= 2sec<sup>2</sup>(2x)`
+          ]
+        },
+        {
+          display: '(3x−1)⁴',
+          answer: '12(3x−1)³',
+          missingInner: '4(3x−1)³',
+          work: [
+            `d/dx [(3x−1)⁴]`,
+            `Let u = 3x−1, du/dx = 3`,
+            `= 4u³ · 3`,
+            `= 12(3x−1)³`
+          ]
+        }
+      ];
+      
+      const p = randChoice(problems);
+      return {
+        question: p.display,
+        answer: p.answer.replace(/<[^>]*>/g, ''),
+        display: p.display,
+        answerDisplay: p.answer,
+        rule: 'Chain Rule: d/dx[f(g)] = f\'(g)·g\'',
+        ruleKey: 'chain-simple',
+        work: p.work,
+        commonMistakes: [
+          {
+            pattern: p.missingInner,
+            hint: 'You forgot to multiply by the inner derivative!',
+            explanation: `Chain rule: d/dx[f(g(x))] = f'(g(x)) · g'(x)\n                                        ^^^^^^\n                                        Don't forget this!\n\nYou took the outer derivative correctly, but the chain rule says you must MULTIPLY by the derivative of the inside.`
+          }
+        ]
+      };
+    },
+    
+    'chain-complex': () => {
+      const problems = [
+        {
+          display: 'sin³(x)',
+          answer: '3sin²(x)·cos(x)',
+          missingInner: 'sin²(x)',
+          work: [
+            `d/dx [sin³(x)]`,
+            `= d/dx [(sin x)³]`,
+            `Let u = sin x, du/dx = cos x`,
+            `= 3u² · du/dx`,
+            `= 3sin²(x) · cos(x)`
+          ]
+        },
+        {
+          display: 'cos²(x)',
+          answer: '−2cos(x)·sin(x)',
+          missingInner: '2cos(x)',
+          work: [
+            `d/dx [cos²(x)]`,
+            `= d/dx [(cos x)²]`,
+            `Let u = cos x, du/dx = −sin x`,
+            `= 2u · du/dx`,
+            `= 2cos(x) · (−sin x)`,
+            `= −2cos(x)·sin(x)`
+          ]
+        },
+        {
+          display: 'tan²(x)',
+          answer: '2tan(x)·sec<sup>2</sup>(x)',
+          missingInner: '2tan(x)',
+          work: [
+            `d/dx [tan²(x)]`,
+            `= d/dx [(tan x)²]`,
+            `Let u = tan x, du/dx = sec<sup>2</sup>x`,
+            `= 2u · du/dx`,
+            `= 2tan(x) · sec<sup>2</sup>(x)`
+          ]
+        },
+        {
+          display: 'e<sup>sin(x)</sup>',
+          answer: 'cos(x)·e<sup>sin(x)</sup>',
+          missingInner: 'e<sup>sin(x)</sup>',
+          work: [
+            `d/dx [e<sup>sin(x)</sup>]`,
+            `Let u = sin x, du/dx = cos x`,
+            `= e<sup>u</sup> · du/dx`,
+            `= e<sup>sin(x)</sup> · cos(x)`,
+            `= cos(x)·e<sup>sin(x)</sup>`
+          ]
+        },
+        {
+          display: 'ln(cos x)',
+          answer: '−tan(x)',
+          missingInner: '1/cos x',
+          work: [
+            `d/dx [ln(cos x)]`,
+            `Let u = cos x, du/dx = −sin x`,
+            `= (1/u) · du/dx`,
+            `= (1/cos x) · (−sin x)`,
+            `= −sin x/cos x`,
+            `= −tan(x)`
+          ]
+        },
+        {
+          display: '(2x+1)<sup>4</sup>',
+          answer: '8(2x+1)³',
+          missingInner: '4(2x+1)³',
+          work: [
+            `d/dx [(2x+1)<sup>4</sup>]`,
+            `Let u = 2x+1, du/dx = 2`,
+            `= 4u³ · du/dx`,
+            `= 4(2x+1)³ · 2`,
+            `= 8(2x+1)³`
+          ]
+        },
+        {
+          display: 'sin(cos x)',
+          answer: '−sin(x)·cos(cos x)',
+          missingInner: 'cos(cos x)',
+          work: [
+            `d/dx [sin(cos x)]`,
+            `Let u = cos x, du/dx = −sin x`,
+            `= cos(u) · du/dx`,
+            `= cos(cos x) · (−sin x)`,
+            `= −sin(x)·cos(cos x)`
+          ]
+        },
+        {
+          display: 'e<sup>x²</sup>',
+          answer: '2x·e<sup>x²</sup>',
+          missingInner: 'e<sup>x²</sup>',
+          work: [
+            `d/dx [e<sup>x²</sup>]`,
+            `Let u = x², du/dx = 2x`,
+            `= e<sup>u</sup> · du/dx`,
+            `= e<sup>x²</sup> · 2x`,
+            `= 2x·e<sup>x²</sup>`
+          ]
+        }
+      ];
+      
+      const p = randChoice(problems);
+      return {
+        question: p.display,
+        answer: p.answer.replace(/<[^>]*>/g, ''),
+        display: p.display,
+        answerDisplay: p.answer,
+        rule: 'Chain Rule (nested)',
+        ruleKey: 'chain-complex',
+        work: p.work,
+        commonMistakes: [
+          {
+            pattern: p.missingInner,
+            hint: 'Almost! Don\'t forget to multiply by the inner derivative.',
+            explanation: `Chain rule: d/dx[f(g(x))] = f'(g(x)) · g'(x)\n\nYou got the outer derivative but forgot the inner!\n\nThe "chain" in chain rule means you multiply derivatives together in a chain.`
+          }
+        ]
+      };
+    }
+  };
+  
+  // Generate wrong answers
+  function generateWrongAnswers(correct, problem) {
+    const wrongs = new Set();
+    
+    // Common mistakes
+    if (problem.rule === 'Power Rule') {
+      // Forgot to reduce exponent
+      wrongs.add(correct.replace(/x<sup>(\d+)<\/sup>/, (m, n) => `x<sup>${parseInt(n) + 1}</sup>`));
+      // Forgot coefficient
+      wrongs.add(correct.replace(/^\d+/, ''));
+      // Added instead of multiplied
+      const match = correct.match(/^(\d+)/);
+      if (match) {
+        wrongs.add(correct.replace(/^\d+/, String(parseInt(match[1]) + 1)));
+      }
+    }
+    
+    if (problem.rule === 'Trig Derivative') {
+      const trigWrongs = [
+        'sin x', 'cos x', '-sin x', '-cos x', 'tan x',
+        'sec<sup>2</sup>x', '-sec<sup>2</sup>x',
+        'cot x', '-csc<sup>2</sup>x', 'csc<sup>2</sup>x'
+      ];
+      trigWrongs.forEach(w => {
+        if (w !== correct.replace(/<[^>]*>/g, '')) wrongs.add(w);
+      });
+    }
+    
+    // Random modifications
+    wrongs.add(correct.replace(/(\d+)/, m => String(parseInt(m) + randInt(1, 3))));
+    wrongs.add(correct.replace(/(\d+)/, m => String(Math.max(1, parseInt(m) - randInt(1, 2)))));
+    wrongs.add(correct + 'x');
+    wrongs.add('0');
+    wrongs.add('1');
+    
+    // Remove correct answer and empties
+    wrongs.delete(correct);
+    wrongs.delete('');
+    wrongs.delete(correct.replace(/<[^>]*>/g, ''));
+    
+    // Return 3 unique wrong answers
+    const wrongArr = Array.from(wrongs).filter(w => w && w !== correct);
+    while (wrongArr.length < 3) {
+      wrongArr.push(`${randInt(1, 10)}x<sup>${randInt(1, 5)}</sup>`);
+    }
+    
+    return wrongArr.slice(0, 3);
+  }
+  
+  // Generate a problem for current level
+  function generateProblem(level) {
+    // Use mastery-weighted picker to focus on weak areas
+    const ruleType = pickRule(level.rules);
+    const generator = generators[ruleType];
+    if (!generator) return generators.power();
+    const problem = generator();
+    // Ensure ruleKey is set
+    problem.ruleKey = problem.ruleKey || ruleType;
+    return problem;
+  }
+  
+  // === STATE ===
+  const state = {
+    level: 1,
+    score: 0,
+    streak: 0,
+    maxStreak: 0,
+    problemIndex: 0,
+    currentProblem: null,
+    timeLeft: 15,
+    timerInterval: null,
+    paused: false,
+    practiceMode: false,
+    showingWork: false,
+    ruleConfirmed: false,
+    ruleHintUsed: false,
+    pickingRule: false,
+    bestScores: {},
+    // Milestones shown
+    milestonesShown: {},
+    // Session override for focused practice (don't mutate levels)
+    sessionRulesOverride: null,
+    sessionProblemCount: null,
+    sessionRemaining: 0,
+    // Mastery tracking per rule
+    mastery: {
+      power: { attempts: 0, correct: 0 },
+      constant: { attempts: 0, correct: 0 },
+      trig: { attempts: 0, correct: 0 },
+      exp: { attempts: 0, correct: 0 },
+      product: { attempts: 0, correct: 0 },
+      quotient: { attempts: 0, correct: 0 },
+      'chain-simple': { attempts: 0, correct: 0 },
+      'chain-complex': { attempts: 0, correct: 0 }
+    }
+  };
+  
+  // Dojo characters (mix of people)
+  const dojoChars = ['🥋', '🧑‍🦱', '👨', '👩', '🧔', '👱‍♀️', '🧑‍🦰', '👨‍🦱', '👩‍🦳', '🥷'];
+  let currentDojoChar = dojoChars[0];
+  
+  // Options
+  const options = {
+    showRuleChips: true,
+    showReference: true,
+    selectedChar: 0
+  };
+  
+  // === ELEMENTS ===
+  const el = {
+    score: document.getElementById('score'),
+    streak: document.getElementById('streak'),
+    levelDisplay: document.getElementById('levelDisplay'),
+    startScreen: document.getElementById('startScreen'),
+    gameArea: document.getElementById('gameArea'),
+    problemText: document.getElementById('problemText'),
+    ruleHint: document.getElementById('ruleHint'),
+    choices: document.getElementById('choices'),
+    feedback: document.getElementById('feedback'),
+    timerFill: document.getElementById('timerFill'),
+    timerNumber: document.getElementById('timerNumber'),
+    streakDots: document.getElementById('streakDots'),
+    combo: document.getElementById('combo'),
+    workPanel: document.getElementById('workPanel'),
+    workSteps: document.getElementById('workSteps'),
+    rulesGrid: document.getElementById('rulesGrid'),
+    levelModal: document.getElementById('levelModal'),
+    levelGrid: document.getElementById('levelGrid'),
+    problemCounter: document.getElementById('problemCounter'),
+    ruleChips: document.getElementById('ruleChips'),
+    masteryPanel: document.getElementById('masteryPanel'),
+    masteryBars: document.getElementById('masteryBars'),
+    dojoChar: document.getElementById('dojoChar'),
+    btnStart: document.getElementById('btnStart'),
+    btnSelectLevel: document.getElementById('btnSelectLevel'),
+    btnSkip: document.getElementById('btnSkip'),
+    btnShowWork: document.getElementById('btnShowWork'),
+    btnPractice: document.getElementById('btnPractice'),
+    btnLevels: document.getElementById('btnLevels'),
+    btnPause: document.getElementById('btnPause'),
+    btnCloseLevel: document.getElementById('btnCloseLevel'),
+    btnStats: document.getElementById('btnStats'),
+    btnOptions: document.getElementById('btnOptions'),
+    // Stats modal
+    statsModal: document.getElementById('statsModal'),
+    statsSummary: document.getElementById('statsSummary'),
+    statsModalMastery: document.getElementById('statsModalMastery'),
+    currentScore: document.getElementById('currentScore'),
+    bestScore: document.getElementById('bestScore'),
+    totalCorrect: document.getElementById('totalCorrect'),
+    overallAccuracy: document.getElementById('overallAccuracy'),
+    btnCloseStats: document.getElementById('btnCloseStats'),
+    btnCopySummary: document.getElementById('btnCopySummary'),
+    // Options modal
+    optionsModal: document.getElementById('optionsModal'),
+    toggleRuleChips: document.getElementById('toggleRuleChips'),
+    toggleReference: document.getElementById('toggleReference'),
+    charPicker: document.getElementById('charPicker'),
+    btnResetProgress: document.getElementById('btnResetProgress'),
+    btnCloseOptions: document.getElementById('btnCloseOptions'),
+    btnStartStats: document.getElementById('btnStartStats'),
+    btnStartOptions: document.getElementById('btnStartOptions')
+  };
+  
+  // === GAME LOGIC ===
+  
+  function startGame() {
+    el.startScreen.style.display = 'none';
+    el.gameArea.style.display = 'flex';
+    el.masteryPanel.style.display = 'none';
+    
+    // Pick a random dojo character
+    currentDojoChar = dojoChars[Math.floor(Math.random() * dojoChars.length)];
+    el.dojoChar.textContent = currentDojoChar;
+    
+    state.score = 0;
+    state.streak = 0;
+    state.problemIndex = 0;
+    
+    updateStats();
+    updateRulesReference();
+    nextProblem();
+  }
+  
+  function nextProblem() {
+    // Get effective level (with session override if set)
+    const baseLevel = levels[state.level - 1];
+    const usingOverride = state.sessionRulesOverride && state.sessionRemaining > 0;
+    
+    const level = usingOverride ? {
+      ...baseLevel,
+      rules: state.sessionRulesOverride,
+      problems: state.sessionProblemCount || 1
+    } : baseLevel;
+    
+    // End-of-level check (skip during one-shot override like retry-similar)
+    if (!usingOverride && state.problemIndex >= level.problems) {
+      // Clear any leftover override
+      state.sessionRulesOverride = null;
+      state.sessionProblemCount = null;
+      state.sessionRemaining = 0;
+      endLevel();
+      return;
+    }
+    
+    state.currentProblem = generateProblem(level);
+    
+    // Advance counters: override consumes 'remaining', normal play advances index
+    if (usingOverride) {
+      state.sessionRemaining--;
+      // Do NOT change problemIndex for retry-similar
+    } else {
+      state.problemIndex++;
+    }
+    
+    state.timeLeft = level.timeLimit;
+    state.showingWork = false;
+    state.ruleConfirmed = false;
+    state.ruleHintUsed = false;
+    state.pickingRule = false;
+    
+    // Update progress counter (show actual level progress, not override)
+    el.problemCounter.textContent = `Question ${state.problemIndex}/${baseLevel.problems}`;
+    
+    el.problemText.innerHTML = `d/dx [ ${state.currentProblem.display} ]`;
+    el.feedback.innerHTML = '';
+    el.workPanel.classList.remove('visible');
+    
+    // NEW: Rule chips are now OPTIONAL help (Claude Sonnet's key insight)
+    // Only show hint button if multiple rules are possible
+    el.ruleChips.style.display = 'none';
+    
+    if (!state.practiceMode && options.showRuleChips && level.rules.length > 1) {
+      // Show hint button instead of auto-showing chips
+      el.ruleHint.innerHTML = `
+        <button class="hint-btn" id="btnRuleHint">
+          💡 Which rule? (−2s)
+        </button>
+      `;
+      
+      document.getElementById('btnRuleHint').addEventListener('click', () => {
+        state.ruleHintUsed = true;
+        state.pickingRule = true;
+        
+        // Time penalty for using hint
+        state.timeLeft = Math.max(0, state.timeLeft - 2);
+        
+        // Show rule chips
+        el.ruleHint.innerHTML = '<span style="color:var(--muted);">Pick the rule:</span>';
+        renderRuleChips(level);
+      });
+      
+      // Show choices immediately (they can answer without picking rule!)
+      renderChoices();
+      startTimer();
+    } else {
+      el.ruleHint.textContent = state.currentProblem.rule;
+      renderChoices();
+      startTimer();
+    }
+    
+    updateStreakDots();
+    
+    // Dojo character idle
+    animateDojoChar('idle');
+  }
+  
+  // Rule chips - pick which rule applies before answering
+  function renderRuleChips(level) {
+    const ruleNames = {
+      'power': 'Power',
+      'constant': 'Constant',
+      'trig': 'Trig',
+      'exp': 'Exp/Log',
+      'product': 'Product',
+      'quotient': 'Quotient',
+      'chain-simple': 'Chain',
+      'chain-complex': 'Chain'
+    };
+    
+    // Get unique display names
+    const seen = new Set();
+    const chips = level.rules
+      .map(r => ({ key: r, name: ruleNames[r] || r }))
+      .filter(r => {
+        if (seen.has(r.name)) return false;
+        seen.add(r.name);
+        return true;
+      });
+    
+    el.ruleChips.innerHTML = chips.map(r => 
+      `<button class="rule-chip" data-rule="${r.key}">${r.name}</button>`
+    ).join('');
+    
+    el.ruleChips.style.display = 'flex';
+    
+    el.ruleChips.querySelectorAll('.rule-chip').forEach(btn => {
+      btn.addEventListener('click', () => handleRuleChipClick(btn));
+    });
+    
+    // Start timer while picking rule
+    startTimer();
+  }
+  
+  function handleRuleChipClick(btn) {
+    const picked = btn.dataset.rule;
+    const correct = state.currentProblem.ruleKey || 'power';
+    
+    // Chain rules are equivalent
+    const pickedBase = picked.replace('-simple', '').replace('-complex', '');
+    const correctBase = correct.replace('-simple', '').replace('-complex', '');
+    
+    if (pickedBase === correctBase) {
+      // Correct rule!
+      btn.classList.add('correct');
+      state.ruleConfirmed = true;
+      state.pickingRule = false;
+      
+      // Small time bonus for knowing the rule
+      if (!state.practiceMode) {
+        state.timeLeft = Math.min(state.timeLeft + 1, levels[state.level - 1].timeLimit);
+      }
+      
+      // Hide chips, show rule name
+      setTimeout(() => {
+        el.ruleChips.style.display = 'none';
+        el.ruleHint.textContent = state.currentProblem.rule;
+      }, 300);
+      
+    } else {
+      // Wrong rule
+      btn.classList.add('incorrect');
+      state.pickingRule = false;
+      
+      // Small time penalty
+      if (!state.practiceMode) {
+        state.timeLeft = Math.max(0, state.timeLeft - 1);
+      }
+      
+      // Highlight correct after a moment
+      setTimeout(() => {
+        el.ruleChips.querySelectorAll('.rule-chip').forEach(b => {
+          const bKey = b.dataset.rule.replace('-simple', '').replace('-complex', '');
+          if (bKey === correctBase) {
+            b.classList.add('correct');
+          }
+        });
+        
+        // Then hide chips
+        setTimeout(() => {
+          el.ruleChips.style.display = 'none';
+          el.ruleHint.textContent = state.currentProblem.rule;
+        }, 500);
+      }, 300);
+    }
+  }
+  
+  // Dojo character animations
+  function animateDojoChar(action) {
+    el.dojoChar.textContent = currentDojoChar;
+    el.dojoChar.className = 'dojo-character';
+    
+    // Force reflow to restart animation
+    void el.dojoChar.offsetWidth;
+    
+    el.dojoChar.classList.add(action);
+  }
+  
+  function renderChoices() {
+    const correct = state.currentProblem.answerDisplay;
+    const wrongs = generateWrongAnswers(correct, state.currentProblem);
+    
+    // Shuffle
+    const all = [correct, ...wrongs].sort(() => Math.random() - 0.5);
+    
+    el.choices.innerHTML = '';
+    all.forEach((choice, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `<span class="choice-num">[${i + 1}]</span>${choice}`;
+      btn.dataset.correct = (choice === correct) ? 'true' : 'false';
+      btn.addEventListener('click', () => checkAnswer(btn, choice === correct));
+      el.choices.appendChild(btn);
+    });
+  }
+  
+  function checkAnswer(btn, isCorrect) {
+    stopTimer();
+    
+    const buttons = el.choices.querySelectorAll('.choice-btn');
+    buttons.forEach(b => b.disabled = true);
+    
+    if (isCorrect) {
+      btn.classList.add('correct');
+      handleCorrect();
+    } else {
+      btn.classList.add('incorrect');
+      // Reveal correct using data attribute
+      buttons.forEach(b => {
+        if (b.dataset.correct === 'true') {
+          b.classList.add('revealed');
+        }
+      });
+      // Pass the picked answer for mistake analysis
+      handleIncorrect(btn.innerHTML);
+    }
+    
+    // Show work
+    showWork();
+    
+    // Next problem after delay
+    setTimeout(nextProblem, isCorrect ? 1200 : 3000);
+  }
+  
+  function handleCorrect() {
+    state.streak++;
+    if (state.streak > state.maxStreak) state.maxStreak = state.streak;
+    
+    // Track mastery
+    const ruleKey = state.currentProblem.ruleKey || 'power';
+    if (state.mastery[ruleKey]) {
+      state.mastery[ruleKey].attempts++;
+      state.mastery[ruleKey].correct++;
+      saveMastery();
+    }
+    
+    let points;
+    let bonusText = '';
+    
+    if (state.practiceMode) {
+      // Practice mode: flat score, no combos
+      points = 10;
+    } else {
+      // Timed mode: combo multiplier
+      const combo = Math.min(5, Math.floor(state.streak / 3) + 1);
+      const timeBonus = Math.max(0, Math.floor(state.timeLeft * 2));
+      points = (10 + timeBonus) * combo;
+      
+      // BONUS: +5 if they didn't use rule hint!
+      if (!state.ruleHintUsed && levels[state.level - 1].rules.length > 1) {
+        points += 5;
+        bonusText = ' <span style="color:var(--warning);font-size:0.8rem;">(+5 no hint!)</span>';
+      }
+      
+      // Show combo
+      if (combo > 1) {
+        el.combo.textContent = `🔥 x${combo} COMBO!`;
+        el.combo.classList.add('visible');
+        setTimeout(() => el.combo.classList.remove('visible'), 1000);
+      }
+    }
+    
+    state.score += points;
+    
+    el.feedback.innerHTML = `<div class="feedback-text correct">✓ Correct! +${points}${bonusText}</div>`;
+    
+    // Dojo character does a kick or punch (special at milestones)
+    if (state.streak === 5) {
+      animateDojoChar('bow');
+    } else if (state.streak >= 10) {
+      animateDojoChar('punch');
+    } else {
+      animateDojoChar(Math.random() > 0.5 ? 'kick' : 'punch');
+    }
+    
+    // Check milestones
+    checkMilestones();
+    
+    updateStats();
+    updateStreakDots();
+  }
+  
+  // Milestone celebration system
+  function checkMilestones() {
+    const totalCorrect = Object.values(state.mastery)
+      .reduce((sum, r) => sum + r.correct, 0);
+    
+    const milestones = {
+      10: '🎉 10 correct! You\'re getting the hang of this!',
+      25: '🔥 25 correct! You\'re on fire!',
+      50: '💪 50 correct! Derivative machine!',
+      100: '🏆 100 correct! Master level!',
+      250: '🌟 250 correct! You\'re a LEGEND!'
+    };
+    
+    // Check total milestones
+    for (const [count, msg] of Object.entries(milestones)) {
+      if (totalCorrect === parseInt(count) && !state.milestonesShown[`total${count}`]) {
+        state.milestonesShown[`total${count}`] = true;
+        showCelebration(msg);
+        break;
+      }
+    }
+    
+    // Check streak milestones
+    if (state.streak === 5 && !state.milestonesShown['streak5']) {
+      state.milestonesShown['streak5'] = true;
+      showCelebration('⚡ 5-STREAK! Keep it going!');
+    } else if (state.streak === 10 && !state.milestonesShown['streak10']) {
+      state.milestonesShown['streak10'] = true;
+      showCelebration('🔥 10-STREAK! INCREDIBLE!');
+    }
+  }
+  
+  function showCelebration(msg) {
+    const div = document.createElement('div');
+    div.className = 'celebration-toast';
+    div.textContent = msg;
+    document.body.appendChild(div);
+    
+    setTimeout(() => div.remove(), 3000);
+  }
+  
+  function handleIncorrect(pickedAnswer) {
+    const lostStreak = state.streak;
+    state.streak = 0;
+    
+    // Track mastery
+    const ruleKey = state.currentProblem.ruleKey || 'power';
+    if (state.mastery[ruleKey]) {
+      state.mastery[ruleKey].attempts++;
+      // No increment to correct
+      saveMastery();
+    }
+    
+    // Check if this is a known common mistake
+    const picked = pickedAnswer ? pickedAnswer.replace(/<[^>]*>/g, '').replace(/\[\d\]\s*/, '').trim() : '';
+    const mistake = state.currentProblem.commonMistakes?.find(m => {
+      const pattern = m.pattern.replace(/<[^>]*>/g, '').trim();
+      return pattern === picked;
+    });
+    
+    let feedbackHTML = '';
+    
+    if (mistake) {
+      // Show specific feedback for this mistake
+      feedbackHTML = `
+        <div class="feedback-text incorrect">✗ ${mistake.hint}</div>
+        <div class="mistake-box">
+          <details>
+            <summary>Why was this wrong?</summary>
+            <div class="mistake-explanation">${mistake.explanation}</div>
+          </details>
+        </div>
+        <div class="feedback-detail" style="margin-top:8px;">Correct: ${state.currentProblem.answerDisplay}</div>
+      `;
+    } else {
+      // Generic feedback with rule tip
+      const tip = getQuickTip(state.currentProblem);
+      feedbackHTML = `
+        <div class="feedback-text incorrect">✗ Incorrect</div>
+        <div class="feedback-detail">Answer: ${state.currentProblem.answerDisplay}</div>
+        ${tip ? `<div class="feedback-detail" style="color:var(--warning);margin-top:4px;">💡 ${tip}</div>` : ''}
+      `;
+    }
+    
+    // Streak loss emotion
+    if (lostStreak >= 5) {
+      feedbackHTML += `
+        <div style="color: var(--warning); font-size: 0.85rem; margin-top: 6px;">
+          💔 Streak broken! You had ${lostStreak} going...
+        </div>
+      `;
+    }
+    
+    // Add retry similar button
+    feedbackHTML += `
+      <div style="margin-top: 10px;">
+        <button class="control-btn retry-btn" id="btnRetrySimilar">↻ Retry similar</button>
+      </div>
+    `;
+    
+    el.feedback.innerHTML = feedbackHTML;
+    
+    // Add retry handler
+    document.getElementById('btnRetrySimilar')?.addEventListener('click', () => {
+      stopTimer();
+      // Set session override to practice this rule (one problem only)
+      state.sessionRulesOverride = [state.currentProblem.ruleKey || 'power'];
+      state.sessionProblemCount = 1;
+      state.sessionRemaining = 1;
+      nextProblem();
+    });
+    
+    // Dojo character is sad
+    animateDojoChar('sad');
+    
+    updateStats();
+    updateStreakDots();
+  }
+  
+  // Quick tips for common rule mistakes
+  function getQuickTip(problem) {
+    const rule = problem.rule || '';
+    if (/chain/i.test(rule)) return "Chain rule: don't forget to multiply by the inner derivative!";
+    if (/product/i.test(rule)) return "Product rule needs BOTH terms: f'g + fg'";
+    if (/quotient/i.test(rule)) return "Quotient rule: (f'g − fg')/g² — watch the order!";
+    if (/trig/i.test(rule) && /cos/i.test(problem.display)) return "d(cos x)/dx = −sin x (negative!)";
+    return "";
+  }
+  
+  function showWork() {
+    if (!state.currentProblem.work) return;
+    
+    el.workSteps.innerHTML = state.currentProblem.work
+      .map(step => `<div class="work-step">${step}</div>`)
+      .join('');
+    el.workPanel.classList.add('visible');
+  }
+  
+  function startTimer() {
+    stopTimer();
+    
+    // In practice mode, no timer
+    if (state.practiceMode) {
+      el.timerFill.style.width = '100%';
+      el.timerFill.classList.remove('warning', 'danger');
+      el.timerNumber.textContent = '∞';
+      el.timerNumber.className = 'timer-number';
+      return;
+    }
+    
+    const level = levels[state.level - 1];
+    const updateInterval = 50;
+    
+    state.timerInterval = setInterval(() => {
+      if (state.paused) return;
+      
+      // Slower drain while picking rule (half speed)
+      const drain = state.pickingRule ? (updateInterval / 2000) : (updateInterval / 1000);
+      state.timeLeft -= drain;
+      
+      const pct = (state.timeLeft / level.timeLimit) * 100;
+      el.timerFill.style.width = `${Math.max(0, pct)}%`;
+      
+      // Update number display
+      const secs = Math.ceil(state.timeLeft);
+      el.timerNumber.textContent = secs + 's';
+      
+      // Color classes
+      el.timerFill.classList.remove('warning', 'danger');
+      el.timerNumber.classList.remove('warning', 'danger');
+      if (pct < 30) {
+        el.timerFill.classList.add('danger');
+        el.timerNumber.classList.add('danger');
+      } else if (pct < 50) {
+        el.timerFill.classList.add('warning');
+        el.timerNumber.classList.add('warning');
+      }
+      
+      if (state.timeLeft <= 0) {
+        timeOut();
+      }
+    }, updateInterval);
+  }
+  
+  function stopTimer() {
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+    }
+  }
+  
+  function timeOut() {
+    stopTimer();
+    
+    state.streak = 0;
+    
+    // Track mastery
+    const ruleKey = state.currentProblem.ruleKey || 'power';
+    if (state.mastery[ruleKey]) {
+      state.mastery[ruleKey].attempts++;
+      saveMastery();
+    }
+    
+    const buttons = el.choices.querySelectorAll('.choice-btn');
+    buttons.forEach(b => {
+      b.disabled = true;
+      if (b.dataset.correct === 'true') {
+        b.classList.add('revealed');
+      }
+    });
+    
+    el.feedback.innerHTML = `
+      <div class="feedback-text incorrect">⏱ Time's up!</div>
+      <div class="feedback-detail">Answer: ${state.currentProblem.answerDisplay}</div>
+    `;
+    
+    // Dojo character sad
+    animateDojoChar('sad');
+    
+    showWork();
+    updateStats();
+    updateStreakDots();
+    
+    setTimeout(nextProblem, 3000);
+  }
+  
+  function endLevel() {
+    stopTimer();
+    
+    // Save best score
+    const key = `level${state.level}`;
+    if (!state.bestScores[key] || state.score > state.bestScores[key]) {
+      state.bestScores[key] = state.score;
+      saveBestScores();
+    }
+    
+    const level = levels[state.level - 1];
+    
+    // Dojo character bows
+    animateDojoChar('bow');
+    
+    el.feedback.innerHTML = `
+      <div class="feedback-text correct">🎉 Level Complete!</div>
+      <div class="feedback-detail">Score: ${state.score} | Best Streak: ${state.maxStreak}</div>
+    `;
+    
+    el.choices.innerHTML = `
+      <button class="choice-btn" id="btnNextLevel">Next Level →</button>
+      <button class="choice-btn" id="btnReplay">Replay</button>
+    `;
+    
+    // Show mastery panel
+    updateMasteryPanel();
+    el.masteryPanel.style.display = 'block';
+    
+    // Find weak areas
+    const weakArea = findWeakestRule();
+    if (weakArea) {
+      el.choices.innerHTML += `
+        <button class="choice-btn" id="btnPracticeWeak" style="grid-column: span 2; background: rgba(255,107,74,0.15); border-color: var(--accent);">
+          💪 Practice ${weakArea.name}
+        </button>
+      `;
+    }
+    
+    document.getElementById('btnNextLevel').addEventListener('click', () => {
+      el.masteryPanel.style.display = 'none';
+      if (state.level < levels.length) {
+        state.level++;
+        el.levelDisplay.textContent = state.level;
+        state.score = 0;
+        state.streak = 0;
+        state.maxStreak = 0;
+        state.problemIndex = 0;
+        updateStats();
+        updateRulesReference();
+        nextProblem();
+      }
+    });
+    
+    document.getElementById('btnReplay').addEventListener('click', () => {
+      el.masteryPanel.style.display = 'none';
+      state.score = 0;
+      state.streak = 0;
+      state.maxStreak = 0;
+      state.problemIndex = 0;
+      updateStats();
+      nextProblem();
+    });
+    
+    const practiceWeakBtn = document.getElementById('btnPracticeWeak');
+    if (practiceWeakBtn && weakArea) {
+      practiceWeakBtn.addEventListener('click', () => {
+        // Set up focused practice on weak area
+        el.masteryPanel.style.display = 'none';
+        state.practiceMode = true;
+        el.btnPractice.textContent = '⏱ Timed Mode';
+        el.btnPractice.classList.add('active');
+        
+        // Use session override (don't mutate levels!)
+        state.sessionRulesOverride = [weakArea.key];
+        state.sessionProblemCount = 5;
+        state.sessionRemaining = 5;
+        
+        state.score = 0;
+        state.streak = 0;
+        state.problemIndex = 0;
+        updateStats();
+        nextProblem();
+      });
+    }
+  }
+  
+  // Update mastery panel display
+  function updateMasteryPanel() {
+    const ruleNames = {
+      'power': 'Power',
+      'constant': 'Constant',
+      'trig': 'Trig',
+      'exp': 'Exp/Log',
+      'product': 'Product',
+      'quotient': 'Quotient',
+      'chain-simple': 'Chain (simple)',
+      'chain-complex': 'Chain (complex)'
+    };
+    
+    const rows = Object.entries(state.mastery)
+      .filter(([key, data]) => data.attempts > 0)
+      .map(([key, data]) => {
+        const pct = Math.round((data.correct / data.attempts) * 100);
+        const colorClass = pct >= 80 ? 'good' : pct >= 50 ? 'okay' : 'weak';
+        return `
+          <div class="mastery-row">
+            <div class="mastery-label">${ruleNames[key] || key}</div>
+            <div class="mastery-bar">
+              <div class="mastery-fill ${colorClass}" style="width: ${pct}%"></div>
+            </div>
+            <div class="mastery-pct">${pct}%</div>
+          </div>
+        `;
+      });
+    
+    el.masteryBars.innerHTML = rows.length > 0 
+      ? rows.join('') 
+      : '<div style="color:var(--muted);font-size:0.85rem;">No data yet</div>';
+  }
+  
+  // Find the weakest rule for practice suggestion
+  function findWeakestRule() {
+    const ruleNames = {
+      'power': 'Power Rule',
+      'constant': 'Constant Rule',
+      'trig': 'Trig Derivatives',
+      'exp': 'Exp/Log',
+      'product': 'Product Rule',
+      'quotient': 'Quotient Rule',
+      'chain-simple': 'Chain Rule',
+      'chain-complex': 'Chain Rule'
+    };
+    
+    let weakest = null;
+    let lowestPct = 100;
+    
+    for (const [key, data] of Object.entries(state.mastery)) {
+      if (data.attempts >= 2) {
+        const pct = (data.correct / data.attempts) * 100;
+        if (pct < lowestPct && pct < 70) {
+          lowestPct = pct;
+          weakest = { key, name: ruleNames[key], pct };
+        }
+      }
+    }
+    
+    return weakest;
+  }
+  
+  function updateStats() {
+    el.score.textContent = state.score;
+    el.streak.textContent = state.streak;
+    el.levelDisplay.textContent = state.level;
+  }
+  
+  function updateStreakDots() {
+    const dots = el.streakDots.querySelectorAll('.streak-dot');
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('filled', i < state.streak % 5 || (state.streak > 0 && state.streak % 5 === 0 && i < 5));
+    });
+  }
+  
+  function updateRulesReference() {
+    const level = levels[state.level - 1];
+    const rules = [];
+    
+    if (level.rules.includes('power')) {
+      rules.push({ from: 'xⁿ', to: 'nxⁿ⁻¹' });
+    }
+    if (level.rules.includes('constant')) {
+      rules.push({ from: 'c', to: '0' });
+    }
+    if (level.rules.includes('trig')) {
+      rules.push({ from: 'sin x', to: 'cos x' });
+      rules.push({ from: 'cos x', to: '-sin x' });
+      rules.push({ from: 'tan x', to: 'sec<sup>2</sup>x' });
+      rules.push({ from: 'sec x', to: 'sec x tan x' });
+      rules.push({ from: 'csc x', to: '-csc x cot x' });
+      rules.push({ from: 'cot x', to: '-csc<sup>2</sup>x' });
+    }
+    if (level.rules.includes('exp')) {
+      rules.push({ from: 'eˣ', to: 'eˣ' });
+      rules.push({ from: 'ln x', to: '1/x' });
+    }
+    if (level.rules.includes('product')) {
+      rules.push({ from: 'f·g', to: "f'g + fg'" });
+    }
+    if (level.rules.includes('quotient')) {
+      rules.push({ from: 'f/g', to: "(f'g - fg')/g²" });
+    }
+    if (level.rules.includes('chain-simple') || level.rules.includes('chain-complex')) {
+      rules.push({ from: 'f(g(x))', to: "f'(g)·g'" });
+    }
+    
+    el.rulesGrid.innerHTML = rules
+      .map(r => `<div class="rule-item"><span class="from">${r.from}</span> → <span class="to">${r.to}</span></div>`)
+      .join('');
+  }
+  
+  function renderLevelSelect() {
+    el.levelGrid.innerHTML = levels.map(level => {
+      const best = state.bestScores[`level${level.id}`] || '—';
+      return `
+        <button class="level-btn ${level.id === state.level ? 'current' : ''}" data-level="${level.id}">
+          <div>
+            <div class="level-name">${level.id}. ${level.name}</div>
+            <div class="level-desc">${level.desc}</div>
+          </div>
+          <div class="level-best">Best: ${best}</div>
+        </button>
+      `;
+    }).join('');
+    
+    el.levelGrid.querySelectorAll('.level-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.level = parseInt(btn.dataset.level);
+        el.levelModal.classList.remove('visible');
+        startGame();
+      });
+    });
+  }
+  
+  function saveBestScores() {
+    try {
+      localStorage.setItem('derivativeDojoScores', JSON.stringify(state.bestScores));
+    } catch (e) {}
+  }
+  
+  function loadBestScores() {
+    try {
+      const saved = localStorage.getItem('derivativeDojoScores');
+      if (saved) state.bestScores = JSON.parse(saved);
+    } catch (e) {}
+  }
+  
+  function saveMastery() {
+    try {
+      localStorage.setItem('derivativeDojoMastery', JSON.stringify(state.mastery));
+    } catch (e) {}
+  }
+  
+  function loadMastery() {
+    try {
+      const saved = localStorage.getItem('derivativeDojoMastery');
+      if (saved) {
+        const loaded = JSON.parse(saved);
+        // Merge with default structure
+        for (const key of Object.keys(state.mastery)) {
+          if (loaded[key]) {
+            state.mastery[key] = loaded[key];
+          }
+        }
+      }
+    } catch (e) {}
+  }
+  
+  // === EVENT LISTENERS ===
+  
+  el.btnStart.addEventListener('click', startGame);
+  
+  el.btnSelectLevel.addEventListener('click', () => {
+    renderLevelSelect();
+    el.levelModal.classList.add('visible');
+  });
+  
+  el.btnLevels.addEventListener('click', () => {
+    renderLevelSelect();
+    el.levelModal.classList.add('visible');
+  });
+  
+  el.btnCloseLevel.addEventListener('click', () => {
+    el.levelModal.classList.remove('visible');
+  });
+  
+  el.btnSkip.addEventListener('click', () => {
+    stopTimer();
+    state.streak = 0;
+    updateStreakDots();
+    nextProblem();
+  });
+  
+  el.btnShowWork.addEventListener('click', () => {
+    if (state.currentProblem) {
+      showWork();
+    }
+  });
+  
+  el.btnPause.addEventListener('click', () => {
+    state.paused = !state.paused;
+    el.btnPause.textContent = state.paused ? 'Resume' : 'Pause';
+    el.btnPause.classList.toggle('active', state.paused);
+  });
+  
+  el.btnPractice.addEventListener('click', () => {
+    state.practiceMode = !state.practiceMode;
+    el.btnPractice.textContent = state.practiceMode ? '⏱ Timed Mode' : 'Practice Mode';
+    el.btnPractice.classList.toggle('active', state.practiceMode);
+    
+    // Reset timer display in practice mode
+    if (state.practiceMode) {
+      stopTimer();
+      el.timerFill.style.width = '100%';
+      el.timerFill.classList.remove('warning', 'danger');
+      // Hide rule chips in practice mode for faster flow
+      el.ruleChips.style.display = 'none';
+      if (state.currentProblem) {
+        el.ruleHint.textContent = state.currentProblem.rule;
+      }
+    } else {
+      // Restart timer with current problem
+      const level = levels[state.level - 1];
+      state.timeLeft = level.timeLimit;
+      startTimer();
+    }
+  });
+  
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      el.levelModal.classList.remove('visible');
+      el.statsModal.classList.remove('visible');
+      el.optionsModal.classList.remove('visible');
+    }
+    // Number keys for quick answer
+    if (e.key >= '1' && e.key <= '4') {
+      const buttons = el.choices.querySelectorAll('.choice-btn:not(:disabled)');
+      const idx = parseInt(e.key) - 1;
+      if (buttons[idx]) buttons[idx].click();
+    }
+  });
+  
+  // === STATS MODAL ===
+  
+  el.btnStats.addEventListener('click', () => {
+    updateStatsModal();
+    el.statsModal.classList.add('visible');
+  });
+  
+  el.btnCloseStats.addEventListener('click', () => {
+    el.statsModal.classList.remove('visible');
+  });
+  
+  el.btnCopySummary.addEventListener('click', copySessionSummary);
+  
+  function copySessionSummary() {
+    const totalAttempts = Object.values(state.mastery).reduce((s, m) => s + m.attempts, 0);
+    const totalCorrect = Object.values(state.mastery).reduce((s, m) => s + m.correct, 0);
+    const acc = totalAttempts ? Math.round(100 * totalCorrect / totalAttempts) : 0;
+    
+    const ruleNames = {
+      'power': 'Power Rule',
+      'constant': 'Constant',
+      'trig': 'Trig',
+      'exp': 'Exp/Log',
+      'product': 'Product Rule',
+      'quotient': 'Quotient Rule',
+      'chain-simple': 'Chain (simple)',
+      'chain-complex': 'Chain (complex)'
+    };
+    
+    const lines = [
+      `🥋 Derivative Dojo — Level ${state.level} (${levels[state.level - 1].name})`,
+      `Score: ${state.score}`,
+      `Best Streak: ${state.maxStreak}`,
+      `Accuracy: ${acc}% (${totalCorrect}/${totalAttempts})`,
+      '',
+      'Mastery by rule:'
+    ];
+    
+    for (const [key, m] of Object.entries(state.mastery)) {
+      if (!m.attempts) continue;
+      const pct = Math.round(100 * m.correct / m.attempts);
+      lines.push(`  • ${ruleNames[key] || key}: ${pct}% (${m.correct}/${m.attempts})`);
+    }
+    
+    lines.push('', `Generated: ${new Date().toLocaleString()}`);
+    
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      el.btnCopySummary.textContent = '✓ Copied!';
+      setTimeout(() => {
+        el.btnCopySummary.textContent = '📋 Copy Summary';
+      }, 2000);
+    }).catch(() => {
+      alert('Could not copy to clipboard');
+    });
+  }
+  
+  el.statsModal.addEventListener('click', (e) => {
+    if (e.target === el.statsModal) {
+      el.statsModal.classList.remove('visible');
+    }
+  });
+  
+  function updateStatsModal() {
+    // Calculate totals from mastery
+    let totalAttempts = 0;
+    let totalCorrect = 0;
+    
+    for (const data of Object.values(state.mastery)) {
+      totalAttempts += data.attempts;
+      totalCorrect += data.correct;
+    }
+    
+    const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+    
+    // Find best score for current level
+    const currentLevelBest = state.bestScores[`level${state.level}`] || 0;
+    
+    // Current session score
+    el.currentScore.textContent = state.score;
+    el.bestScore.textContent = currentLevelBest;
+    el.totalCorrect.textContent = totalCorrect;
+    el.overallAccuracy.textContent = accuracy + '%';
+    
+    // Color the accuracy
+    el.overallAccuracy.className = 'stats-box-value';
+    if (accuracy >= 80) el.overallAccuracy.classList.add('green');
+    else if (accuracy >= 50) el.overallAccuracy.style.color = 'var(--warning)';
+    else el.overallAccuracy.style.color = 'var(--error)';
+    
+    // Update mastery bars
+    const ruleNames = {
+      'power': 'Power',
+      'constant': 'Constant',
+      'trig': 'Trig',
+      'exp': 'Exp/Log',
+      'product': 'Product',
+      'quotient': 'Quotient',
+      'chain-simple': 'Chain (simple)',
+      'chain-complex': 'Chain (complex)'
+    };
+    
+    const rows = Object.entries(state.mastery)
+      .map(([key, data]) => {
+        const pct = data.attempts > 0 ? Math.round((data.correct / data.attempts) * 100) : 0;
+        const colorClass = pct >= 80 ? 'good' : pct >= 50 ? 'okay' : 'weak';
+        const attempts = data.attempts > 0 ? `${data.correct}/${data.attempts}` : '—';
+        return `
+          <div class="mastery-row">
+            <div class="mastery-label">${ruleNames[key] || key}</div>
+            <div class="mastery-bar">
+              <div class="mastery-fill ${data.attempts > 0 ? colorClass : ''}" style="width: ${pct}%"></div>
+            </div>
+            <div class="mastery-pct">${attempts}</div>
+          </div>
+        `;
+      });
+    
+    el.statsModalMastery.innerHTML = rows.join('');
+  }
+  
+  // === OPTIONS MODAL ===
+  
+  el.btnOptions.addEventListener('click', () => {
+    renderOptionsModal();
+    el.optionsModal.classList.add('visible');
+  });
+  
+  el.btnCloseOptions.addEventListener('click', () => {
+    el.optionsModal.classList.remove('visible');
+  });
+  
+  el.optionsModal.addEventListener('click', (e) => {
+    if (e.target === el.optionsModal) {
+      el.optionsModal.classList.remove('visible');
+    }
+  });
+  
+  function renderOptionsModal() {
+    // Update toggle states
+    el.toggleRuleChips.classList.toggle('active', options.showRuleChips);
+    el.toggleReference.classList.toggle('active', options.showReference);
+    
+    // Render character picker
+    el.charPicker.innerHTML = dojoChars.map((char, i) => `
+      <div class="char-option ${i === options.selectedChar ? 'selected' : ''}" data-index="${i}">
+        ${char}
+      </div>
+    `).join('');
+    
+    // Character selection events
+    el.charPicker.querySelectorAll('.char-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        options.selectedChar = parseInt(opt.dataset.index);
+        currentDojoChar = dojoChars[options.selectedChar];
+        el.dojoChar.textContent = currentDojoChar;
+        saveOptions();
+        renderOptionsModal();
+      });
+    });
+  }
+  
+  el.toggleRuleChips.addEventListener('click', () => {
+    options.showRuleChips = !options.showRuleChips;
+    el.toggleRuleChips.classList.toggle('active', options.showRuleChips);
+    saveOptions();
+  });
+  
+  el.toggleReference.addEventListener('click', () => {
+    options.showReference = !options.showReference;
+    el.toggleReference.classList.toggle('active', options.showReference);
+    document.getElementById('rulesPanel').style.display = options.showReference ? 'block' : 'none';
+    saveOptions();
+  });
+  
+  el.btnResetProgress.addEventListener('click', () => {
+    if (confirm('Reset ALL progress? This will clear your scores and mastery data.')) {
+      // Reset mastery
+      for (const key of Object.keys(state.mastery)) {
+        state.mastery[key] = { attempts: 0, correct: 0 };
+      }
+      // Reset best scores
+      state.bestScores = {};
+      
+      // Save cleared data
+      saveBestScores();
+      saveMastery();
+      
+      alert('Progress reset!');
+      el.optionsModal.classList.remove('visible');
+    }
+  });
+  
+  function saveOptions() {
+    try {
+      localStorage.setItem('derivativeDojoOptions', JSON.stringify(options));
+    } catch (e) {}
+  }
+  
+  function loadOptions() {
+    try {
+      const saved = localStorage.getItem('derivativeDojoOptions');
+      if (saved) {
+        Object.assign(options, JSON.parse(saved));
+        currentDojoChar = dojoChars[options.selectedChar] || dojoChars[0];
+      }
+    } catch (e) {}
+  }
+  
+  // Start screen stats/options buttons
+  el.btnStartStats.addEventListener('click', () => {
+    updateStatsModal();
+    el.statsModal.classList.add('visible');
+  });
+  
+  el.btnStartOptions.addEventListener('click', () => {
+    renderOptionsModal();
+    el.optionsModal.classList.add('visible');
+  });
+  
+  // Init
+  loadBestScores();
+  loadMastery();
+  loadOptions();
+  applyTeacherMode();
+  
+  // Apply loaded options
+  el.dojoChar.textContent = currentDojoChar;
+  document.getElementById('rulesPanel').style.display = options.showReference ? 'block' : 'none';
+  
+  // Teacher mode via URL param (?teacher=1)
+  function applyTeacherMode() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('teacher') === '1') {
+      state.practiceMode = true;
+      options.showReference = true;
+      options.showRuleChips = false; // Teachers demo without hints
+      
+      // Update UI
+      el.btnPractice.textContent = '⏱ Timed Mode';
+      el.btnPractice.classList.add('active');
+      document.getElementById('rulesPanel').style.display = 'block';
+      
+      // Add teacher mode indicator
+      const indicator = document.createElement('div');
+      indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:var(--accent2);color:#000;padding:4px 10px;border-radius:4px;font-size:0.75rem;font-weight:600;z-index:100;';
+      indicator.textContent = '👨‍🏫 Teacher Mode';
+      document.body.appendChild(indicator);
+    }
+  }
+  
+})();
+</script>
+</body>
+</html>

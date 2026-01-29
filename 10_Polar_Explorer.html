@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Polar Explorer — Discover Beautiful Curves</title>
+<style>
+  :root {
+    --bg: #0a0d14;
+    --panel: #111827;
+    --border: rgba(255,255,255,0.08);
+    --text: #e8eefc;
+    --muted: #8892a4;
+    --accent: #7cf3a0;
+    --accent2: #7cc4f3;
+    --rose: #f3a0c4;
+    --gold: #ffd166;
+    --curve: #7cf3a0;
+    --fill: rgba(124,243,160,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.4 system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  
+  header {
+    padding: 12px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  h1 {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  
+  h1 span { color: var(--accent); }
+  
+  .tagline {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    min-height: calc(100vh - 56px);
+  }
+  
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { max-height: 50vh; overflow-y: auto; }
+  }
+  
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  /* Accordion */
+  .accordion {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .accordion-header {
+    background: rgba(255,255,255,0.03);
+    padding: 10px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+  
+  .accordion-header:hover {
+    background: rgba(255,255,255,0.06);
+  }
+  
+  .accordion-header .icon {
+    color: var(--muted);
+    transition: transform 0.2s;
+  }
+  
+  .accordion.open .accordion-header .icon {
+    transform: rotate(90deg);
+  }
+  
+  .accordion-content {
+    display: none;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+  }
+  
+  .accordion.open .accordion-content {
+    display: block;
+  }
+  
+  .preset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  
+  .preset {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 0.8rem;
+  }
+  
+  .preset:hover {
+    background: rgba(124, 243, 160, 0.1);
+    border-color: var(--accent);
+  }
+  
+  .preset.active {
+    background: rgba(124, 243, 160, 0.15);
+    border-color: var(--accent);
+  }
+  
+  .preset-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  
+  .preset-formula {
+    font-family: ui-monospace, monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  
+  /* Panels */
+  .panel {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  
+  .panel h3 {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  
+  /* Sliders */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+  }
+  
+  .slider-row label {
+    min-width: 50px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  
+  .slider-row input[type="range"] {
+    flex: 1;
+    height: 5px;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: grab;
+  }
+  
+  .slider-value {
+    min-width: 50px;
+    text-align: right;
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+  
+  /* Formula Input */
+  .formula-input-wrap {
+    position: relative;
+  }
+  
+  .formula-input {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: ui-monospace, monospace;
+    font-size: 0.9rem;
+  }
+  
+  .formula-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  
+  .formula-hint {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  
+  .formula-error {
+    color: #ff6b6b;
+    font-size: 0.75rem;
+    margin-top: 4px;
+  }
+  
+  /* Info Panel */
+  .curve-info {
+    background: rgba(124, 243, 160, 0.08);
+    border: 1px solid rgba(124, 243, 160, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  
+  .curve-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  
+  .curve-formula-display {
+    font-family: ui-monospace, monospace;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+  }
+  
+  .curve-description {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  
+  .curve-fact {
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(255, 209, 102, 0.1);
+    border-left: 3px solid var(--gold);
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+  
+  .curve-fact strong {
+    color: var(--gold);
+  }
+  
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .stat-box {
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  
+  .stat-value {
+    font-family: ui-monospace, monospace;
+    font-size: 0.95rem;
+    color: var(--accent);
+  }
+  
+  /* Canvas Area */
+  .canvas-area {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .canvas-wrap {
+    flex: 1;
+    min-height: 400px;
+    background: radial-gradient(circle at 30% 30%, #111827, #0a0d14);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  
+  .canvas-controls {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    gap: 8px;
+  }
+  
+  .canvas-btn {
+    background: rgba(0,0,0,0.7);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .canvas-btn:hover {
+    background: rgba(124, 243, 160, 0.2);
+    border-color: var(--accent);
+  }
+  
+  .canvas-btn.active {
+    background: rgba(124, 243, 160, 0.25);
+    border-color: var(--accent);
+  }
+  
+  /* Theta Animation Slider */
+  .theta-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  
+  .theta-control label {
+    color: var(--muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  
+  .theta-control input[type="range"] {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+  }
+  
+  .theta-control input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: grab;
+  }
+  
+  .theta-value {
+    min-width: 120px;
+    font-family: ui-monospace, monospace;
+    color: var(--accent);
+    text-align: right;
+    font-size: 0.85rem;
+  }
+  
+  /* Integral Display */
+  .integral-display {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .integral-formula {
+    font-family: ui-monospace, monospace;
+    font-size: 0.9rem;
+  }
+  
+  .integral-result {
+    font-family: ui-monospace, monospace;
+    font-size: 1.1rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  
+  /* Challenge Panel */
+  .challenge-panel {
+    background: rgba(124, 161, 255, 0.08);
+    border-color: rgba(124, 161, 255, 0.2);
+  }
+  
+  .challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .challenge-header h3 {
+    margin: 0;
+    color: var(--accent2);
+  }
+  
+  .challenge-progress {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    color: var(--accent2);
+    background: rgba(124, 196, 243, 0.15);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  
+  .challenge-name {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  
+  .challenge-prompt {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+  
+  .challenge-hint {
+    background: rgba(255, 209, 102, 0.15);
+    border-left: 3px solid var(--gold);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  
+  .challenge-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .challenge-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .challenge-btn:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  
+  .challenge-btn.primary {
+    background: rgba(124, 243, 160, 0.2);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  
+  .challenge-btn.primary:hover {
+    background: rgba(124, 243, 160, 0.3);
+  }
+  
+  .challenge-success, .challenge-complete {
+    text-align: center;
+    padding: 10px;
+  }
+  
+  .success-icon {
+    font-size: 2rem;
+    margin-bottom: 6px;
+  }
+  
+  .success-text {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--accent);
+  }
+  
+  /* Share Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  
+  .modal-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 450px;
+    width: 90%;
+  }
+  
+  .modal h2 {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+  }
+  
+  .modal-section {
+    margin-bottom: 16px;
+  }
+  
+  .modal-section label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  
+  .modal-input {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+  }
+  
+  .modal-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  
+  .modal-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .modal-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .modal-btn.secondary {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  
+  .modal-btn.primary {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+  
+  .modal-btn:hover {
+    opacity: 0.9;
+  }
+  
+  .copy-feedback {
+    text-align: center;
+    color: var(--accent);
+    font-size: 0.85rem;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  .copy-feedback.visible {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌸 Polar <span>Explorer</span></h1>
+  <div class="tagline">Discover the beauty of polar curves — drag, explore, wonder</div>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    
+    <!-- Formula Input -->
+    <div class="panel">
+      <h3>Type a Formula</h3>
+      <div class="formula-input-wrap">
+        <input type="text" class="formula-input" id="formulaInput" placeholder="r = 2*cos(3*t)" spellcheck="false"/>
+        <div class="formula-hint">Use <code>t</code> for θ. Examples: <code>2*sin(4*t)</code>, <code>1+cos(t)</code></div>
+        <div class="formula-error" id="formulaError"></div>
+      </div>
+    </div>
+    
+    <!-- Curve Categories -->
+    <div class="accordion open" data-category="circles">
+      <div class="accordion-header">
+        <span>⭕ Circles & Basics</span>
+        <span class="icon">▶</span>
+      </div>
+      <div class="accordion-content">
+        <div class="preset-grid">
+          <div class="preset" data-preset="circle">
+            <div class="preset-name">Circle</div>
+            <div class="preset-formula">r = a</div>
+          </div>
+          <div class="preset" data-preset="line">
+            <div class="preset-name">Line</div>
+            <div class="preset-formula">r = a/cos(θ)</div>
+          </div>
+          <div class="preset" data-preset="offset-circle">
+            <div class="preset-name">Offset Circle</div>
+            <div class="preset-formula">r = 2a·cos(θ)</div>
+          </div>
+          <div class="preset" data-preset="offset-circle-sin">
+            <div class="preset-name">Offset (sin)</div>
+            <div class="preset-formula">r = 2a·sin(θ)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="accordion" data-category="roses">
+      <div class="accordion-header">
+        <span>🌹 Rose Curves</span>
+        <span class="icon">▶</span>
+      </div>
+      <div class="accordion-content">
+        <div class="preset-grid">
+          <div class="preset" data-preset="rose3">
+            <div class="preset-name">3-Petal</div>
+            <div class="preset-formula">r = a·cos(3θ)</div>
+          </div>
+          <div class="preset" data-preset="rose4">
+            <div class="preset-name">4-Petal</div>
+            <div class="preset-formula">r = a·cos(2θ)</div>
+          </div>
+          <div class="preset" data-preset="rose5">
+            <div class="preset-name">5-Petal</div>
+            <div class="preset-formula">r = a·cos(5θ)</div>
+          </div>
+          <div class="preset" data-preset="rose8">
+            <div class="preset-name">8-Petal</div>
+            <div class="preset-formula">r = a·sin(4θ)</div>
+          </div>
+          <div class="preset" data-preset="rose-sin3">
+            <div class="preset-name">Rose (sin 3θ)</div>
+            <div class="preset-formula">r = a·sin(3θ)</div>
+          </div>
+          <div class="preset" data-preset="rose-custom">
+            <div class="preset-name">Custom Rose</div>
+            <div class="preset-formula">r = a·cos(nθ)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="accordion" data-category="cardioids">
+      <div class="accordion-header">
+        <span>💜 Cardioids & Limaçons</span>
+        <span class="icon">▶</span>
+      </div>
+      <div class="accordion-content">
+        <div class="preset-grid">
+          <div class="preset" data-preset="cardioid">
+            <div class="preset-name">Cardioid</div>
+            <div class="preset-formula">r = a(1+cos θ)</div>
+          </div>
+          <div class="preset" data-preset="cardioid-sin">
+            <div class="preset-name">Cardioid (sin)</div>
+            <div class="preset-formula">r = a(1+sin θ)</div>
+          </div>
+          <div class="preset" data-preset="limacon-inner">
+            <div class="preset-name">Limaçon (loop)</div>
+            <div class="preset-formula">r = a + b·cos θ</div>
+          </div>
+          <div class="preset" data-preset="limacon-dimple">
+            <div class="preset-name">Limaçon (dimple)</div>
+            <div class="preset-formula">r = a + b·cos θ</div>
+          </div>
+          <div class="preset" data-preset="limacon-convex">
+            <div class="preset-name">Convex Limaçon</div>
+            <div class="preset-formula">r = a + b·cos θ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="accordion" data-category="spirals">
+      <div class="accordion-header">
+        <span>🌀 Spirals</span>
+        <span class="icon">▶</span>
+      </div>
+      <div class="accordion-content">
+        <div class="preset-grid">
+          <div class="preset" data-preset="archimedes">
+            <div class="preset-name">Archimedean</div>
+            <div class="preset-formula">r = a·θ</div>
+          </div>
+          <div class="preset" data-preset="fermat">
+            <div class="preset-name">Fermat</div>
+            <div class="preset-formula">r = a·√θ</div>
+          </div>
+          <div class="preset" data-preset="log-spiral">
+            <div class="preset-name">Logarithmic</div>
+            <div class="preset-formula">r = a·e^(bθ)</div>
+          </div>
+          <div class="preset" data-preset="hyperbolic">
+            <div class="preset-name">Hyperbolic</div>
+            <div class="preset-formula">r = a/θ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="accordion" data-category="special">
+      <div class="accordion-header">
+        <span>✨ Special Curves</span>
+        <span class="icon">▶</span>
+      </div>
+      <div class="accordion-content">
+        <div class="preset-grid">
+          <div class="preset" data-preset="lemniscate">
+            <div class="preset-name">Lemniscate</div>
+            <div class="preset-formula">r² = a²cos(2θ)</div>
+          </div>
+          <div class="preset" data-preset="butterfly">
+            <div class="preset-name">Butterfly</div>
+            <div class="preset-formula">r = eˢⁱⁿᶿ - 2cos(4θ)</div>
+          </div>
+          <div class="preset" data-preset="heart">
+            <div class="preset-name">Heart</div>
+            <div class="preset-formula">r = 1 - sin(θ)</div>
+          </div>
+          <div class="preset" data-preset="flower">
+            <div class="preset-name">Flower</div>
+            <div class="preset-formula">r = cos(2θ)·cos(3θ)</div>
+          </div>
+          <div class="preset" data-preset="cannabis">
+            <div class="preset-name">Cannabis</div>
+            <div class="preset-formula">(1+sin)(1+.9cos8θ)...</div>
+          </div>
+          <div class="preset" data-preset="star">
+            <div class="preset-name">Star</div>
+            <div class="preset-formula">r = 2 + cos(5θ)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Parameter Sliders -->
+    <div class="panel" id="paramPanel">
+      <h3>Parameters</h3>
+      <div class="slider-row" id="rowA">
+        <label>a</label>
+        <input type="range" id="sliderA" min="0.1" max="3" step="0.05" value="1.5"/>
+        <span class="slider-value" id="valA">1.50</span>
+      </div>
+      <div class="slider-row" id="rowB" style="display:none">
+        <label>b</label>
+        <input type="range" id="sliderB" min="-2" max="2" step="0.05" value="0.5"/>
+        <span class="slider-value" id="valB">0.50</span>
+      </div>
+      <div class="slider-row" id="rowN" style="display:none">
+        <label>n</label>
+        <input type="range" id="sliderN" min="1" max="12" step="1" value="3"/>
+        <span class="slider-value" id="valN">3</span>
+      </div>
+    </div>
+    
+    <!-- Curve Info -->
+    <div class="curve-info" id="curveInfo">
+      <div class="curve-name" id="curveName">Circle</div>
+      <div class="curve-formula-display" id="curveFormula">r = 1.5</div>
+      <div class="curve-description" id="curveDesc">The simplest polar curve. All points are equidistant from the origin.</div>
+      <div class="curve-fact" id="curveFact">
+        <strong>💡 Did you know?</strong> The area of a circle in polar coordinates is A = ½∫r²dθ = ½ · a² · 2π = πa²
+      </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Area</div>
+        <div class="stat-value" id="statArea">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Arc Length</div>
+        <div class="stat-value" id="statArc">—</div>
+      </div>
+    </div>
+    
+    <!-- Challenge Mode -->
+    <div class="panel challenge-panel" id="challengePanel">
+      <div class="challenge-header">
+        <h3>🎯 Challenges</h3>
+        <span class="challenge-progress" id="challengeProgress">0/8</span>
+      </div>
+      <div class="challenge-current" id="challengeCurrent">
+        <div class="challenge-name" id="challengeName">Rose Detective</div>
+        <div class="challenge-prompt" id="challengePrompt">Create a rose curve with exactly 5 petals</div>
+        <div class="challenge-hint" id="challengeHint" style="display:none"></div>
+        <div class="challenge-buttons">
+          <button class="challenge-btn" id="btnHint">💡 Hint</button>
+          <button class="challenge-btn" id="btnSkip">Skip →</button>
+        </div>
+      </div>
+      <div class="challenge-success" id="challengeSuccess" style="display:none">
+        <div class="success-icon">🎉</div>
+        <div class="success-text" id="successText">Perfect!</div>
+        <button class="challenge-btn primary" id="btnNextChallenge">Next Challenge →</button>
+      </div>
+      <div class="challenge-complete" id="challengeComplete" style="display:none">
+        <div class="success-icon">🏆</div>
+        <div class="success-text">All Challenges Complete!</div>
+        <button class="challenge-btn" id="btnRestart">Play Again</button>
+      </div>
+    </div>
+    
+  </div>
+  
+  <div class="canvas-area">
+    <div class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+      <div class="canvas-controls">
+        <button class="canvas-btn active" id="btnFill">Fill</button>
+        <button class="canvas-btn" id="btnAnimate">▶ Draw</button>
+        <button class="canvas-btn" id="btnGrid">Grid</button>
+        <button class="canvas-btn active" id="btnScale">Fixed Scale</button>
+        <button class="canvas-btn" id="btnRandom">🎲</button>
+        <button class="canvas-btn" id="btnShare">📤 Share</button>
+      </div>
+    </div>
+    
+    <!-- Theta Slider -->
+    <div class="theta-control">
+      <label>θ range:</label>
+      <input type="range" id="thetaSlider" min="0.1" max="12.566" step="0.01" value="6.283"/>
+      <span class="theta-value" id="thetaValue">0 → 2π</span>
+    </div>
+    
+    <!-- Integral Display -->
+    <div class="integral-display">
+      <div class="integral-formula">
+        A = ½ ∫<sub>0</sub><sup id="intUpper">2π</sup> r² dθ
+      </div>
+      <div class="integral-result" id="integralResult">= 7.069</div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <h2>📤 Share This Curve</h2>
+    <div class="modal-section">
+      <label>Share Code (paste after your file path or URL)</label>
+      <input type="text" class="modal-input" id="shareCode" readonly/>
+    </div>
+    <div class="modal-section">
+      <label>Load a Code</label>
+      <input type="text" class="modal-input" id="loadCode" placeholder="Paste a code here..."/>
+    </div>
+    <div class="modal-buttons">
+      <button class="modal-btn secondary" id="btnCloseModal">Close</button>
+      <button class="modal-btn secondary" id="btnLoadCode">Load</button>
+      <button class="modal-btn primary" id="btnCopyCode">Copy Code</button>
+    </div>
+    <div class="copy-feedback" id="copyFeedback">✓ Copied!</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  
+  const TAU = Math.PI * 2;
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // State
+  const state = {
+    preset: 'circle',
+    a: 1.5,
+    b: 0.5,
+    n: 3,
+    thetaMax: TAU,
+    customFormula: null,
+    showFill: true,
+    showGrid: true,
+    fixedScale: true,
+    scaleMax: 3.5,
+    animating: false,
+    animTheta: 0,
+    // Challenge state
+    challengeIndex: 0,
+    challengesCompleted: new Set()
+  };
+  
+  // Challenges
+  const challenges = [
+    {
+      id: 'rose5',
+      name: 'Rose Detective',
+      prompt: 'Create a rose curve with exactly 5 petals',
+      hint: 'Try r = a·cos(nθ) where n is odd. Odd n gives n petals!',
+      check: () => {
+        return (state.preset === 'rose5' || 
+               (state.preset === 'rose-custom' && state.n === 5) ||
+               (state.preset === 'rose-sin3' && false) || // 3 petals
+               (state.customFormula && el.formulaInput.value.match(/cos\s*\(\s*5\s*\*?\s*t/i)));
+      },
+      reward: 'Odd n gives n petals. Even n gives 2n petals!'
+    },
+    {
+      id: 'cardioid',
+      name: 'Heart Finder',
+      prompt: 'Display a cardioid (heart-shaped curve)',
+      hint: 'Look in the Cardioids & Limaçons section...',
+      check: () => {
+        return state.preset === 'cardioid' || state.preset === 'cardioid-sin' || state.preset === 'heart';
+      },
+      reward: 'The cardioid is named from Greek "kardia" (heart)!'
+    },
+    {
+      id: 'area10',
+      name: 'Area Hunter',
+      prompt: 'Find ANY curve with area between 9.5 and 10.5',
+      hint: 'Adjust the "a" parameter or θ range to fine-tune the area.',
+      check: () => {
+        const area = calcArea();
+        return area >= 9.5 && area <= 10.5;
+      },
+      reward: 'You found it! Area = ½∫r²dθ in action.'
+    },
+    {
+      id: 'limacon-loop',
+      name: 'Loop Master',
+      prompt: 'Create a limaçon with an inner loop',
+      hint: 'In r = a + b·cos(θ), you need |b| > |a| for an inner loop.',
+      check: () => {
+        return state.preset === 'limacon-inner' || 
+               (state.preset.includes('limacon') && Math.abs(state.b) > Math.abs(state.a));
+      },
+      reward: 'When |b| > |a|, the curve crosses the origin, creating a loop!'
+    },
+    {
+      id: 'spiral',
+      name: 'Spiral Explorer',
+      prompt: 'Display any spiral curve',
+      hint: 'Check the Spirals section in the accordion menu.',
+      check: () => {
+        return ['archimedes', 'fermat', 'log-spiral', 'hyperbolic'].includes(state.preset);
+      },
+      reward: 'Spirals are unbounded — they grow forever as θ increases!'
+    },
+    {
+      id: 'lemniscate',
+      name: 'Infinity Symbol',
+      prompt: 'Find the curve that looks like ∞',
+      hint: 'It\'s in the Special Curves section. Its name starts with "L"...',
+      check: () => state.preset === 'lemniscate',
+      reward: 'The ∞ symbol is based on the Lemniscate of Bernoulli!'
+    },
+    {
+      id: 'custom',
+      name: 'Custom Creator',
+      prompt: 'Create your own curve using the formula input',
+      hint: 'Type something like: 2*cos(3*t) + sin(2*t)',
+      check: () => state.customFormula !== null,
+      reward: 'You can create infinite curves by combining trig functions!'
+    },
+    {
+      id: 'butterfly',
+      name: 'Nature\'s Beauty',
+      prompt: 'Find the butterfly curve',
+      hint: 'Look in Special Curves for something that flies...',
+      check: () => state.preset === 'butterfly',
+      reward: 'Temple Fay discovered this curve in 1989 — pure math creates natural forms!'
+    }
+  ];
+  
+  // Curve definitions
+  const curves = {
+    'circle': {
+      name: 'Circle',
+      formula: (t, a) => a,
+      display: (a) => `r = ${a.toFixed(2)}`,
+      desc: 'The simplest polar curve. All points are equidistant from the origin.',
+      fact: 'The area A = πa². The circumference is 2πa. Every point satisfies x² + y² = a².',
+      params: ['a'],
+      thetaDefault: TAU
+    },
+    'line': {
+      name: 'Vertical Line',
+      formula: (t, a) => a / Math.cos(t),
+      display: (a) => `r = ${a.toFixed(2)}/cos(θ)`,
+      desc: 'A vertical line at x = a. Demonstrates that lines can be expressed in polar form.',
+      fact: 'This is equivalent to x = a in Cartesian coordinates. The curve is undefined when cos(θ) = 0.',
+      params: ['a'],
+      thetaDefault: Math.PI * 0.9
+    },
+    'offset-circle': {
+      name: 'Offset Circle (cos)',
+      formula: (t, a) => 2 * a * Math.cos(t),
+      display: (a) => `r = ${(2*a).toFixed(2)}·cos(θ)`,
+      desc: 'A circle passing through the origin, centered at (a, 0).',
+      fact: 'Converting to Cartesian: r = 2a·cos(θ) → r² = 2ar·cos(θ) → x² + y² = 2ax → (x-a)² + y² = a²',
+      params: ['a'],
+      thetaDefault: Math.PI
+    },
+    'offset-circle-sin': {
+      name: 'Offset Circle (sin)',
+      formula: (t, a) => 2 * a * Math.sin(t),
+      display: (a) => `r = ${(2*a).toFixed(2)}·sin(θ)`,
+      desc: 'A circle passing through the origin, centered at (0, a).',
+      fact: 'This circle is tangent to the x-axis at the origin. The full curve traces from θ = 0 to θ = π.',
+      params: ['a'],
+      thetaDefault: Math.PI
+    },
+    'rose3': {
+      name: '3-Petal Rose',
+      formula: (t, a) => a * Math.cos(3 * t),
+      display: (a) => `r = ${a.toFixed(2)}·cos(3θ)`,
+      desc: 'A rose curve with 3 petals. Odd n gives n petals.',
+      fact: 'For r = a·cos(nθ): odd n gives n petals, even n gives 2n petals. Each petal has area πa²/(4n).',
+      params: ['a'],
+      thetaDefault: Math.PI
+    },
+    'rose4': {
+      name: '4-Petal Rose',
+      formula: (t, a) => a * Math.cos(2 * t),
+      display: (a) => `r = ${a.toFixed(2)}·cos(2θ)`,
+      desc: 'A rose curve with 4 petals. Even n gives 2n petals.',
+      fact: 'The total area of all petals is πa²/2 — exactly half the area of a circle with radius a!',
+      params: ['a'],
+      thetaDefault: TAU
+    },
+    'rose5': {
+      name: '5-Petal Rose',
+      formula: (t, a) => a * Math.cos(5 * t),
+      display: (a) => `r = ${a.toFixed(2)}·cos(5θ)`,
+      desc: 'A beautiful 5-petal rose curve.',
+      fact: 'You need θ from 0 to π to trace odd-petal roses completely. The symmetry comes from cos being even.',
+      params: ['a'],
+      thetaDefault: Math.PI
+    },
+    'rose8': {
+      name: '8-Petal Rose',
+      formula: (t, a) => a * Math.sin(4 * t),
+      display: (a) => `r = ${a.toFixed(2)}·sin(4θ)`,
+      desc: '8 petals from sin(4θ). The sin version rotates the rose by π/(2n).',
+      fact: 'Rose curves were named by mathematician Guido Grandi in 1728. He called them "rhodonea" (Greek for rose).',
+      params: ['a'],
+      thetaDefault: TAU
+    },
+    'rose-sin3': {
+      name: 'Rose (sin 3θ)',
+      formula: (t, a) => a * Math.sin(3 * t),
+      display: (a) => `r = ${a.toFixed(2)}·sin(3θ)`,
+      desc: '3 petals, rotated 30° from the cos version.',
+      fact: 'The sin version is rotated by π/(2n) radians compared to the cos version.',
+      params: ['a'],
+      thetaDefault: Math.PI
+    },
+    'rose-custom': {
+      name: 'Custom Rose',
+      formula: (t, a, b, n) => a * Math.cos(n * t),
+      display: (a, b, n) => `r = ${a.toFixed(2)}·cos(${n}θ)`,
+      desc: 'Adjust n to change the number of petals. Odd n = n petals, even n = 2n petals.',
+      fact: 'Try n = 2/3 or other fractions for exotic curves that don\'t close!',
+      params: ['a', 'n'],
+      thetaDefault: TAU
+    },
+    'cardioid': {
+      name: 'Cardioid',
+      formula: (t, a) => a * (1 + Math.cos(t)),
+      display: (a) => `r = ${a.toFixed(2)}(1 + cos θ)`,
+      desc: 'Heart-shaped curve. A special case of the limaçon where a = b.',
+      fact: 'The name comes from Greek "kardia" (heart). Area = 6πa²/4 = 1.5πa². It\'s also the shape of the central bulb of the Mandelbrot set!',
+      params: ['a'],
+      thetaDefault: TAU
+    },
+    'cardioid-sin': {
+      name: 'Cardioid (sin)',
+      formula: (t, a) => a * (1 + Math.sin(t)),
+      display: (a) => `r = ${a.toFixed(2)}(1 + sin θ)`,
+      desc: 'Cardioid rotated 90°. The cusp points downward.',
+      fact: 'A cardioid is the envelope of circles centered on another circle, all passing through a point on that circle.',
+      params: ['a'],
+      thetaDefault: TAU
+    },
+    'limacon-inner': {
+      name: 'Limaçon (inner loop)',
+      formula: (t, a, b) => a + b * Math.cos(t),
+      display: (a, b) => `r = ${a.toFixed(2)} + ${b.toFixed(2)}·cos θ`,
+      desc: 'When |b| > |a|, the limaçon has an inner loop.',
+      fact: 'Named after the French word "limaçon" (snail). When a = b, it becomes a cardioid. When b = 0, it\'s a circle.',
+      params: ['a', 'b'],
+      defaults: { a: 0.8, b: 1.5 },
+      thetaDefault: TAU
+    },
+    'limacon-dimple': {
+      name: 'Limaçon (dimpled)',
+      formula: (t, a, b) => a + b * Math.cos(t),
+      display: (a, b) => `r = ${a.toFixed(2)} + ${b.toFixed(2)}·cos θ`,
+      desc: 'When |a| > |b| but |a| < 2|b|, the limaçon has a dimple.',
+      fact: 'The dimple occurs because the curve comes close to but doesn\'t cross the origin.',
+      params: ['a', 'b'],
+      defaults: { a: 1.5, b: 1.0 },
+      thetaDefault: TAU
+    },
+    'limacon-convex': {
+      name: 'Convex Limaçon',
+      formula: (t, a, b) => a + b * Math.cos(t),
+      display: (a, b) => `r = ${a.toFixed(2)} + ${b.toFixed(2)}·cos θ`,
+      desc: 'When |a| ≥ 2|b|, the limaçon is convex (no dimple or loop).',
+      fact: 'As a/b → ∞, the limaçon approaches a circle.',
+      params: ['a', 'b'],
+      defaults: { a: 2.0, b: 0.5 },
+      thetaDefault: TAU
+    },
+    'archimedes': {
+      name: 'Archimedean Spiral',
+      formula: (t, a) => a * t / TAU,
+      display: (a) => `r = ${(a/TAU).toFixed(3)}·θ`,
+      desc: 'Distance from origin increases linearly with angle. One of the oldest known curves.',
+      fact: 'Archimedes used this spiral to trisect angles and square the circle. Each arm is evenly spaced.',
+      params: ['a'],
+      thetaDefault: TAU * 3
+    },
+    'fermat': {
+      name: 'Fermat\'s Spiral',
+      formula: (t, a) => a * Math.sqrt(Math.max(0, t)),
+      display: (a) => `r = ${a.toFixed(2)}·√θ`,
+      desc: 'A parabolic spiral where r² is proportional to θ.',
+      fact: 'This spiral appears in nature: sunflower seeds and pinecone scales follow Fermat spirals!',
+      params: ['a'],
+      thetaDefault: TAU * 4
+    },
+    'log-spiral': {
+      name: 'Logarithmic Spiral',
+      formula: (t, a, b) => a * Math.exp(b * t),
+      display: (a, b) => `r = ${a.toFixed(2)}·e^(${b.toFixed(2)}θ)`,
+      desc: 'Self-similar: every rotation looks the same, just scaled.',
+      fact: 'Also called "spira mirabilis" (miracle spiral). Appears in nautilus shells, hurricanes, and galaxies. Jacob Bernoulli loved it so much he wanted it on his tombstone!',
+      params: ['a', 'b'],
+      defaults: { a: 0.3, b: 0.15 },
+      thetaDefault: TAU * 2.5
+    },
+    'hyperbolic': {
+      name: 'Hyperbolic Spiral',
+      formula: (t, a) => t > 0.1 ? a / t : a / 0.1,
+      display: (a) => `r = ${a.toFixed(2)}/θ`,
+      desc: 'r decreases as θ increases. Approaches the origin asymptotically.',
+      fact: 'As θ→0⁺, r→∞ (explodes outward). As θ→∞, r→0 (spirals into origin). The polar axis (θ=0) is an asymptote.',
+      params: ['a'],
+      thetaDefault: TAU * 2
+    },
+    'lemniscate': {
+      name: 'Lemniscate of Bernoulli',
+      formula: (t, a) => a * Math.sqrt(Math.max(0, Math.cos(2 * t))),
+      display: (a) => `r² = ${(a*a).toFixed(2)}·cos(2θ)`,
+      desc: 'A figure-8 curve. Points where the product of distances to two foci is constant.',
+      fact: 'The ∞ symbol is based on this curve! Area = a². The curve is only defined where cos(2θ) ≥ 0.',
+      params: ['a'],
+      thetaDefault: TAU
+    },
+    'butterfly': {
+      name: 'Butterfly Curve',
+      formula: (t, a) => a * (Math.exp(Math.sin(t)) - 2 * Math.cos(4 * t) + Math.pow(Math.sin((2 * t - Math.PI) / 24), 5)),
+      display: (a) => `r = ${a.toFixed(1)}(eˢⁱⁿᶿ - 2cos4θ + sin⁵(...))`,
+      desc: 'A beautiful curve discovered by Temple Fay in 1989.',
+      fact: 'This equation produces a remarkably accurate butterfly shape purely from trigonometry!',
+      params: ['a'],
+      defaults: { a: 0.7 },
+      thetaDefault: TAU * 6
+    },
+    'heart': {
+      name: 'Heart Curve',
+      formula: (t, a) => a * (1 - Math.sin(t)),
+      display: (a) => `r = ${a.toFixed(2)}(1 - sin θ)`,
+      desc: 'A cardioid rotated to point upward like a heart.',
+      fact: 'The cusp points up at θ = π/2. Perfect for Valentine\'s Day math!',
+      params: ['a'],
+      thetaDefault: TAU
+    },
+    'flower': {
+      name: 'Flower',
+      formula: (t, a) => a * Math.abs(Math.cos(2 * t) * Math.cos(3 * t)),
+      display: (a) => `r = ${a.toFixed(2)}|cos(2θ)·cos(3θ)|`,
+      desc: 'Multiplying rose curves creates intricate flower patterns.',
+      fact: 'The product of two rose curves creates interference patterns. Try different combinations!',
+      params: ['a'],
+      thetaDefault: TAU
+    },
+    'cannabis': {
+      name: 'Cannabis Curve',
+      formula: (t, a) => a * (1 + 0.9 * Math.cos(8 * t)) * (1 + 0.1 * Math.cos(24 * t)) * (0.9 + 0.1 * Math.cos(200 * t)) * (1 + Math.sin(t)),
+      display: (a) => `r = ${a.toFixed(2)}(1+.9cos8θ)(1+.1cos24θ)...`,
+      desc: 'A complex curve that resembles a cannabis leaf.',
+      fact: 'This equation was created as a mathematical curiosity showing how complex shapes emerge from simple trig!',
+      params: ['a'],
+      defaults: { a: 0.8 },
+      thetaDefault: TAU
+    },
+    'star': {
+      name: 'Star',
+      formula: (t, a) => a * (2 + Math.cos(5 * t)),
+      display: (a) => `r = ${a.toFixed(2)}(2 + cos 5θ)`,
+      desc: 'A 5-pointed star shape.',
+      fact: 'Unlike a rose, this curve never reaches the origin. The constant 2 keeps the curve "inflated".',
+      params: ['a'],
+      thetaDefault: TAU
+    }
+  };
+  
+  // Elements
+  const el = {
+    formulaInput: document.getElementById('formulaInput'),
+    formulaError: document.getElementById('formulaError'),
+    sliderA: document.getElementById('sliderA'),
+    sliderB: document.getElementById('sliderB'),
+    sliderN: document.getElementById('sliderN'),
+    valA: document.getElementById('valA'),
+    valB: document.getElementById('valB'),
+    valN: document.getElementById('valN'),
+    rowA: document.getElementById('rowA'),
+    rowB: document.getElementById('rowB'),
+    rowN: document.getElementById('rowN'),
+    curveName: document.getElementById('curveName'),
+    curveFormula: document.getElementById('curveFormula'),
+    curveDesc: document.getElementById('curveDesc'),
+    curveFact: document.getElementById('curveFact'),
+    statArea: document.getElementById('statArea'),
+    statArc: document.getElementById('statArc'),
+    thetaSlider: document.getElementById('thetaSlider'),
+    thetaValue: document.getElementById('thetaValue'),
+    intUpper: document.getElementById('intUpper'),
+    integralResult: document.getElementById('integralResult'),
+    btnFill: document.getElementById('btnFill'),
+    btnAnimate: document.getElementById('btnAnimate'),
+    btnGrid: document.getElementById('btnGrid'),
+    btnScale: document.getElementById('btnScale'),
+    btnRandom: document.getElementById('btnRandom'),
+    btnShare: document.getElementById('btnShare'),
+    // Challenge elements
+    challengePanel: document.getElementById('challengePanel'),
+    challengeProgress: document.getElementById('challengeProgress'),
+    challengeCurrent: document.getElementById('challengeCurrent'),
+    challengeName: document.getElementById('challengeName'),
+    challengePrompt: document.getElementById('challengePrompt'),
+    challengeHint: document.getElementById('challengeHint'),
+    challengeSuccess: document.getElementById('challengeSuccess'),
+    challengeComplete: document.getElementById('challengeComplete'),
+    successText: document.getElementById('successText'),
+    btnHint: document.getElementById('btnHint'),
+    btnSkip: document.getElementById('btnSkip'),
+    btnNextChallenge: document.getElementById('btnNextChallenge'),
+    btnRestart: document.getElementById('btnRestart'),
+    // Share modal elements
+    shareModal: document.getElementById('shareModal'),
+    shareCode: document.getElementById('shareCode'),
+    loadCode: document.getElementById('loadCode'),
+    btnCloseModal: document.getElementById('btnCloseModal'),
+    btnLoadCode: document.getElementById('btnLoadCode'),
+    btnCopyCode: document.getElementById('btnCopyCode'),
+    copyFeedback: document.getElementById('copyFeedback')
+  };
+  
+  // Simpson integration
+  function simpson(f, a, b, n = 500) {
+    if (n % 2) n++;
+    const h = (b - a) / n;
+    let s = f(a) + f(b);
+    for (let i = 1; i < n; i++) {
+      s += (i % 2 ? 4 : 2) * f(a + i * h);
+    }
+    return s * h / 3;
+  }
+  
+  // Get r(theta) function
+  function getR(theta) {
+    if (state.customFormula) {
+      try {
+        const r = state.customFormula(theta);
+        return Number.isFinite(r) ? r : NaN;
+      } catch {
+        return NaN;
+      }
+    }
+    
+    const curve = curves[state.preset];
+    if (!curve) return NaN;
+    const r = curve.formula(theta, state.a, state.b, state.n);
+    return Number.isFinite(r) ? r : NaN;
+  }
+  
+  // Calculate area (adaptive samples)
+  function calcArea() {
+    const n = Math.max(200, Math.ceil(state.thetaMax * 400));
+    const samples = n % 2 ? n + 1 : n; // Simpson needs even
+    
+    const area = simpson(t => {
+      const r = getR(t);
+      const v = 0.5 * r * r;
+      return Number.isFinite(v) ? v : 0;
+    }, 0, state.thetaMax, samples);
+    
+    return Math.abs(area);
+  }
+  
+  // Calculate arc length (central difference for dr/dθ, adaptive samples)
+  function calcArcLength() {
+    const h = Math.max(1e-5, state.thetaMax / 4000);
+    const n = Math.max(200, Math.ceil(state.thetaMax * 400));
+    const samples = n % 2 ? n + 1 : n; // Simpson needs even
+    
+    const integrand = (t) => {
+      const r0 = getR(t);
+      const rp = getR(t + h);
+      const rm = getR(t - h);
+      const dr = (rp - rm) / (2 * h); // Central difference
+      const v = Math.sqrt(r0 * r0 + dr * dr);
+      return Number.isFinite(v) ? v : 0;
+    };
+    
+    return Math.abs(simpson(integrand, 0, state.thetaMax, samples));
+  }
+  
+  // Draw
+  function draw() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    
+    const w = rect.width;
+    const h = rect.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    
+    // Find max r for scaling
+    let maxR = 0.1;
+    const samples = 500;
+    for (let i = 0; i <= samples; i++) {
+      const t = (i / samples) * state.thetaMax;
+      const r = Math.abs(getR(t));
+      if (isFinite(r)) maxR = Math.max(maxR, r);
+    }
+    
+    // Use fixed scale OR auto scale
+    const scaleR = state.fixedScale ? state.scaleMax : maxR;
+    const scale = Math.min(w, h) * 0.4 / scaleR;
+    
+    // Clear
+    ctx.clearRect(0, 0, w, h);
+    
+    // Grid
+    if (state.showGrid) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      
+      // Concentric circles (use scaleR for consistent reference)
+      for (let i = 1; i <= 4; i++) {
+        const r = (scaleR / 4) * i * scale;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, TAU);
+        ctx.stroke();
+      }
+      
+      // Radial lines
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * TAU;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angle) * scaleR * scale * 1.1, cy - Math.sin(angle) * scaleR * scale * 1.1);
+        ctx.stroke();
+      }
+      
+      // Axes
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, cy);
+      ctx.lineTo(w, cy);
+      ctx.moveTo(cx, 0);
+      ctx.lineTo(cx, h);
+      ctx.stroke();
+      
+      // Grid labels (show actual r values)
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = '10px system-ui';
+      for (let i = 1; i <= 4; i++) {
+        const rVal = (scaleR / 4) * i;
+        const rPx = rVal * scale;
+        ctx.fillText(rVal.toFixed(1), cx + rPx + 4, cy - 4);
+      }
+    }
+    
+    // Draw limit
+    const drawTo = state.animating ? state.animTheta : state.thetaMax;
+    
+    // FILL (handles discontinuities + uses even-odd rule)
+    if (state.showFill && drawTo > 0.1) {
+      ctx.fillStyle = 'rgba(124, 243, 160, 0.12)';
+      ctx.beginPath();
+      let pen = false;
+      for (let i = 0; i <= samples; i++) {
+        const t = (i / samples) * drawTo;
+        const r = getR(t);
+        const ok = Number.isFinite(r) && Math.abs(r) < 1e6;
+        if (!ok) { pen = false; continue; }
+        const x = cx + r * Math.cos(t) * scale;
+        const y = cy - r * Math.sin(t) * scale;
+        if (!pen) { 
+          ctx.moveTo(cx, cy); 
+          ctx.lineTo(x, y); 
+          pen = true; 
+        } else { 
+          ctx.lineTo(x, y); 
+        }
+      }
+      ctx.fill('evenodd');
+    }
+    
+    // STROKE (segment-aware, breaks at discontinuities)
+    ctx.strokeStyle = '#7cf3a0';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    let pen = false;
+    for (let i = 0; i <= samples; i++) {
+      const t = (i / samples) * drawTo;
+      const r = getR(t);
+      const ok = Number.isFinite(r) && Math.abs(r) < 1e6;
+      if (!ok) { pen = false; continue; }
+      const x = cx + r * Math.cos(t) * scale;
+      const y = cy - r * Math.sin(t) * scale;
+      if (!pen) { 
+        ctx.moveTo(x, y); 
+        pen = true; 
+      } else { 
+        ctx.lineTo(x, y); 
+      }
+    }
+    ctx.stroke();
+    
+    // Current point (during animation)
+    if (state.animating) {
+      const t = state.animTheta;
+      const r = getR(t);
+      if (isFinite(r)) {
+        const x = cx + r * Math.cos(t) * scale;
+        const y = cy - r * Math.sin(t) * scale;
+        
+        // Radial line
+        ctx.strokeStyle = 'rgba(255, 209, 102, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Point
+        ctx.fillStyle = '#ffd166';
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, TAU);
+        ctx.fill();
+      }
+    }
+    
+    // Show warning if curve extends beyond view
+    if (maxR > scaleR * 1.1) {
+      ctx.fillStyle = 'rgba(255, 107, 107, 0.8)';
+      ctx.font = '12px system-ui';
+      ctx.fillText('⚠ Curve extends beyond view — try Auto Scale', 10, 20);
+    }
+  }
+  
+  // Update UI
+  function update() {
+    const curve = curves[state.preset];
+    
+    // Formula display
+    if (state.customFormula) {
+      el.curveFormula.textContent = `r = custom`;
+    } else if (curve) {
+      el.curveFormula.textContent = curve.display(state.a, state.b, state.n);
+    }
+    
+    // Stats
+    const area = calcArea();
+    const arc = calcArcLength();
+    el.statArea.textContent = isFinite(area) ? area.toFixed(3) : '—';
+    el.statArc.textContent = isFinite(arc) ? arc.toFixed(3) : '—';
+    
+    // Theta display (show degrees too)
+    const thetaPI = state.thetaMax / Math.PI;
+    const deg = (state.thetaMax * 180 / Math.PI).toFixed(0);
+    let thetaStr;
+    if (Math.abs(thetaPI - Math.round(thetaPI)) < 0.02) {
+      thetaStr = `0 → ${Math.round(thetaPI)}π`;
+    } else {
+      thetaStr = `0 → ${thetaPI.toFixed(2)}π`;
+    }
+    el.thetaValue.textContent = `${thetaStr} (${deg}°)`;
+    el.intUpper.textContent = thetaStr.split('→ ')[1];
+    
+    // Integral
+    el.integralResult.textContent = `= ${isFinite(area) ? area.toFixed(4) : '—'}`;
+    
+    draw();
+  }
+  
+  // Select preset
+  function selectPreset(preset) {
+    state.preset = preset;
+    state.customFormula = null;
+    el.formulaInput.value = '';
+    el.formulaError.textContent = '';
+    
+    const curve = curves[preset];
+    if (!curve) return;
+    
+    // Apply defaults
+    if (curve.defaults) {
+      if (curve.defaults.a !== undefined) state.a = curve.defaults.a;
+      if (curve.defaults.b !== undefined) state.b = curve.defaults.b;
+      if (curve.defaults.n !== undefined) state.n = curve.defaults.n;
+    }
+    
+    // Update sliders
+    el.sliderA.value = state.a;
+    el.sliderB.value = state.b;
+    el.sliderN.value = state.n;
+    el.valA.textContent = state.a.toFixed(2);
+    el.valB.textContent = state.b.toFixed(2);
+    el.valN.textContent = state.n;
+    
+    // Show/hide params
+    el.rowA.style.display = curve.params.includes('a') ? 'flex' : 'none';
+    el.rowB.style.display = curve.params.includes('b') ? 'flex' : 'none';
+    el.rowN.style.display = curve.params.includes('n') ? 'flex' : 'none';
+    
+    // Theta default
+    state.thetaMax = curve.thetaDefault || TAU;
+    el.thetaSlider.value = state.thetaMax;
+    
+    // Info
+    el.curveName.textContent = curve.name;
+    el.curveDesc.textContent = curve.desc;
+    el.curveFact.innerHTML = `<strong>💡 Did you know?</strong> ${curve.fact}`;
+    
+    // Highlight active preset
+    document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+    document.querySelector(`[data-preset="${preset}"]`)?.classList.add('active');
+    
+    update();
+  }
+  
+  // Parse custom formula (safer with whitelist)
+  function parseFormula(str) {
+    let expr = str.toLowerCase()
+      .replace(/^r\s*=\s*/i, '')
+      .replace(/θ|theta/g, 't')
+      .replace(/\^/g, '**')
+      .replace(/(\d)([a-z])/g, '$1*$2')
+      .replace(/([a-z])(\d)/g, '$1*$2')
+      .replace(/\)\(/g, ')*(')
+      .replace(/(\d)\(/g, '$1*(')
+      .replace(/\)(\d)/g, ')*$1');
+    
+    // Block risky keywords
+    const banned = /\b(?:constructor|window|document|self|global|Function|eval|import|=>|new|this|prototype)\b/;
+    if (banned.test(expr)) return null;
+    
+    // Whitelist safe tokens only
+    const SAFE = /^[\d.+\-*/(),\s%tabnepisqrlocowtax]+$/;
+    if (!SAFE.test(expr)) return null;
+    
+    try {
+      const fn = new Function('t', 'a', 'b', 'n', `"use strict";
+        const sin = Math.sin, cos = Math.cos, tan = Math.tan;
+        const sqrt = Math.sqrt, abs = Math.abs, exp = Math.exp;
+        const log = Math.log, pow = Math.pow;
+        const PI = Math.PI, pi = Math.PI, e = Math.E;
+        return (${expr});
+      `);
+      
+      // Test it with sample values
+      const test = fn(1, state.a, state.b, state.n);
+      if (typeof test !== 'number') return null;
+      
+      // Return wrapper that uses current state
+      return (t) => fn(t, state.a, state.b, state.n);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  // Animation
+  let animFrame = null;
+  function animate() {
+    if (!state.animating) return;
+    
+    state.animTheta += 0.05;
+    if (state.animTheta >= state.thetaMax) {
+      state.animTheta = state.thetaMax;
+      state.animating = false;
+      el.btnAnimate.textContent = '▶ Draw';
+      el.btnAnimate.classList.remove('active');
+    }
+    
+    draw();
+    
+    if (state.animating) {
+      animFrame = requestAnimationFrame(animate);
+    }
+  }
+  
+  // Event listeners
+  document.querySelectorAll('.accordion-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const accordion = header.parentElement;
+      accordion.classList.toggle('open');
+    });
+  });
+  
+  document.querySelectorAll('.preset').forEach(preset => {
+    preset.addEventListener('click', () => {
+      selectPreset(preset.dataset.preset);
+    });
+  });
+  
+  el.formulaInput.addEventListener('input', () => {
+    const val = el.formulaInput.value.trim();
+    if (!val) {
+      state.customFormula = null;
+      el.formulaError.textContent = '';
+      update();
+      return;
+    }
+    
+    // Strip "r =" prefix if present
+    let expr = val.replace(/^r\s*=\s*/i, '');
+    
+    const fn = parseFormula(expr);
+    if (fn) {
+      state.customFormula = fn;
+      el.formulaError.textContent = '';
+      el.curveName.textContent = 'Custom Curve';
+      el.curveDesc.textContent = 'Your own polar equation.';
+      el.curveFact.innerHTML = '<strong>💡 Tip:</strong> Try combining sin, cos, and arithmetic to create unique shapes!';
+      document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+      update();
+    } else {
+      el.formulaError.textContent = 'Could not parse formula. Use t for θ.';
+    }
+  });
+  
+  el.formulaInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      el.formulaInput.blur();
+    }
+  });
+  
+  el.sliderA.addEventListener('input', () => {
+    state.a = parseFloat(el.sliderA.value);
+    el.valA.textContent = state.a.toFixed(2);
+    update();
+  });
+  
+  el.sliderB.addEventListener('input', () => {
+    state.b = parseFloat(el.sliderB.value);
+    el.valB.textContent = state.b.toFixed(2);
+    update();
+  });
+  
+  el.sliderN.addEventListener('input', () => {
+    state.n = parseInt(el.sliderN.value);
+    el.valN.textContent = state.n;
+    update();
+  });
+  
+  el.thetaSlider.addEventListener('input', () => {
+    let v = parseFloat(el.thetaSlider.value);
+    
+    // Snap to nice multiples of π when close
+    const snaps = [
+      Math.PI / 6, Math.PI / 4, Math.PI / 3, Math.PI / 2,
+      Math.PI, 1.5 * Math.PI, 2 * Math.PI, 
+      3 * Math.PI, 4 * Math.PI
+    ];
+    for (const s of snaps) {
+      if (Math.abs(v - s) < 0.08) { 
+        v = s; 
+        el.thetaSlider.value = v;
+        break; 
+      }
+    }
+    
+    state.thetaMax = v;
+    update();
+  });
+  
+  el.btnFill.addEventListener('click', () => {
+    state.showFill = !state.showFill;
+    el.btnFill.classList.toggle('active', state.showFill);
+    draw();
+  });
+  
+  el.btnGrid.addEventListener('click', () => {
+    state.showGrid = !state.showGrid;
+    el.btnGrid.classList.toggle('active', state.showGrid);
+    draw();
+  });
+  
+  el.btnScale.addEventListener('click', () => {
+    state.fixedScale = !state.fixedScale;
+    el.btnScale.classList.toggle('active', state.fixedScale);
+    el.btnScale.textContent = state.fixedScale ? 'Fixed Scale' : 'Auto Scale';
+    draw();
+  });
+  
+  el.btnRandom.addEventListener('click', () => {
+    const presets = Object.keys(curves);
+    const random = presets[Math.floor(Math.random() * presets.length)];
+    selectPreset(random);
+    
+    // Randomize parameters a bit
+    state.a = 0.8 + Math.random() * 1.5;
+    state.b = -1 + Math.random() * 2;
+    state.n = 2 + Math.floor(Math.random() * 6);
+    
+    el.sliderA.value = state.a;
+    el.sliderB.value = state.b;
+    el.sliderN.value = state.n;
+    el.valA.textContent = state.a.toFixed(2);
+    el.valB.textContent = state.b.toFixed(2);
+    el.valN.textContent = state.n;
+    
+    update();
+  });
+  
+  // === CHALLENGE SYSTEM ===
+  
+  function showChallenge(index) {
+    if (index >= challenges.length) {
+      // All done!
+      el.challengeCurrent.style.display = 'none';
+      el.challengeSuccess.style.display = 'none';
+      el.challengeComplete.style.display = 'block';
+      el.challengeProgress.textContent = `${challenges.length}/${challenges.length}`;
+      return;
+    }
+    
+    const challenge = challenges[index];
+    state.challengeIndex = index;
+    
+    el.challengeName.textContent = challenge.name;
+    el.challengePrompt.textContent = challenge.prompt;
+    el.challengeHint.textContent = challenge.hint;
+    el.challengeHint.style.display = 'none';
+    
+    el.challengeCurrent.style.display = 'block';
+    el.challengeSuccess.style.display = 'none';
+    el.challengeComplete.style.display = 'none';
+    
+    el.challengeProgress.textContent = `${state.challengesCompleted.size}/${challenges.length}`;
+  }
+  
+  function checkChallenge() {
+    if (state.challengeIndex >= challenges.length) return;
+    
+    const challenge = challenges[state.challengeIndex];
+    if (challenge.check()) {
+      // Success!
+      state.challengesCompleted.add(challenge.id);
+      el.successText.textContent = challenge.reward;
+      el.challengeCurrent.style.display = 'none';
+      el.challengeSuccess.style.display = 'block';
+      el.challengeProgress.textContent = `${state.challengesCompleted.size}/${challenges.length}`;
+    }
+  }
+  
+  el.btnHint.addEventListener('click', () => {
+    el.challengeHint.style.display = 'block';
+  });
+  
+  el.btnSkip.addEventListener('click', () => {
+    showChallenge(state.challengeIndex + 1);
+  });
+  
+  el.btnNextChallenge.addEventListener('click', () => {
+    showChallenge(state.challengeIndex + 1);
+  });
+  
+  el.btnRestart.addEventListener('click', () => {
+    state.challengesCompleted.clear();
+    showChallenge(0);
+  });
+  
+  // Check challenge on any state change
+  const originalUpdate = update;
+  update = function() {
+    originalUpdate();
+    checkChallenge();
+  };
+  
+  // === URL SHARING ===
+  
+  function getShareCode() {
+    const parts = [
+      state.preset,
+      state.a.toFixed(2),
+      state.b.toFixed(2),
+      state.n,
+      state.thetaMax.toFixed(3),
+      state.customFormula ? encodeURIComponent(el.formulaInput.value) : ''
+    ];
+    return parts.join('|');
+  }
+  
+  function loadShareCode(code) {
+    try {
+      const parts = code.split('|');
+      if (parts.length < 5) return false;
+      
+      const [preset, a, b, n, theta, formula] = parts;
+      
+      // Validate preset exists or is valid for custom
+      if (!curves[preset] && preset !== 'custom') return false;
+      
+      // Apply values
+      if (curves[preset]) {
+        selectPreset(preset);
+      }
+      
+      state.a = parseFloat(a) || 1.5;
+      state.b = parseFloat(b) || 0.5;
+      state.n = parseInt(n) || 3;
+      state.thetaMax = parseFloat(theta) || TAU;
+      
+      // Update sliders
+      el.sliderA.value = state.a;
+      el.sliderB.value = state.b;
+      el.sliderN.value = state.n;
+      el.thetaSlider.value = state.thetaMax;
+      el.valA.textContent = state.a.toFixed(2);
+      el.valB.textContent = state.b.toFixed(2);
+      el.valN.textContent = state.n;
+      
+      // Handle custom formula
+      if (formula) {
+        const decodedFormula = decodeURIComponent(formula);
+        el.formulaInput.value = decodedFormula;
+        state.customFormula = parseFormula(decodedFormula);
+      }
+      
+      update();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  function loadFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('c') || params.get('code');
+    if (code) {
+      loadShareCode(code);
+    }
+  }
+  
+  el.btnShare.addEventListener('click', () => {
+    el.shareCode.value = getShareCode();
+    el.shareModal.classList.add('visible');
+  });
+  
+  el.btnCloseModal.addEventListener('click', () => {
+    el.shareModal.classList.remove('visible');
+  });
+  
+  el.shareModal.addEventListener('click', (e) => {
+    if (e.target === el.shareModal) {
+      el.shareModal.classList.remove('visible');
+    }
+  });
+  
+  el.btnCopyCode.addEventListener('click', () => {
+    el.shareCode.select();
+    navigator.clipboard.writeText(el.shareCode.value).then(() => {
+      el.copyFeedback.classList.add('visible');
+      setTimeout(() => el.copyFeedback.classList.remove('visible'), 2000);
+    });
+  });
+  
+  el.btnLoadCode.addEventListener('click', () => {
+    const code = el.loadCode.value.trim();
+    if (code) {
+      if (loadShareCode(code)) {
+        el.shareModal.classList.remove('visible');
+        el.loadCode.value = '';
+      } else {
+        el.loadCode.style.borderColor = '#ff6b6b';
+        setTimeout(() => el.loadCode.style.borderColor = '', 1000);
+      }
+    }
+  });
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      el.shareModal.classList.remove('visible');
+    }
+  });
+  
+  el.btnAnimate.addEventListener('click', () => {
+    if (state.animating) {
+      state.animating = false;
+      cancelAnimationFrame(animFrame);
+      el.btnAnimate.textContent = '▶ Draw';
+      el.btnAnimate.classList.remove('active');
+    } else {
+      state.animating = true;
+      state.animTheta = 0;
+      el.btnAnimate.textContent = '⏸ Pause';
+      el.btnAnimate.classList.add('active');
+      animate();
+    }
+  });
+  
+  window.addEventListener('resize', draw);
+  
+  // Init
+  selectPreset('circle');
+  el.btnGrid.classList.add('active');
+  el.btnScale.classList.add('active');
+  
+  // Load from URL if present
+  loadFromURL();
+  
+  // Show first challenge
+  showChallenge(0);
+})();
+</script>
+</body>
+</html>

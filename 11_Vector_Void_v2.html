@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vector Void — Parametric Equations</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    :root {
+      --bg: #0a0a12;
+      --panel: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.1);
+      --text: #e8e8e8;
+      --muted: #888;
+      --accent: #5ea1ff;
+      --good: #5eff8f;
+      --warn: #ffcc00;
+      --bad: #ff5e5e;
+      --path: #5ea1ff;
+      --velocity: #ff6b6b;
+      --accel: #fbbf24;
+    }
+    
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+    }
+    
+    #app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+    }
+    
+    header {
+      padding: 10px 20px;
+      background: rgba(0,0,0,0.5);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    
+    h1 span { color: var(--accent); }
+    
+    .header-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+    }
+    
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .stat-label { color: var(--muted); }
+    .stat-value { 
+      font-weight: 700; 
+      font-family: ui-monospace, monospace;
+      color: var(--accent);
+    }
+    
+    .header-btns {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .header-btns button {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+    
+    main {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      overflow: hidden;
+    }
+    
+    @media (max-width: 1000px) {
+      main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+      .controls { order: 2; max-height: 50vh; overflow-y: auto; }
+    }
+    
+    .controls {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .panel {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    
+    .panel h3 {
+      margin: 0 0 8px 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .mission-brief {
+      background: rgba(94, 161, 255, 0.1);
+      border: 1px solid rgba(94, 161, 255, 0.3);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+    
+    .mission-brief strong { color: var(--accent); }
+    
+    .level-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    
+    .level-title span { color: var(--warn); }
+    
+    .level-badges {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .badge {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    
+    .badge.moving { background: rgba(251, 191, 36, 0.2); color: var(--warn); }
+    .badge.timed { background: rgba(255, 107, 107, 0.2); color: var(--bad); }
+    .badge.checkpoint { background: rgba(94, 255, 143, 0.2); color: var(--good); }
+    
+    .new-param {
+      background: rgba(94, 161, 255, 0.15);
+      border: 1px solid rgba(94, 161, 255, 0.3);
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 0.8rem;
+    }
+    
+    .new-param strong { color: var(--accent); }
+    
+    .slider-group {
+      margin-bottom: 10px;
+    }
+    
+    .slider-group:last-child { margin-bottom: 0; }
+    
+    .slider-group.locked {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    
+    .slider-group.locked .slider-header::after {
+      content: '🔒';
+      margin-left: 6px;
+      font-size: 0.7rem;
+    }
+    
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+    }
+    
+    .slider-header label { color: var(--text); }
+    
+    .slider-value {
+      font-family: ui-monospace, monospace;
+      color: var(--accent);
+      min-width: 45px;
+      text-align: right;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      -webkit-appearance: none;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: grab;
+    }
+    
+    .formula-display {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+    }
+    
+    .formula-display .x-eq { color: #ff8a8a; }
+    .formula-display .y-eq { color: #8aff8a; }
+    .formula-display .t-range { color: var(--warn); }
+    
+    .derivative-display {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    
+    .derivative-display .dx { color: #ff8a8a; }
+    .derivative-display .dy { color: #8aff8a; }
+    
+    .fuel-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .fuel-gauge {
+      background: rgba(0,0,0,0.4);
+      border-radius: 5px;
+      height: 24px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    
+    .fuel-fill {
+      height: 100%;
+      transition: width 0.3s, background 0.3s;
+      border-radius: 4px;
+    }
+    
+    .fuel-fill.good { background: linear-gradient(90deg, var(--good), #3dd979); }
+    .fuel-fill.warn { background: linear-gradient(90deg, var(--warn), #e6b800); }
+    .fuel-fill.bad { background: linear-gradient(90deg, var(--bad), #cc4a4a); }
+    
+    .fuel-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    .arc-length-formula {
+      font-family: ui-monospace, monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 4px;
+    }
+    
+    .par-score {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    
+    .par-item {
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      padding: 6px;
+      text-align: center;
+    }
+    
+    .par-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    
+    .par-value {
+      font-family: ui-monospace, monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    
+    .par-value.good { color: var(--good); }
+    .par-value.ok { color: var(--warn); }
+    .par-value.bad { color: var(--bad); }
+    
+    .status-display {
+      text-align: center;
+      padding: 8px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s;
+    }
+    
+    .status-display.valid {
+      background: rgba(94, 255, 143, 0.15);
+      border: 1px solid var(--good);
+      color: var(--good);
+    }
+    
+    .status-display.invalid {
+      background: rgba(255, 94, 94, 0.15);
+      border: 1px solid var(--bad);
+      color: var(--bad);
+    }
+    
+    .status-display.warning {
+      background: rgba(255, 204, 0, 0.15);
+      border: 1px solid var(--warn);
+      color: var(--warn);
+    }
+    
+    .timer-display {
+      text-align: center;
+      font-family: ui-monospace, monospace;
+      font-size: 1.1rem;
+      padding: 6px;
+      border-radius: 6px;
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      color: var(--bad);
+      display: none;
+    }
+    
+    .timer-display.active { display: block; }
+    
+    button {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: var(--accent);
+    }
+    
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), #4080d0);
+      border: none;
+      color: #fff;
+      font-size: 0.95rem;
+      padding: 12px 20px;
+    }
+    
+    button.primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+    
+    button.primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .btn-row button { flex: 1; }
+    
+    #btnHint {
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.3);
+      color: #fbbf24;
+    }
+    
+    #btnHint:hover {
+      background: rgba(251, 191, 36, 0.2);
+      border-color: #fbbf24;
+    }
+    
+    /* Math Insight Panel */
+    details.math-insight {
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+    
+    details.math-insight summary {
+      padding: 8px 10px;
+      cursor: pointer;
+      color: var(--warn);
+      font-weight: 600;
+    }
+    
+    details.math-insight .content {
+      padding: 0 10px 10px 10px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    
+    details.math-insight code {
+      background: rgba(0,0,0,0.3);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: ui-monospace, monospace;
+    }
+    
+    .canvas-container {
+      position: relative;
+      background: radial-gradient(circle at 30% 30%, #12121f, #0a0a12);
+      overflow: hidden;
+    }
+    
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.92);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 32px;
+      text-align: center;
+      z-index: 100;
+      max-width: 420px;
+      display: none;
+    }
+    
+    .overlay.visible { display: block; animation: popIn 0.3s ease-out; }
+    
+    @keyframes popIn {
+      from { transform: translate(-50%, -40%); opacity: 0; }
+      to { transform: translate(-50%, -50%); opacity: 1; }
+    }
+    
+    .overlay h2 {
+      margin: 0 0 8px 0;
+      font-size: 1.4rem;
+    }
+    
+    .overlay h2.success { color: var(--good); }
+    .overlay h2.fail { color: var(--bad); }
+    
+    .overlay p {
+      color: var(--muted);
+      margin: 0 0 12px 0;
+      line-height: 1.4;
+      font-size: 0.9rem;
+    }
+    
+    .overlay .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .overlay .stat-box {
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    
+    .overlay .stat-box .label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    
+    .overlay .stat-box .value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: ui-monospace, monospace;
+    }
+    
+    .overlay .formula-used {
+      background: rgba(94, 161, 255, 0.1);
+      border: 1px solid rgba(94, 161, 255, 0.3);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    
+    .overlay .btn-group {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    
+    /* History Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-backdrop.visible { display: flex; }
+    
+    .modal {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      width: 90%;
+    }
+    
+    .modal h2 {
+      margin: 0 0 16px 0;
+      color: var(--accent);
+    }
+    
+    .modal .close-btn {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    
+    .history-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    
+    .history-item .level-name {
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    
+    .history-item .formulas {
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    
+    .history-item .efficiency {
+      margin-top: 6px;
+      font-size: 0.8rem;
+    }
+    
+    .no-history {
+      color: var(--muted);
+      text-align: center;
+      padding: 20px;
+    }
+
+    .vector-legend {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(0,0,0,0.7);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      display: flex;
+      gap: 12px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .legend-line {
+      width: 20px;
+      height: 3px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Vector <span>Void</span></h1>
+      <div class="header-stats">
+        <div class="stat">
+          <span class="stat-label">Level</span>
+          <span class="stat-value" id="levelDisplay">1</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Completed</span>
+          <span class="stat-value" id="completedDisplay">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Best Efficiency</span>
+          <span class="stat-value" id="bestEfficiency">—</span>
+        </div>
+      </div>
+      <div class="header-btns">
+        <button id="btnHistory">📜 Solutions</button>
+        <button id="btnSandbox">🧪 Sandbox</button>
+      </div>
+    </header>
+    
+    <main>
+      <div class="controls">
+        <div class="panel mission-brief">
+          <div class="level-title">Level <span id="levelNum">1</span>: <span id="levelName">First Flight</span></div>
+          <div id="missionText">Guide your drone from START to FINISH.</div>
+          <div class="level-badges" id="levelBadges"></div>
+        </div>
+        
+        <div class="panel" id="newParamPanel" style="display:none;">
+          <div class="new-param">
+            <strong>🆕 New Parameter Unlocked!</strong><br/>
+            <span id="newParamText"></span>
+          </div>
+        </div>
+        
+        <div class="timer-display" id="timerDisplay">⏱ Time: <span id="timerValue">30.0</span>s</div>
+        
+        <div class="panel">
+          <h3>Trajectory Controls</h3>
+          
+          <div class="slider-group" id="vxGroup">
+            <div class="slider-header">
+              <label>Horizontal Velocity (vₓ)</label>
+              <span class="slider-value" id="vxValue">0</span>
+            </div>
+            <input type="range" id="vxSlider" min="-100" max="100" step="1" value="0"/>
+          </div>
+          
+          <div class="slider-group locked" id="vyGroup">
+            <div class="slider-header">
+              <label>Vertical Velocity (vᵧ)</label>
+              <span class="slider-value" id="vyValue">0</span>
+            </div>
+            <input type="range" id="vySlider" min="-100" max="100" step="1" value="0"/>
+          </div>
+          
+          <div class="slider-group locked" id="gravGroup">
+            <div class="slider-header">
+              <label>Downward Acceleration (a)</label>
+              <span class="slider-value" id="gravValue">0</span>
+            </div>
+            <input type="range" id="gravSlider" min="-25" max="25" step="0.5" value="0"/>
+          </div>
+          
+          <div class="slider-group locked" id="oscGroup">
+            <div class="slider-header">
+              <label>Wave Amplitude (A)</label>
+              <span class="slider-value" id="oscValue">0</span>
+            </div>
+            <input type="range" id="oscSlider" min="0" max="80" step="1" value="0"/>
+          </div>
+          
+          <div class="slider-group locked" id="freqGroup">
+            <div class="slider-header">
+              <label>Wave Frequency (ω)</label>
+              <span class="slider-value" id="freqValue">1.0</span>
+            </div>
+            <input type="range" id="freqSlider" min="0.25" max="5" step="0.25" value="1.5"/>
+          </div>
+          
+          <div class="slider-group" id="tGroup">
+            <div class="slider-header">
+              <label>Flight Time (t)</label>
+              <span class="slider-value" id="tValue">5</span>
+            </div>
+            <input type="range" id="tSlider" min="1" max="12" step="0.5" value="5"/>
+          </div>
+        </div>
+        
+        <div class="panel">
+          <h3>Your Equations</h3>
+          <div class="formula-display">
+            <div class="x-eq" id="xFormula">x(t) = 0</div>
+            <div class="y-eq" id="yFormula">y(t) = 0</div>
+            <div class="t-range" id="tFormula">t ∈ [0, 5]</div>
+            <div class="derivative-display">
+              <div><span class="dx">dx/dt = <span id="dxFormula">0</span></span></div>
+              <div><span class="dy">dy/dt = <span id="dyFormula">0</span></span></div>
+            </div>
+          </div>
+        </div>
+        
+        <details class="math-insight">
+          <summary>💡 Math Insight</summary>
+          <div class="content" id="mathInsight">
+            <p>Parametric equations describe motion by giving <code>x</code> and <code>y</code> as functions of time <code>t</code>.</p>
+            <p>The <strong>velocity vector</strong> is <code>(dx/dt, dy/dt)</code> — the red arrow shows direction and speed.</p>
+          </div>
+        </details>
+        
+        <div class="panel">
+          <h3>Fuel (Arc Length)</h3>
+          <div class="fuel-section">
+            <div class="fuel-gauge">
+              <div class="fuel-fill good" id="fuelFill" style="width: 0%"></div>
+              <div class="fuel-text" id="fuelText">0 / 300</div>
+            </div>
+            <div class="arc-length-formula">
+              L = ∫₀ᵗ √[(dx/dt)² + (dy/dt)²] dt = <span id="arcLengthValue">0</span>
+            </div>
+            <div class="par-score">
+              <div class="par-item">
+                <div class="par-label">Your Path</div>
+                <div class="par-value" id="yourPath">0</div>
+              </div>
+              <div class="par-item">
+                <div class="par-label">Straight Line</div>
+                <div class="par-value" id="parPath">0</div>
+              </div>
+              <div class="par-item">
+                <div class="par-label">Efficiency</div>
+                <div class="par-value" id="efficiency">—</div>
+              </div>
+              <div class="par-item">
+                <div class="par-label">Rating</div>
+                <div class="par-value" id="rating">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="status-display valid" id="statusDisplay">
+          ✓ Ready to Launch
+        </div>
+        
+        <div class="btn-row">
+          <button id="btnReset">↺ Reset</button>
+          <button id="btnHint">💡 Solution</button>
+          <button id="btnLaunch" class="primary">🚀 LAUNCH</button>
+        </div>
+      </div>
+      
+      <div class="canvas-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="vector-legend">
+          <div class="legend-item">
+            <div class="legend-line" style="background: #ff6b6b;"></div>
+            <span>Velocity</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #fbbf24;"></div>
+            <span>Acceleration</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #5ea1ff; opacity: 0.5;"></div>
+            <span>Path</span>
+          </div>
+        </div>
+        
+        <div class="overlay" id="overlay">
+          <h2 id="overlayTitle" class="success">Level Complete!</h2>
+          <p id="overlayMsg">Great trajectory calculation.</p>
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-box">
+              <div class="label">Path Length</div>
+              <div class="value" id="statPath">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="label">Efficiency</div>
+              <div class="value" id="statEfficiency">0%</div>
+            </div>
+          </div>
+          <div class="formula-used" id="formulaUsed">
+            <div class="x-eq">x(t) = 30t</div>
+            <div class="y-eq">y(t) = 0</div>
+          </div>
+          <div class="btn-group">
+            <button id="btnRetry">Try Again</button>
+            <button class="primary" id="btnNext">Next Level →</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- History Modal -->
+  <div class="modal-backdrop" id="historyModal">
+    <div class="modal">
+      <button class="close-btn" id="closeHistory">&times;</button>
+      <h2>📜 Solution History</h2>
+      <div id="historyList">
+        <div class="no-history">No solutions yet. Complete levels to see your formulas here!</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+  
+  // === ELEMENTS ===
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  const el = {
+    levelDisplay: document.getElementById('levelDisplay'),
+    completedDisplay: document.getElementById('completedDisplay'),
+    bestEfficiency: document.getElementById('bestEfficiency'),
+    levelNum: document.getElementById('levelNum'),
+    levelName: document.getElementById('levelName'),
+    missionText: document.getElementById('missionText'),
+    levelBadges: document.getElementById('levelBadges'),
+    newParamPanel: document.getElementById('newParamPanel'),
+    newParamText: document.getElementById('newParamText'),
+    timerDisplay: document.getElementById('timerDisplay'),
+    timerValue: document.getElementById('timerValue'),
+    
+    vxSlider: document.getElementById('vxSlider'),
+    vySlider: document.getElementById('vySlider'),
+    gravSlider: document.getElementById('gravSlider'),
+    oscSlider: document.getElementById('oscSlider'),
+    freqSlider: document.getElementById('freqSlider'),
+    tSlider: document.getElementById('tSlider'),
+    
+    vxValue: document.getElementById('vxValue'),
+    vyValue: document.getElementById('vyValue'),
+    gravValue: document.getElementById('gravValue'),
+    oscValue: document.getElementById('oscValue'),
+    freqValue: document.getElementById('freqValue'),
+    tValue: document.getElementById('tValue'),
+    
+    vxGroup: document.getElementById('vxGroup'),
+    vyGroup: document.getElementById('vyGroup'),
+    gravGroup: document.getElementById('gravGroup'),
+    oscGroup: document.getElementById('oscGroup'),
+    freqGroup: document.getElementById('freqGroup'),
+    
+    xFormula: document.getElementById('xFormula'),
+    yFormula: document.getElementById('yFormula'),
+    tFormula: document.getElementById('tFormula'),
+    dxFormula: document.getElementById('dxFormula'),
+    dyFormula: document.getElementById('dyFormula'),
+    
+    fuelFill: document.getElementById('fuelFill'),
+    fuelText: document.getElementById('fuelText'),
+    arcLengthValue: document.getElementById('arcLengthValue'),
+    yourPath: document.getElementById('yourPath'),
+    parPath: document.getElementById('parPath'),
+    efficiency: document.getElementById('efficiency'),
+    rating: document.getElementById('rating'),
+    statusDisplay: document.getElementById('statusDisplay'),
+    mathInsight: document.getElementById('mathInsight'),
+    
+    btnLaunch: document.getElementById('btnLaunch'),
+    btnReset: document.getElementById('btnReset'),
+    btnHint: document.getElementById('btnHint'),
+    btnHistory: document.getElementById('btnHistory'),
+    btnSandbox: document.getElementById('btnSandbox'),
+    
+    overlay: document.getElementById('overlay'),
+    overlayTitle: document.getElementById('overlayTitle'),
+    overlayMsg: document.getElementById('overlayMsg'),
+    statsGrid: document.getElementById('statsGrid'),
+    statPath: document.getElementById('statPath'),
+    statEfficiency: document.getElementById('statEfficiency'),
+    formulaUsed: document.getElementById('formulaUsed'),
+    btnNext: document.getElementById('btnNext'),
+    btnRetry: document.getElementById('btnRetry'),
+    
+    historyModal: document.getElementById('historyModal'),
+    historyList: document.getElementById('historyList'),
+    closeHistory: document.getElementById('closeHistory')
+  };
+  
+  // === STATE ===
+  const state = {
+    level: 1,
+    completed: 0,
+    assisted: 0,  // Levels completed with solution help
+    bestEfficiency: 0,
+    currentLevelConfig: null,
+    usedHint: false,  // Whether hint was used on current level
+    
+    start: { x: 0, y: 0 },
+    end: { x: 0, y: 0 },
+    obstacles: [],
+    checkpoints: [],
+    checkpointsHit: new Set(),
+    maxFuel: 300,
+    straightDistance: 0,
+    
+    // Level modifiers
+    hasMovingTarget: false,
+    hasTimer: false,
+    timeLimit: 0,
+    timeRemaining: 0,
+    
+    // Unlocked parameters
+    hasVy: false,
+    hasGrav: false,
+    hasOsc: false,
+    hasFreq: false,
+    
+    // Trajectory
+    path: [],
+    arcLength: 0,
+    isValid: false,
+    hitsObstacle: false,
+    reachesTarget: false,
+    
+    // Animation
+    launching: false,
+    launchProgress: 0,
+    gameTime: 0,
+    
+    // Sandbox
+    sandboxMode: false,
+    
+    // History
+    history: [],
+    
+    width: 800,
+    height: 600
+  };
+  
+  // === LEVEL GENERATION ===
+  function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  
+  function randFloat(min, max) {
+    return min + Math.random() * (max - min);
+  }
+  
+  // Store level as relative coordinates (0-1), convert to pixels when needed
+  function generateLevel(levelNum) {
+    let level = {};
+    
+    switch(levelNum) {
+      case 1:
+        level = {
+          name: "First Flight",
+          mission: "Adjust horizontal velocity to reach the target. Distance = velocity × time.",
+          start: { rx: 0.08, ry: 0.5 },
+          end: { rx: 0.88 + randFloat(-0.05, 0.05), ry: 0.5 + randFloat(-0.03, 0.03) },
+          obstacles: [],
+          checkpoints: [],
+          fuelMultiplier: 1.3,
+          unlocks: [],
+          hasMovingTarget: false,
+          hasTimer: false,
+          insight: `<p><strong>Linear motion:</strong> With constant velocity, position is <code>x(t) = x₀ + v·t</code></p>
+                   <p>To travel distance <code>d</code> in time <code>t</code>, set velocity to <code>v = d/t</code></p>`
+        };
+        break;
+        
+      case 2:
+        level = {
+          name: "Going Up",
+          mission: "The target is at a different height! Combine horizontal and vertical velocity.",
+          start: { rx: 0.08, ry: 0.85 + randFloat(-0.03, 0.03) },
+          end: { rx: 0.88 + randFloat(-0.04, 0.04), ry: 0.15 + randFloat(0, 0.08) },
+          obstacles: [],
+          checkpoints: [],
+          fuelMultiplier: 1.3,
+          unlocks: ['vy'],
+          hasMovingTarget: false,
+          hasTimer: false,
+          insight: `<p><strong>2D Motion:</strong> Horizontal and vertical are independent!</p>
+                   <p><code>x(t) = x₀ + vₓ·t</code> and <code>y(t) = y₀ + vᵧ·t</code></p>
+                   <p>The path is a straight line at angle <code>θ = atan(vᵧ/vₓ)</code></p>`
+        };
+        break;
+        
+      case 3:
+        level = {
+          name: "Over the Wall",
+          mission: "An obstacle blocks the straight path! Use downward acceleration to arc over it.",
+          start: { rx: 0.08, ry: 0.85 },
+          end: { rx: 0.88, ry: 0.85 + randFloat(-0.05, 0.05) },
+          obstacles: [
+            { rx: 0.5 + randFloat(-0.03, 0.03), ry: 0.5 + randFloat(-0.06, 0.06), rr: 0.08 + randFloat(0, 0.02) }
+          ],
+          checkpoints: [],
+          fuelMultiplier: 1.4,
+          unlocks: ['grav'],
+          hasMovingTarget: false,
+          hasTimer: false,
+          insight: `<p><strong>Projectile motion:</strong> Acceleration curves the path!</p>
+                   <p><code>y(t) = y₀ + vᵧ·t + ½a·t²</code></p>
+                   <p>Negative acceleration (upward initial velocity) creates an arc that goes up then down — like throwing a ball!</p>`
+        };
+        break;
+        
+      case 4:
+        const gapRy = 0.5 + randFloat(-0.05, 0.05);
+        level = {
+          name: "Thread the Needle",
+          mission: "Multiple obstacles! Use wave motion to weave through gaps.",
+          start: { rx: 0.07, ry: gapRy },
+          end: { rx: 0.93, ry: gapRy + randFloat(-0.06, 0.06) },
+          obstacles: [
+            { rx: 0.28, ry: gapRy - 0.18 - randFloat(0, 0.04), rr: 0.06 },
+            { rx: 0.28, ry: gapRy + 0.18 + randFloat(0, 0.04), rr: 0.06 },
+            { rx: 0.52, ry: gapRy + randFloat(-0.02, 0.02), rr: 0.055 },
+            { rx: 0.76, ry: gapRy - 0.15 - randFloat(0, 0.03), rr: 0.055 },
+            { rx: 0.76, ry: gapRy + 0.15 + randFloat(0, 0.03), rr: 0.055 }
+          ],
+          checkpoints: [],
+          fuelMultiplier: 1.5,
+          unlocks: ['osc', 'freq'],
+          hasMovingTarget: false,
+          hasTimer: false,
+          insight: `<p><strong>Sinusoidal motion:</strong> Waves let you weave!</p>
+                   <p><code>y(t) += A·sin(ω·t)</code></p>
+                   <p><strong>A</strong> = amplitude (how far up/down)</p>
+                   <p><strong>ω</strong> = frequency (how fast it oscillates)</p>
+                   <p>The derivative is <code>dy/dt += A·ω·cos(ω·t)</code></p>`
+        };
+        break;
+        
+      case 5:
+        // Checkpoint level - EASY version, checkpoints very close to center line
+        const startRy5 = 0.5;
+        level = {
+          name: "Supply Run",
+          mission: "Collect both checkpoints! Use a gentle wave to weave through them.",
+          start: { rx: 0.08, ry: startRy5 },
+          end: { rx: 0.92, ry: startRy5 },
+          obstacles: [], // No obstacles - just learn checkpoints
+          checkpoints: [
+            // Checkpoint 1: slightly above center, 1/3 of the way (only 8% offset)
+            { rx: 0.35, ry: startRy5 - 0.08 },
+            // Checkpoint 2: slightly below center, 2/3 of the way  
+            { rx: 0.65, ry: startRy5 + 0.08 }
+          ],
+          fuelMultiplier: 2.5,
+          unlocks: [],
+          hasMovingTarget: false,
+          hasTimer: false,
+          insight: `<p><strong>Hint:</strong> The checkpoints are placed at the peaks of a sine wave!</p>
+                   <p>Try: Amplitude ≈ 30-50, Frequency = 1.0, Time ≈ 8-10</p>
+                   <p>The wave goes UP through CP1, then DOWN through CP2.</p>`
+        };
+        break;
+        
+      case 6:
+        level = {
+          name: "Moving Target",
+          mission: "The target is moving! Predict where it will be when you arrive.",
+          start: { rx: 0.08, ry: 0.5 },
+          end: { rx: 0.85, ry: 0.5 },
+          obstacles: [],
+          checkpoints: [],
+          fuelMultiplier: 1.4,
+          unlocks: [],
+          hasMovingTarget: true,
+          targetSpeed: 30 + rand(0, 20),
+          targetDir: Math.random() > 0.5 ? 1 : -1,
+          hasTimer: false,
+          insight: `<p><strong>Interception:</strong> Where will the target be at time t?</p>
+                   <p>Target position: <code>y_target(t) = y₀ + v_target·t</code></p>
+                   <p>Your drone must arrive at the same (x, y) at the same time!</p>`
+        };
+        break;
+        
+      case 7:
+        level = {
+          name: "Speed Run",
+          mission: "You have limited time! Plan fast and launch!",
+          start: { rx: 0.08, ry: 0.85 },
+          end: { rx: 0.92, ry: 0.15 + randFloat(0, 0.08) },
+          obstacles: [
+            { rx: 0.5 + randFloat(-0.08, 0.08), ry: 0.5 + randFloat(-0.05, 0.05), rr: 0.09 }
+          ],
+          checkpoints: [],
+          fuelMultiplier: 1.5,
+          unlocks: [],
+          hasMovingTarget: false,
+          hasTimer: true,
+          timeLimit: 25,
+          insight: `<p><strong>Under pressure:</strong> Real engineering has deadlines!</p>
+                   <p>Use your intuition about how velocity and acceleration affect the path.</p>`
+        };
+        break;
+        
+      default:
+        // Procedural levels 8+
+        const numObs = Math.min(4 + Math.floor((levelNum - 7) / 2), 7);
+        const hasCP = levelNum % 3 === 0;
+        const hasMoving = levelNum % 4 === 1;
+        const hasTimed = levelNum % 5 === 0;
+        
+        const obstacles = [];
+        const checkpoints = [];
+        
+        const startRy = 0.15 + randFloat(0, 0.7);
+        const endRy = 0.15 + randFloat(0, 0.7);
+        
+        for (let i = 0; i < numObs; i++) {
+          let tries = 0;
+          let obs;
+          do {
+            obs = {
+              rx: 0.2 + randFloat(0, 0.6),
+              ry: 0.12 + randFloat(0, 0.76),
+              rr: 0.045 + randFloat(0, 0.03)
+            };
+            tries++;
+          } while (tries < 25 && obstacles.some(o => 
+            Math.hypot(o.rx - obs.rx, o.ry - obs.ry) < (o.rr + obs.rr + 0.08)
+          ));
+          obstacles.push(obs);
+        }
+        
+        if (hasCP) {
+          // Place checkpoints along a reasonable path from start to end
+          const pathMidY = (startRy + endRy) / 2;
+          const waveSize = 0.15;
+          checkpoints.push({
+            rx: 0.32 + randFloat(-0.03, 0.03),
+            ry: pathMidY - waveSize + randFloat(-0.02, 0.02)
+          });
+          checkpoints.push({
+            rx: 0.68 + randFloat(-0.03, 0.03),
+            ry: pathMidY + waveSize + randFloat(-0.02, 0.02)
+          });
+        }
+        
+        level = {
+          name: `Void Sector ${levelNum - 7}`,
+          mission: "Navigate the void using all your skills!",
+          start: { rx: 0.08, ry: startRy },
+          end: { rx: 0.92, ry: endRy },
+          obstacles,
+          checkpoints,
+          fuelMultiplier: 1.4 + (levelNum - 7) * 0.05,
+          unlocks: [],
+          hasMovingTarget: hasMoving,
+          targetSpeed: hasMoving ? 25 + rand(0, 30) : 0,
+          targetDir: Math.random() > 0.5 ? 1 : -1,
+          hasTimer: hasTimed,
+          timeLimit: hasTimed ? 30 - Math.min(levelNum - 8, 10) : 0,
+          insight: `<p><strong>Mastery:</strong> Combine linear, quadratic, and sinusoidal motion to find the optimal path.</p>
+                   <p>Remember: efficiency = straight line distance / your path length</p>`
+        };
+    }
+    
+    return level;
+  }
+  
+  // Convert relative level to pixel coordinates
+  function applyLevelToScreen(level) {
+    const w = state.width;
+    const h = state.height;
+    const minDim = Math.min(w, h);
+    
+    state.start = { x: level.start.rx * w, y: level.start.ry * h };
+    state.end = { x: level.end.rx * w, y: level.end.ry * h };
+    
+    state.obstacles = level.obstacles.map(o => ({
+      x: o.rx * w,
+      y: o.ry * h,
+      r: o.rr * minDim  // Use min dimension for consistent obstacle sizes
+    }));
+    
+    state.checkpoints = (level.checkpoints || []).map(cp => ({
+      x: cp.rx * w,
+      y: cp.ry * h
+    }));
+    
+    // Calculate straight distance and set fuel based on it
+    state.straightDistance = Math.hypot(state.end.x - state.start.x, state.end.y - state.start.y);
+    state.maxFuel = Math.round(state.straightDistance * level.fuelMultiplier);
+  }
+  
+  // === TRAJECTORY CALCULATION ===
+  
+  // Baseline dimensions for velocity scaling
+  const BASELINE_WIDTH = 800;
+  const BASELINE_HEIGHT = 600;
+  
+  function getVelocityScale() {
+    return {
+      sx: state.width / BASELINE_WIDTH,
+      sy: state.height / BASELINE_HEIGHT
+    };
+  }
+  
+  // Simpson's rule integration - matches the arc length formula exactly
+  function simpson(f, a, b, n = 400) {
+    if (n % 2) n++;
+    const h = (b - a) / n;
+    let s = f(a) + f(b);
+    for (let i = 1; i < n; i++) {
+      const x = a + i * h;
+      s += (i % 2 ? 4 : 2) * f(x);
+    }
+    return s * h / 3;
+  }
+  
+  function getParams() {
+    const scale = getVelocityScale();
+    const tMax = parseFloat(el.tSlider.value);
+    const freq = state.hasFreq ? parseFloat(el.freqSlider.value) : 1.5;
+    const omegaEff = 2 * Math.PI * freq / tMax;  // Actual angular frequency
+    
+    return {
+      vx: parseFloat(el.vxSlider.value) * scale.sx,
+      vy: state.hasVy ? parseFloat(el.vySlider.value) * scale.sy : 0,
+      g: state.hasGrav ? parseFloat(el.gravSlider.value) * scale.sy : 0,
+      amp: state.hasOsc ? parseFloat(el.oscSlider.value) * scale.sy : 0,
+      freq: freq,
+      tMax: tMax,
+      omegaEff: omegaEff,
+      // Raw values for display
+      rawVx: parseFloat(el.vxSlider.value),
+      rawVy: state.hasVy ? parseFloat(el.vySlider.value) : 0,
+      rawG: state.hasGrav ? parseFloat(el.gravSlider.value) : 0,
+      rawAmp: state.hasOsc ? parseFloat(el.oscSlider.value) : 0
+    };
+  }
+  
+  function getPosition(t, params, start) {
+    const { vx, vy, g, amp, omegaEff } = params;
+    
+    const x = start.x + vx * t;
+    // Screen Y is inverted: positive vy = up on screen = decrease in y value
+    const y = start.y - vy * t + 0.5 * g * t * t - amp * Math.sin(omegaEff * t);
+    
+    return { x, y };
+  }
+  
+  function getVelocity(t, params) {
+    const { vx, vy, g, amp, omegaEff } = params;
+    
+    const dx = vx;
+    const dy = -vy + g * t - amp * omegaEff * Math.cos(omegaEff * t);
+    
+    return { dx, dy };
+  }
+  
+  function getAcceleration(t, params) {
+    const { g, amp, omegaEff } = params;
+    
+    const ax = 0;
+    const ay = g + amp * omegaEff * omegaEff * Math.sin(omegaEff * t);
+    
+    return { ax, ay };
+  }
+  
+  function calculatePath() {
+    const params = getParams();
+    const steps = 180;
+    const dt = params.tMax / steps;
+    
+    state.path = [];
+    
+    let prev = getPosition(0, params, state.start);
+    const vel0 = getVelocity(0, params);
+    const acc0 = getAcceleration(0, params);
+    state.path.push({ ...prev, t: 0, vel: vel0, acc: acc0 });
+    
+    for (let i = 1; i <= steps; i++) {
+      const t = i * dt;
+      const curr = getPosition(t, params, state.start);
+      const vel = getVelocity(t, params);
+      const acc = getAcceleration(t, params);
+      
+      state.path.push({ ...curr, t, vel, acc });
+      prev = curr;
+    }
+    
+    // Arc length via Simpson's rule: L = ∫₀ᵗ √[(dx/dt)² + (dy/dt)²] dt
+    // This exactly matches the displayed formula!
+    const speed = (t) => {
+      const vel = getVelocity(t, params);
+      return Math.hypot(vel.dx, vel.dy);
+    };
+    state.arcLength = simpson(speed, 0, params.tMax, 400);
+    
+    // Calculate straight distance
+    let targetPos = state.end;
+    if (state.hasMovingTarget) {
+      targetPos = getMovingTargetPosition(params.tMax);
+    }
+    state.straightDistance = Math.hypot(targetPos.x - state.start.x, targetPos.y - state.start.y);
+    
+    checkValidity();
+    updateUI();
+  }
+  
+  function getMovingTargetPosition(t) {
+    if (!state.hasMovingTarget) return state.end;
+    
+    const baseY = state.end.y;
+    const amplitude = state.height * 0.3;
+    const speed = state.level >= 6 ? (30 + (state.level - 6) * 5) : 30;
+    
+    return {
+      x: state.end.x,
+      y: baseY + Math.sin(t * speed / 50) * amplitude * state.targetDir
+    };
+  }
+  
+  function checkValidity() {
+    const params = getParams();
+    const endPoint = state.path[state.path.length - 1];
+    
+    // Check fuel
+    const fuelOk = state.arcLength <= state.maxFuel;
+    
+    // Check obstacles
+    state.hitsObstacle = false;
+    for (const p of state.path) {
+      for (const obs of state.obstacles) {
+        if (Math.hypot(p.x - obs.x, p.y - obs.y) < obs.r) {
+          state.hitsObstacle = true;
+          break;
+        }
+      }
+      if (p.x < 0 || p.x > state.width || p.y < 0 || p.y > state.height) {
+        state.hitsObstacle = true;
+      }
+      if (state.hitsObstacle) break;
+    }
+    
+    // Check checkpoints
+    state.checkpointsHit.clear();
+    for (const p of state.path) {
+      for (let i = 0; i < state.checkpoints.length; i++) {
+        const cp = state.checkpoints[i];
+        if (Math.hypot(p.x - cp.x, p.y - cp.y) < 40) {
+          state.checkpointsHit.add(i);
+        }
+      }
+    }
+    const allCheckpointsHit = state.checkpointsHit.size >= state.checkpoints.length;
+    
+    // Check target (with moving target support)
+    let targetPos = state.end;
+    if (state.hasMovingTarget) {
+      targetPos = getMovingTargetPosition(params.tMax);
+    }
+    const distToEnd = Math.hypot(endPoint.x - targetPos.x, endPoint.y - targetPos.y);
+    state.reachesTarget = distToEnd < 40;
+    
+    state.isValid = fuelOk && !state.hitsObstacle && state.reachesTarget && allCheckpointsHit;
+  }
+  
+  // === UI UPDATES ===
+  function updateUI() {
+    const params = getParams();
+    const omegaStr = params.omegaEff.toFixed(2);
+    
+    // Slider values (show raw, not scaled)
+    el.vxValue.textContent = params.rawVx;
+    el.vyValue.textContent = params.rawVy;
+    el.gravValue.textContent = params.rawG;
+    el.oscValue.textContent = params.rawAmp;
+    el.freqValue.textContent = params.freq.toFixed(2);
+    el.tValue.textContent = params.tMax;
+    
+    // Position formulas with actual ω_eff
+    let xStr = `x(t) = x₀`;
+    if (params.rawVx !== 0) xStr += ` + ${params.rawVx}t`;
+    el.xFormula.textContent = xStr;
+    
+    let yStr = `y(t) = y₀`;
+    if (params.rawVy !== 0) yStr += ` ${params.rawVy > 0 ? '−' : '+'} ${Math.abs(params.rawVy)}t`;
+    if (params.rawG !== 0) yStr += ` ${params.rawG > 0 ? '+' : '−'} ${(Math.abs(params.rawG)/2).toFixed(1)}t²`;
+    if (params.rawAmp !== 0) yStr += ` − ${params.rawAmp}sin(${omegaStr}t)`;
+    el.yFormula.textContent = yStr;
+    
+    el.tFormula.textContent = `t ∈ [0, ${params.tMax}]`;
+    
+    // Derivative formulas with actual values
+    el.dxFormula.textContent = `${params.rawVx}`;
+    
+    let dyStr = `${-params.rawVy}`;
+    if (params.rawG !== 0) dyStr += ` ${params.rawG > 0 ? '+' : '−'} ${Math.abs(params.rawG)}t`;
+    if (params.rawAmp !== 0) dyStr += ` − ${(params.rawAmp * params.omegaEff).toFixed(1)}cos(${omegaStr}t)`;
+    el.dyFormula.textContent = dyStr;
+    
+    // Fuel gauge
+    const fuelPct = Math.min(100, (state.arcLength / state.maxFuel) * 100);
+    el.fuelFill.style.width = fuelPct + '%';
+    el.fuelText.textContent = `${Math.round(state.arcLength)} / ${state.maxFuel}`;
+    el.arcLengthValue.textContent = Math.round(state.arcLength);
+    
+    if (state.arcLength > state.maxFuel) {
+      el.fuelFill.className = 'fuel-fill bad';
+    } else if (state.arcLength > state.maxFuel * 0.85) {
+      el.fuelFill.className = 'fuel-fill warn';
+    } else {
+      el.fuelFill.className = 'fuel-fill good';
+    }
+    
+    // Par score
+    el.yourPath.textContent = Math.round(state.arcLength);
+    el.parPath.textContent = Math.round(state.straightDistance);
+    
+    const eff = state.arcLength > 0 ? (state.straightDistance / state.arcLength * 100) : 0;
+    el.efficiency.textContent = eff.toFixed(0) + '%';
+    
+    let rating = '—';
+    let ratingClass = '';
+    if (state.isValid) {
+      if (eff >= 95) { rating = '⭐ Perfect!'; ratingClass = 'good'; }
+      else if (eff >= 80) { rating = '✓ Great'; ratingClass = 'good'; }
+      else if (eff >= 60) { rating = '○ Good'; ratingClass = 'ok'; }
+      else { rating = '△ OK'; ratingClass = 'bad'; }
+    }
+    el.rating.textContent = rating;
+    el.rating.className = 'par-value ' + ratingClass;
+    
+    // Status
+    if (state.hitsObstacle) {
+      el.statusDisplay.className = 'status-display invalid';
+      el.statusDisplay.textContent = '✗ Path hits obstacle or boundary!';
+      el.btnLaunch.disabled = true;
+    } else if (state.arcLength > state.maxFuel) {
+      el.statusDisplay.className = 'status-display invalid';
+      el.statusDisplay.textContent = '✗ Not enough fuel! Path too long.';
+      el.btnLaunch.disabled = true;
+    } else if (state.checkpointsHit.size < state.checkpoints.length) {
+      el.statusDisplay.className = 'status-display warning';
+      el.statusDisplay.textContent = `⚠ Checkpoints: ${state.checkpointsHit.size}/${state.checkpoints.length}`;
+      el.btnLaunch.disabled = true;
+    } else if (!state.reachesTarget) {
+      el.statusDisplay.className = 'status-display warning';
+      el.statusDisplay.textContent = '⚠ Path misses target. Adjust trajectory.';
+      el.btnLaunch.disabled = true;
+    } else {
+      el.statusDisplay.className = 'status-display valid';
+      el.statusDisplay.textContent = '✓ Trajectory valid — Ready to launch!';
+      el.btnLaunch.disabled = false;
+    }
+  }
+  
+  function updateMathInsight(insight) {
+    el.mathInsight.innerHTML = insight;
+  }
+  
+  function loadLevel(levelNum) {
+    state.level = levelNum;
+    state.currentLevelConfig = generateLevel(levelNum);
+    const level = state.currentLevelConfig;
+    
+    // Apply level to current screen dimensions
+    applyLevelToScreen(level);
+    
+    state.checkpointsHit.clear();
+    state.hasMovingTarget = level.hasMovingTarget || false;
+    state.targetSpeed = level.targetSpeed || 0;
+    state.targetDir = level.targetDir || 1;
+    state.hasTimer = level.hasTimer || false;
+    state.timeLimit = level.timeLimit || 0;
+    state.timeRemaining = state.timeLimit;
+    state.gameTime = 0;
+    
+    // Reset hint state
+    state.usedHint = false;
+    el.btnHint.textContent = '💡 Solution';
+    el.btnHint.style.opacity = '1';
+    el.btnHint.disabled = false;
+    
+    // Timer display
+    el.timerDisplay.classList.toggle('active', state.hasTimer);
+    if (state.hasTimer) {
+      el.timerValue.textContent = state.timeLimit.toFixed(1);
+    }
+    
+    // Unlock parameters
+    el.newParamPanel.style.display = 'none';
+    
+    if (level.unlocks.includes('vy') && !state.hasVy) {
+      state.hasVy = true;
+      el.vyGroup.classList.remove('locked');
+      el.newParamPanel.style.display = 'block';
+      el.newParamText.innerHTML = '<strong>Vertical Velocity (vᵧ)</strong> — Move up and down!';
+    }
+    if (level.unlocks.includes('grav') && !state.hasGrav) {
+      state.hasGrav = true;
+      el.gravGroup.classList.remove('locked');
+      el.newParamPanel.style.display = 'block';
+      el.newParamText.innerHTML = '<strong>Downward Acceleration (a)</strong> — Creates parabolic arcs!';
+    }
+    if (level.unlocks.includes('osc') && !state.hasOsc) {
+      state.hasOsc = true;
+      el.oscGroup.classList.remove('locked');
+      el.newParamPanel.style.display = 'block';
+      el.newParamText.innerHTML = '<strong>Wave Amplitude (A)</strong> — Adds sine wave to weave!';
+    }
+    if (level.unlocks.includes('freq') && !state.hasFreq) {
+      state.hasFreq = true;
+      el.freqGroup.classList.remove('locked');
+    }
+    
+    // Badges
+    let badges = '';
+    if (state.hasMovingTarget) badges += '<span class="badge moving">🎯 Moving Target</span>';
+    if (state.hasTimer) badges += '<span class="badge timed">⏱ Timed</span>';
+    if (state.checkpoints.length > 0) badges += '<span class="badge checkpoint">📍 Checkpoints</span>';
+    el.levelBadges.innerHTML = badges;
+    
+    // Update UI
+    el.levelDisplay.textContent = levelNum;
+    el.levelNum.textContent = levelNum;
+    el.levelName.textContent = level.name;
+    el.missionText.textContent = level.mission;
+    
+    updateMathInsight(level.insight || '');
+    
+    // Reset sliders
+    el.vxSlider.value = 0;
+    el.vySlider.value = 0;
+    el.gravSlider.value = 0;
+    el.oscSlider.value = 0;
+    el.freqSlider.value = 1.5;
+    el.tSlider.value = 5;
+    
+    // Hide overlay
+    el.overlay.classList.remove('visible');
+    
+    // Reset animation
+    state.launching = false;
+    state.launchProgress = 0;
+    
+    calculatePath();
+  }
+  
+  function resetLevel() {
+    loadLevel(state.level);
+  }
+  
+  function launch() {
+    if (!state.isValid) return;
+    
+    state.launching = true;
+    state.launchProgress = 0;
+    el.btnLaunch.disabled = true;
+  }
+  
+  function showSuccess() {
+    const params = getParams();
+    const eff = state.arcLength > 0 ? (state.straightDistance / state.arcLength * 100) : 0;
+    
+    if (state.usedHint) {
+      el.overlayTitle.textContent = '✓ Level Complete (Assisted)';
+      el.overlayTitle.className = 'success';
+      el.overlayMsg.textContent = 'You used the solution. Try the next one on your own!';
+      state.assisted++;
+    } else {
+      el.overlayTitle.textContent = '🎉 Level Complete!';
+      el.overlayTitle.className = 'success';
+      el.overlayMsg.textContent = 'Great trajectory calculation!';
+    }
+    
+    el.statPath.textContent = Math.round(state.arcLength);
+    el.statEfficiency.textContent = eff.toFixed(0) + '%';
+    el.statEfficiency.className = 'value ' + (eff >= 80 ? 'good' : eff >= 60 ? 'ok' : '');
+    
+    // Formula used with actual omegaEff
+    const omegaStr = params.omegaEff.toFixed(2);
+    
+    let xStr = `x(t) = x₀`;
+    if (params.rawVx !== 0) xStr += ` + ${params.rawVx}t`;
+    
+    let yStr = `y(t) = y₀`;
+    if (params.rawVy !== 0) yStr += ` ${params.rawVy > 0 ? '−' : '+'} ${Math.abs(params.rawVy)}t`;
+    if (params.rawG !== 0) yStr += ` ${params.rawG > 0 ? '+' : '−'} ${(Math.abs(params.rawG)/2).toFixed(1)}t²`;
+    if (params.rawAmp !== 0) yStr += ` − ${params.rawAmp}sin(${omegaStr}t)`;
+    
+    el.formulaUsed.innerHTML = `
+      <div style="color:#ff8a8a">${xStr}</div>
+      <div style="color:#8aff8a">${yStr}</div>
+      <div style="color:#ffcc00">t ∈ [0, ${params.tMax}]</div>
+      ${state.usedHint ? '<div style="color:#888; margin-top:8px; font-size:0.75rem;">📋 Solution was shown</div>' : ''}
+    `;
+    
+    el.btnNext.style.display = 'inline-block';
+    el.btnRetry.style.display = 'inline-block';
+    el.overlay.classList.add('visible');
+    
+    // Save to history
+    state.history.push({
+      level: state.level,
+      name: document.getElementById('levelName').textContent,
+      xFormula: xStr,
+      yFormula: yStr,
+      tRange: `t ∈ [0, ${params.tMax}]`,
+      pathLength: Math.round(state.arcLength),
+      efficiency: eff.toFixed(0),
+      assisted: state.usedHint
+    });
+    
+    state.completed++;
+    if (!state.usedHint && eff > state.bestEfficiency) {
+      state.bestEfficiency = eff;
+      el.bestEfficiency.textContent = eff.toFixed(0) + '%';
+    }
+    el.completedDisplay.textContent = state.completed;
+    
+    updateHistoryDisplay();
+  }
+  
+  function showFailure(reason) {
+    el.overlayTitle.textContent = '💥 Mission Failed';
+    el.overlayTitle.className = 'fail';
+    el.overlayMsg.textContent = reason;
+    el.statsGrid.style.display = 'none';
+    el.formulaUsed.style.display = 'none';
+    el.btnNext.style.display = 'none';
+    el.btnRetry.style.display = 'inline-block';
+    el.overlay.classList.add('visible');
+  }
+  
+  function updateHistoryDisplay() {
+    if (state.history.length === 0) {
+      el.historyList.innerHTML = '<div class="no-history">No solutions yet. Complete levels to see your formulas here!</div>';
+      return;
+    }
+    
+    el.historyList.innerHTML = state.history.map(h => `
+      <div class="history-item" style="${h.assisted ? 'opacity: 0.7; border-left: 3px solid #fbbf24;' : ''}">
+        <div class="level-name">
+          Level ${h.level}: ${h.name}
+          ${h.assisted ? '<span style="color:#fbbf24; font-size:0.75rem; margin-left:8px;">📋 Assisted</span>' : ''}
+        </div>
+        <div class="formulas">
+          <div style="color:#ff8a8a">${h.xFormula}</div>
+          <div style="color:#8aff8a">${h.yFormula}</div>
+          <div style="color:#ffcc00">${h.tRange}</div>
+        </div>
+        <div class="efficiency">
+          Path: ${h.pathLength} | Efficiency: <strong>${h.efficiency}%</strong>
+        </div>
+      </div>
+    `).reverse().join('');
+  }
+  
+  // === RENDERING ===
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    
+    state.width = rect.width;
+    state.height = rect.height;
+  }
+  
+  function drawArrow(x, y, dx, dy, color, scale = 1) {
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    if (mag < 0.5) return;
+    
+    const len = Math.min(mag * scale, 60);
+    const nx = dx / mag;
+    const ny = dy / mag;
+    
+    const ex = x + nx * len;
+    const ey = y + ny * len;
+    
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    
+    // Arrowhead
+    const headLen = 8;
+    const headAngle = Math.PI / 6;
+    const angle = Math.atan2(ny, nx);
+    
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - headLen * Math.cos(angle - headAngle), ey - headLen * Math.sin(angle - headAngle));
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - headLen * Math.cos(angle + headAngle), ey - headLen * Math.sin(angle + headAngle));
+    ctx.stroke();
+  }
+  
+  function draw() {
+    const w = state.width;
+    const h = state.height;
+    const params = getParams();
+    
+    // Background
+    ctx.fillStyle = '#0a0a12';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    
+    // Obstacles
+    for (const obs of state.obstacles) {
+      const grad = ctx.createRadialGradient(obs.x, obs.y, 0, obs.x, obs.y, obs.r * 1.5);
+      grad.addColorStop(0, 'rgba(255, 80, 80, 0.25)');
+      grad.addColorStop(1, 'rgba(255, 80, 80, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(obs.x, obs.y, obs.r * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = 'rgba(255, 80, 80, 0.15)';
+      ctx.strokeStyle = '#ff5050';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    
+    // Checkpoints
+    for (let i = 0; i < state.checkpoints.length; i++) {
+      const cp = state.checkpoints[i];
+      const hit = state.checkpointsHit.has(i);
+      
+      ctx.fillStyle = hit ? 'rgba(94, 255, 143, 0.2)' : 'rgba(251, 191, 36, 0.15)';
+      ctx.strokeStyle = hit ? '#5eff8f' : '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cp.x, cp.y, 35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.fillStyle = hit ? '#5eff8f' : '#fbbf24';
+      ctx.font = 'bold 11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(hit ? '✓' : `CP${i + 1}`, cp.x, cp.y + 4);
+    }
+    
+    // Moving target position
+    let targetPos = state.end;
+    if (state.hasMovingTarget) {
+      targetPos = getMovingTargetPosition(state.launching ? state.launchProgress * params.tMax : params.tMax);
+    }
+    
+    // Target zone
+    ctx.fillStyle = 'rgba(94, 255, 143, 0.12)';
+    ctx.strokeStyle = '#5eff8f';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(targetPos.x, targetPos.y, 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.fillStyle = '#5eff8f';
+    ctx.font = 'bold 12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('FINISH', targetPos.x, targetPos.y - 50);
+    
+    // Start zone
+    ctx.fillStyle = 'rgba(94, 161, 255, 0.12)';
+    ctx.strokeStyle = '#5ea1ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(state.start.x, state.start.y, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.fillStyle = '#5ea1ff';
+    ctx.fillText('START', state.start.x, state.start.y - 30);
+    
+    // Trajectory path (ghost)
+    if (state.path && state.path.length > 1 && !state.launching) {
+      ctx.strokeStyle = state.isValid ? 'rgba(94, 161, 255, 0.5)' : 'rgba(100, 100, 100, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(state.path[0].x, state.path[0].y);
+      for (const p of state.path) {
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw tangent vectors along path
+      if (state.isValid) {
+        for (let i = 0; i < state.path.length; i += 20) {
+          const p = state.path[i];
+          drawArrow(p.x, p.y, p.vel.dx, p.vel.dy, 'rgba(255, 107, 107, 0.4)', 0.4);
+        }
+      }
+      
+      // End point marker
+      const endP = state.path[state.path.length - 1];
+      ctx.fillStyle = state.reachesTarget ? '#5eff8f' : '#ff5050';
+      ctx.beginPath();
+      ctx.arc(endP.x, endP.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    // Drone
+    let dronePos, droneVel, droneAcc;
+    if (state.launching) {
+      const idx = Math.floor(state.launchProgress * (state.path.length - 1));
+      const point = state.path[Math.min(idx, state.path.length - 1)];
+      dronePos = { x: point.x, y: point.y };
+      droneVel = point.vel;
+      droneAcc = point.acc;
+      
+      // Draw trail
+      ctx.strokeStyle = '#5ea1ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(state.path[0].x, state.path[0].y);
+      for (let i = 0; i <= idx; i++) {
+        ctx.lineTo(state.path[i].x, state.path[i].y);
+      }
+      ctx.stroke();
+    } else {
+      dronePos = state.start;
+      droneVel = state.path.length > 0 ? state.path[0].vel : { dx: 0, dy: 0 };
+      droneAcc = state.path.length > 0 ? state.path[0].acc : { ax: 0, ay: 0 };
+    }
+    
+    // Velocity vector (red)
+    drawArrow(dronePos.x, dronePos.y, droneVel.dx, droneVel.dy, '#ff6b6b', 0.8);
+    
+    // Acceleration vector (yellow)
+    drawArrow(dronePos.x, dronePos.y, droneAcc.ax, droneAcc.ay, '#fbbf24', 1.5);
+    
+    // Drone body
+    ctx.save();
+    ctx.translate(dronePos.x, dronePos.y);
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#5ea1ff';
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#5ea1ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    
+    // Animation update
+    if (state.launching) {
+      state.launchProgress += 0.008;
+      if (state.launchProgress >= 1) {
+        state.launching = false;
+        showSuccess();
+      }
+    }
+    
+    // Timer update
+    if (state.hasTimer && !state.launching && !el.overlay.classList.contains('visible')) {
+      state.gameTime += 1/60;
+      state.timeRemaining = Math.max(0, state.timeLimit - state.gameTime);
+      el.timerValue.textContent = state.timeRemaining.toFixed(1);
+      
+      if (state.timeRemaining <= 0) {
+        showFailure('Time ran out! Plan faster next time.');
+      }
+    }
+    
+    requestAnimationFrame(draw);
+  }
+  
+  // === EVENT LISTENERS ===
+  [el.vxSlider, el.vySlider, el.gravSlider, el.oscSlider, el.freqSlider, el.tSlider].forEach(slider => {
+    slider.addEventListener('input', () => {
+      if (!state.launching) {
+        calculatePath();
+      }
+    });
+  });
+  
+  el.btnLaunch.addEventListener('click', launch);
+  el.btnReset.addEventListener('click', resetLevel);
+  
+  // Smart physics-based solver - much faster than brute force!
+  function findWorkingSolution() {
+    const scale = getVelocityScale();
+    const dx = state.end.x - state.start.x;
+    const dy = state.start.y - state.end.y; // Screen Y inverted
+    const dist = Math.hypot(dx, dy);
+    
+    // Store original slider values
+    const origVx = el.vxSlider.value;
+    const origVy = el.vySlider.value;
+    const origG = el.gravSlider.value;
+    const origAmp = el.oscSlider.value;
+    const origFreq = el.freqSlider.value;
+    const origT = el.tSlider.value;
+    
+    let bestSolution = null;
+    let bestScore = -Infinity;
+    
+    // PHYSICS-BASED HEURISTICS (Claude Sonnet's suggestion)
+    
+    // 1. Estimate optimal time based on distance
+    const estimatedT = Math.max(5, Math.sqrt(dist / 40) + 3);
+    const tValues = [
+      Math.round(estimatedT - 2),
+      Math.round(estimatedT - 1),
+      Math.round(estimatedT),
+      Math.round(estimatedT + 1),
+      Math.round(estimatedT + 2),
+      Math.round(estimatedT + 3)
+    ].filter(t => t >= 3 && t <= 12);
+    
+    // 2. Check if obstacles are in the direct path
+    const obstacleInPath = state.obstacles.some(obs => {
+      // Check if obstacle intersects the straight line from start to end
+      const t_proj = ((obs.x - state.start.x) * dx + (obs.y - state.start.y) * (-dy)) / (dist * dist || 1);
+      if (t_proj < 0 || t_proj > 1) return false;
+      const closestX = state.start.x + t_proj * dx;
+      const closestY = state.start.y - t_proj * dy;
+      const distToObs = Math.hypot(obs.x - closestX, obs.y - closestY);
+      return distToObs < obs.r + 30;
+    });
+    
+    // 3. Determine gravity values based on obstacles
+    const gValues = state.hasGrav ? 
+      (obstacleInPath ? [-18, -15, -12, -10, -8, 8, 10, 12, 15, 18] : [-5, 0, 5]) 
+      : [0];
+    
+    // 4. Determine amplitude based on checkpoints
+    let ampValues = [0];
+    let freqValues = [1.0];
+    
+    if (state.hasOsc && state.checkpoints.length > 0) {
+      // Calculate required amplitude from checkpoint positions
+      const cpYs = state.checkpoints.map(cp => cp.y);
+      const centerY = state.start.y;
+      const maxOffset = Math.max(...cpYs.map(y => Math.abs(y - centerY)));
+      const neededAmp = maxOffset / scale.sy;
+      
+      ampValues = [
+        Math.round(neededAmp * 0.7),
+        Math.round(neededAmp * 0.85),
+        Math.round(neededAmp),
+        Math.round(neededAmp * 1.15),
+        Math.round(neededAmp * 1.3),
+        Math.round(neededAmp * 1.5)
+      ].filter(a => a >= 10 && a <= 80);
+      
+      // Frequency based on checkpoint count and spacing
+      freqValues = [0.5, 0.75, 1.0, 1.25, 1.5];
+    } else if (state.hasOsc && obstacleInPath) {
+      ampValues = [0, 20, 35, 50];
+      freqValues = [0.5, 1.0, 1.5];
+    }
+    
+    // 5. Small vy adjustments
+    const vyOffsets = state.hasVy ? [-15, -10, -5, 0, 5, 10, 15] : [0];
+    
+    // Now test combinations (much fewer than brute force!)
+    for (const t of tValues) {
+      const baseVx = Math.round(dx / t / scale.sx);
+      const baseVy = Math.round(dy / t / scale.sy);
+      
+      for (const g of gValues) {
+        for (const vyOff of vyOffsets) {
+          // Adjust vy for gravity
+          const gravCompensation = 0.5 * g * t;
+          const adjVy = Math.round(baseVy + gravCompensation) + vyOff;
+          
+          for (const amp of ampValues) {
+            for (const freq of freqValues) {
+              const testVx = Math.max(-100, Math.min(100, baseVx));
+              const testVy = Math.max(-100, Math.min(100, state.hasVy ? adjVy : 0));
+              
+              // Apply to sliders
+              el.vxSlider.value = testVx;
+              el.vySlider.value = testVy;
+              el.gravSlider.value = g;
+              el.oscSlider.value = amp;
+              el.freqSlider.value = freq;
+              el.tSlider.value = t;
+              
+              calculatePath();
+              
+              // Score this solution
+              let score = 0;
+              if (state.isValid) {
+                score = 1000 + (state.straightDistance / Math.max(1, state.arcLength) * 100);
+                
+                // Found valid solution - restore and return
+                el.vxSlider.value = origVx;
+                el.vySlider.value = origVy;
+                el.gravSlider.value = origG;
+                el.oscSlider.value = origAmp;
+                el.freqSlider.value = origFreq;
+                el.tSlider.value = origT;
+                calculatePath();
+                return { vx: testVx, vy: testVy, g, amp, freq, t };
+              } else {
+                if (!state.hitsObstacle) score += 100;
+                if (state.reachesTarget) score += 300;
+                if (state.checkpointsHit.size > 0) score += state.checkpointsHit.size * 200;
+                if (state.arcLength <= state.maxFuel) score += 100;
+              }
+              
+              if (score > bestScore) {
+                bestScore = score;
+                bestSolution = { vx: testVx, vy: testVy, g, amp, freq, t };
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Restore original values
+    el.vxSlider.value = origVx;
+    el.vySlider.value = origVy;
+    el.gravSlider.value = origG;
+    el.oscSlider.value = origAmp;
+    el.freqSlider.value = origFreq;
+    el.tSlider.value = origT;
+    calculatePath();
+    
+    return bestSolution;
+  }
+  
+  function applySolution() {
+    state.usedHint = true;
+    el.btnHint.textContent = '⏳ Solving...';
+    el.btnHint.disabled = true;
+    
+    // Use setTimeout to let UI update
+    setTimeout(() => {
+      const sol = findWorkingSolution();
+      
+      if (sol) {
+        el.vxSlider.value = sol.vx;
+        el.vySlider.value = sol.vy;
+        el.gravSlider.value = sol.g;
+        el.oscSlider.value = sol.amp;
+        el.freqSlider.value = sol.freq;
+        el.tSlider.value = sol.t;
+        calculatePath();
+        
+        if (state.isValid) {
+          el.btnHint.textContent = '✓ Solved';
+        } else {
+          el.btnHint.textContent = '~ Close';
+          alert('Found a close solution. Fine-tune the values to complete the level.');
+        }
+      } else {
+        el.btnHint.textContent = '✗ Failed';
+        alert('Could not find a solution. Try Reset or skip to next level.');
+      }
+      
+      el.btnHint.style.opacity = '0.5';
+    }, 50);
+  }
+  
+  el.btnHint.addEventListener('click', () => {
+    if (state.usedHint) return;
+    if (confirm('Show the solution? This level will be marked as "assisted" in your history.')) {
+      applySolution();
+    }
+  });
+  el.btnNext.addEventListener('click', () => {
+    el.statsGrid.style.display = 'grid';
+    el.formulaUsed.style.display = 'block';
+    loadLevel(state.level + 1);
+  });
+  el.btnRetry.addEventListener('click', () => {
+    el.statsGrid.style.display = 'grid';
+    el.formulaUsed.style.display = 'block';
+    resetLevel();
+  });
+  
+  el.btnHistory.addEventListener('click', () => {
+    el.historyModal.classList.add('visible');
+  });
+  
+  el.closeHistory.addEventListener('click', () => {
+    el.historyModal.classList.remove('visible');
+  });
+  
+  el.historyModal.addEventListener('click', (e) => {
+    if (e.target === el.historyModal) {
+      el.historyModal.classList.remove('visible');
+    }
+  });
+  
+  el.btnSandbox.addEventListener('click', () => {
+    // Unlock all parameters for sandbox
+    state.hasVy = true;
+    state.hasGrav = true;
+    state.hasOsc = true;
+    state.hasFreq = true;
+    
+    el.vyGroup.classList.remove('locked');
+    el.gravGroup.classList.remove('locked');
+    el.oscGroup.classList.remove('locked');
+    el.freqGroup.classList.remove('locked');
+    
+    // Generate sandbox level with relative coords
+    state.level = 0;
+    state.currentLevelConfig = {
+      name: 'Sandbox Mode',
+      start: { rx: 0.08, ry: 0.5 },
+      end: { rx: 0.92, ry: 0.5 },
+      obstacles: [],
+      checkpoints: [],
+      fuelMultiplier: 100,
+      hasMovingTarget: false,
+      hasTimer: false
+    };
+    
+    applyLevelToScreen(state.currentLevelConfig);
+    state.hasMovingTarget = false;
+    state.hasTimer = false;
+    
+    el.timerDisplay.classList.remove('active');
+    el.levelDisplay.textContent = '🧪';
+    el.levelNum.textContent = '🧪';
+    el.levelName.textContent = 'Sandbox Mode';
+    el.missionText.textContent = 'Experiment freely! All parameters unlocked. Drag to place obstacles (coming soon).';
+    el.levelBadges.innerHTML = '';
+    el.newParamPanel.style.display = 'none';
+    el.overlay.classList.remove('visible');
+    
+    updateMathInsight(`<p><strong>Sandbox Mode:</strong> Experiment with all parameters!</p>
+                       <p>Try different combinations to see how they affect the path.</p>
+                       <p>Watch the velocity (red) and acceleration (yellow) vectors change.</p>`);
+    
+    calculatePath();
+  });
+  
+  window.addEventListener('resize', () => {
+    resize();
+    // Reapply level to new screen dimensions
+    if (state.currentLevelConfig) {
+      applyLevelToScreen(state.currentLevelConfig);
+    }
+    calculatePath();
+  });
+  
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !el.btnLaunch.disabled) {
+      e.preventDefault();
+      launch();
+    }
+  });
+  
+  // === INIT ===
+  resize();
+  loadLevel(1);
+  draw();
+})();
+</script>
+</body>
+</html>
