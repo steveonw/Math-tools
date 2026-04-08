@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Unit Circle – 3D Hemisphere View</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --panel:#111827cc;
+      --ink:#e5e7eb;
+      --muted:#9ca3af;
+      --accent:#22d3ee;
+      --accent2:#f472b6;
+      --good:#34d399;
+      --warn:#fb7185;
+      --grid:#1f2937;
+      --sector:#3b82f680;
+      --reference:#fbbf2460;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      background:radial-gradient(1200px 800px at 70% -10%,#1f2937 0%, var(--bg) 55%);
+      color:var(--ink);
+    }
+    .wrap{max-width:1600px; margin:0 auto; padding:14px}
+
+    .card{ background:var(--panel); border:1px solid #1f2937; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); overflow:hidden }
+    .head{ padding:14px 16px; border-bottom:1px solid #1f2937; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap }
+    .head h1{ font-size:18px; margin:0; letter-spacing:.2px }
+    .content{ padding:14px 16px }
+
+    /* Split view layout */
+    .visualization-container{ display:grid; grid-template-columns:1fr; gap:0 }
+    .visualization-container.split{ grid-template-columns:1fr 1fr; gap:14px }
+    
+    .main-controls{ display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center }
+    .mode-select{ background:#0b1220; border:1px solid #374151; color:var(--ink); padding:8px 12px; border-radius:12px; cursor:pointer; font-weight:600; font-size:12px; min-width:140px }
+    .mode-select:focus{ outline:2px solid var(--accent); outline-offset:2px }
+    
+    /* Accordion groups */
+    .feature-groups{ display:grid; gap:8px }
+    .feature-group{ background:#0b122040; border:1px solid #1f293780; border-radius:10px; overflow:hidden; display:none }
+    .feature-group.visible{ display:block }
+    .feature-group-header{ 
+      padding:10px 12px; 
+      cursor:pointer; 
+      user-select:none;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      transition:background 0.2s;
+    }
+    .feature-group-header:hover{ background:#0b122060 }
+    .feature-group-header h4{ 
+      margin:0; 
+      font-size:11px; 
+      color:#9ca3af; 
+      text-transform:uppercase; 
+      letter-spacing:0.5px; 
+      font-weight:600 
+    }
+    .feature-group-icon{ 
+      color:#9ca3af; 
+      font-size:14px; 
+      transition:transform 0.2s;
+    }
+    .feature-group.collapsed .feature-group-icon{ transform:rotate(-90deg) }
+    .feature-group-content{ 
+      padding:0 12px 10px; 
+      display:block;
+    }
+    .feature-group.collapsed .feature-group-content{ display:none }
+    .feature-row{ display:flex; gap:8px; flex-wrap:wrap }
+    
+    .btn{ border:1px solid #374151; background:#0b1220; color:var(--ink); padding:8px 12px; border-radius:12px; cursor:pointer; font-weight:600; font-size:12px; transition:border-color 0.2s }
+    .btn:hover{ border-color:#4b5563 }
+    .btn:focus{ outline:2px solid var(--accent); outline-offset:2px }
+    .btn.active{ border-color:var(--accent); background:#1e3a5f }
+    .pill{ background:#0b1220; border:1px solid #374151; border-radius:999px; padding:6px 10px; color:var(--muted); font-size:12px }
+    label{ font-size:12px; color:var(--muted); cursor:pointer; user-select:none }
+    select,input[type="checkbox"]{ accent-color:var(--accent); cursor:pointer }
+
+    .stage{ aspect-ratio:1/1; width:100%; max-width:min(100%, 80vh); margin:0 auto; background:linear-gradient(180deg,#0b1220,transparent), radial-gradient(900px 600px at 10% -10%,#0b1220 0%,transparent 55%); border-bottom:1px solid #1f2937; position:relative }
+    
+    .canvas-3d {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    .canvas-3d:active {
+      cursor: grabbing;
+    }
+    
+    svg{ width:100%; height:100%; touch-action:none; }
+    .axis{ stroke:#374151; stroke-width:1.5 }
+    .tick{ stroke:#2d3748; stroke-width:1 }
+    .circle{ stroke:#334155; fill:rgba(17,24,39,.35); stroke-width:2 }
+    .handle{ fill:var(--accent); stroke:white; stroke-width:2; filter:drop-shadow(0 2px 4px rgba(0,0,0,.5)); cursor:grab; transition:r 0.2s }
+    .handle:hover{ r:16 }
+    .handle:active{ cursor:grabbing }
+    .handle:focus{ outline:2px solid white; outline-offset:2px }
+    .handle2{ fill:var(--accent2); stroke:white; stroke-width:2; filter:drop-shadow(0 2px 4px rgba(0,0,0,.5)); cursor:grab; transition:r 0.2s }
+    .handle2:hover{ r:16 }
+    .handle2:active{ cursor:grabbing }
+    .handle2:focus{ outline:2px solid white; outline-offset:2px }
+    .ray{ stroke:var(--accent); stroke-width:3 }
+    .ray2{ stroke:var(--accent2); stroke-width:3 }
+    .ray-reference{ stroke:var(--reference); stroke-width:2; stroke-dasharray:8 4; opacity:0.7 }
+    .proj{ stroke:#64748b; stroke-dasharray:6 6; stroke-width:1.5 }
+    .proj-highlight{ stroke:#fbbf24; stroke-dasharray:6 6; stroke-width:3 }
+    .ray-highlight{ stroke-width:4 }
+    .tan-line{ stroke:var(--warn); stroke-width:2; stroke-dasharray:5 5 }
+    .classical-tan-line{ stroke:#10b981; stroke-width:2 }
+    .tan-extension{ stroke:var(--accent); stroke-width:1.5; stroke-dasharray:3 3; opacity:0.6 }
+    .tan-point{ fill:#10b981; stroke:white; stroke-width:1.5 }
+    .label{ fill:var(--muted); font-size:12px; user-select:none; text-anchor:middle; dominant-baseline:middle }
+    .tri-label{ fill:#fbbf24; font-size:13px; font-weight:700; user-select:none; text-anchor:middle; dominant-baseline:middle }
+    .special{ fill:#eab308; font-size:11px; font-weight:600; text-anchor:middle; dominant-baseline:middle }
+    .sector{ fill:var(--sector); stroke:rgba(59, 130, 246, 0.6); stroke-width:1 }
+    .reference-label{ fill:#fbbf24; font-size:11px; font-weight:600; text-anchor:middle; dominant-baseline:middle }
+
+    .vals{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px }
+    .vals .box{ background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:10px }
+    .vals h3{ margin:0 0 8px; font-size:13px; color:#cbd5e1 }
+    .kv{ display:grid; grid-template-columns:auto 1fr; gap:4px 8px; align-items:baseline; font-variant-numeric:tabular-nums }
+    .kv div:first-child{ color:var(--muted) }
+    code{ background:#0b1220; padding:2px 6px; border-radius:6px; border:1px solid #1f2937 }
+    .good{ color:var(--good) }
+    .bad{ color:var(--warn) }
+    .highlight-match{ color:#fbbf24; font-weight:600 }
+
+    .footer{ font-size:12px; color:var(--muted); padding:10px 16px 16px }
+
+    .wave-section{ display:none }
+    .wave-section.visible{ display:block }
+    .wave-graph{ background:linear-gradient(180deg,#0b1220,transparent), radial-gradient(900px 600px at 10% -10%,#0b1220 0%,transparent 55%); border-bottom:1px solid #1f2937; padding:16px }
+    .wave-canvas{ width:100%; height:100%; background:#0b1220; border-radius:12px; border:1px solid #1f2937}
+    .visualization-container.split .wave-section{ aspect-ratio:1/1 }
+    .visualization-container.split .wave-canvas{ height:100% }
+
+    .angle-diff{ background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:10px; margin-top:8px }
+    .angle-diff h4{ margin:0 0 6px; font-size:12px; color:#cbd5e1 }
+
+    .identity-box{ background:#0b122080; border:1px solid #1f2937; border-radius:8px; padding:8px 12px; position:absolute; top:10px; right:10px; font-size:12px; color:var(--ink); backdrop-filter:blur(8px); display:none }
+    .identity-box.visible{ display:block }
+    .identity-box .formula{ font-weight:600; color:var(--good) }
+
+    .cofunction-hint{ background:#fbbf2420; border:1px solid #fbbf24; border-radius:8px; padding:8px 12px; margin-top:8px; font-size:12px; color:#fbbf24; display:none; animation:fadeIn 0.3s }
+    .cofunction-hint.visible{ display:block }
+    @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+
+    .view-mode-selector {
+      display: flex;
+      gap: 4px;
+      background: #0b1220;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 4px;
+    }
+    .view-mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .view-mode-btn:hover {
+      background: #1f2937;
+    }
+    .view-mode-btn.active {
+      background: #1e3a5f;
+      color: var(--accent);
+    }
+
+    .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border-width:0 }
+
+    @media (max-width: 640px) {
+      .main-controls{ flex-direction:column; align-items:stretch }
+      .mode-select{ width:100% }
+      .feature-row{ font-size:11px }
+      .btn{ padding:6px 10px; font-size:11px }
+      .identity-box{ top:5px; right:5px; font-size:11px; padding:6px 10px }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card">
+      <div class="head">
+        <h1>Interactive Unit Circle - 3D Hemisphere</h1>
+        <div style="display:flex; gap:8px; align-items:center">
+          <div class="pill" role="status" aria-live="polite">2D Circle + 3D Hemisphere</div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="main-controls">
+          <select class="mode-select" id="modeSelect" aria-label="Visualization mode">
+            <option value="explore">Explore Mode</option>
+            <option value="learning" selected>Learning Mode</option>
+            <option value="advanced">Advanced Mode</option>
+          </select>
+          
+          <div class="view-mode-selector">
+            <button class="view-mode-btn active" data-view="2d">2D Circle</button>
+            <button class="view-mode-btn" data-view="3d">3D Hemisphere</button>
+            <button class="view-mode-btn" data-view="both">Both</button>
+          </div>
+          
+          <button class="btn" id="cycleAngles" aria-label="Cycle through special angles">Cycle Angles →</button>
+          <button class="btn" id="cycleLabelMode" aria-label="Change label display mode">Labels: Degrees</button>
+          <label><input type="checkbox" id="degToggle" checked aria-label="Show angles in degrees" /> Degrees</label>
+        </div>
+        
+        <div class="feature-groups">
+          <div class="feature-group" id="displayGroup">
+            <div class="feature-group-header">
+              <h4>Display</h4>
+              <span class="feature-group-icon">▼</span>
+            </div>
+            <div class="feature-group-content">
+              <div class="feature-row">
+                <label><input type="checkbox" id="showSecond" checked /> 2nd angle</label>
+                <label><input type="checkbox" id="showSector" checked /> Sector</label>
+                <label><input type="checkbox" id="showGrid3D" checked /> 3D Grid</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="feature-group" id="learningGroup">
+            <div class="feature-group-header">
+              <h4>Learning Features</h4>
+              <span class="feature-group-icon">▼</span>
+            </div>
+            <div class="feature-group-content">
+              <div class="feature-row">
+                <label><input type="checkbox" id="showReference" checked /> Reference angle</label>
+                <label><input type="checkbox" id="showPythagorean" checked /> x² + y² = 1</label>
+                <label><input type="checkbox" id="showCofunction" checked /> Cofunction hints</label>
+                <label><input type="checkbox" id="showTriangle" /> Triangle labels</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="feature-group" id="advancedGroup">
+            <div class="feature-group-header">
+              <h4>Advanced</h4>
+              <span class="feature-group-icon">▼</span>
+            </div>
+            <div class="feature-group-content">
+              <div class="feature-row">
+                <label><input type="checkbox" id="showTangent" /> Mirror line</label>
+                <label><input type="checkbox" id="showClassicalTan" /> Classical tangent</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="visualization-container" id="vizContainer">
+        <div class="stage" id="stage2d" role="application" aria-label="Interactive unit circle visualization">
+          <div class="identity-box" id="identityBox">
+            <div class="formula" id="identityFormula">x² + y² = 1.000</div>
+          </div>
+          <svg viewBox="0 0 600 600" id="svg" aria-hidden="true">
+            <line x1="0" y1="300" x2="600" y2="300" class="axis"/>
+            <line x1="300" y1="0" x2="300" y2="600" class="axis"/>
+            <circle cx="300" cy="300" r="220" class="circle"/>
+            <g id="specialTicks"></g>
+            <path id="sector" class="sector" visibility="hidden"/>
+            <line id="rayReference" class="ray-reference" x1="300" y1="300" x2="300" y2="80" visibility="hidden"/>
+            <text id="refLabel" class="reference-label" visibility="hidden">ref</text>
+            <line id="projX" class="proj" x1="300" y1="300" x2="300" y2="300" />
+            <line id="projY" class="proj" x1="300" y1="300" x2="300" y2="300" />
+            <line id="projX2" class="proj" x1="300" y1="300" x2="300" y2="300" visibility="hidden" />
+            <line id="projY2" class="proj" x1="300" y1="300" x2="300" y2="300" visibility="hidden" />
+            <line id="tanLine" class="tan-line" x1="300" y1="60" x2="300" y2="540" visibility="hidden"/>
+            <line id="classicalTanLine" class="classical-tan-line" x1="520" y1="60" x2="520" y2="540" visibility="hidden"/>
+            <line id="tanExtension" class="tan-extension" x1="300" y1="300" x2="520" y2="300" visibility="hidden"/>
+            <circle id="tanPoint" class="tan-point" r="5" cx="520" cy="300" visibility="hidden"/>
+            <text id="hypLabel" class="tri-label" visibility="hidden">hyp</text>
+            <text id="adjLabel" class="tri-label" visibility="hidden">adj</text>
+            <text id="oppLabel" class="tri-label" visibility="hidden">opp</text>
+            <line id="ray" class="ray" x1="300" y1="300" x2="300" y2="80"/>
+            <line id="ray2" class="ray2" x1="300" y1="300" x2="300" y2="80" visibility="visible"/>
+            <circle id="handle" class="handle" r="14" cx="520" cy="300" tabindex="0" role="slider" aria-label="Primary angle control" aria-valuemin="0" aria-valuemax="360" aria-valuenow="0"/>
+            <circle id="handle2" class="handle2" r="14" cx="455" cy="144" visibility="visible" tabindex="0" role="slider" aria-label="Secondary angle control" aria-valuemin="0" aria-valuemax="360" aria-valuenow="45"/>
+            <text id="quadLbl" class="label" x="12" y="20">QI</text>
+          </svg>
+        </div>
+        
+        <div class="stage" id="stage3d" style="display:none;">
+          <canvas id="canvas3d" class="canvas-3d"></canvas>
+        </div>
+      </div>
+      
+      <div class="content">
+        <div class="cofunction-hint" id="cofunctionHint">
+          <strong>Cofunctions detected!</strong> sin(θ) = cos(90° - θ)
+        </div>
+        <div class="vals" id="vals">
+          <div class="box">
+            <h3>Angle A (Cyan)</h3>
+            <div class="kv">
+              <div>θ</div><div id="aTheta">0°</div>
+              <div>θ (rad)</div><div id="aThetaRad">0</div>
+              <div>cos θ</div><div id="aCos">1</div>
+              <div>sin θ</div><div id="aSin">0</div>
+              <div>tan θ</div><div id="aTan">0</div>
+              <div>Quadrant</div><div id="aQuad">QI</div>
+              <div>Point</div><div id="aPoint">(1.000, 0.000)</div>
+            </div>
+          </div>
+          <div class="box">
+            <h3>Angle B (Pink)</h3>
+            <div class="kv">
+              <div>φ</div><div id="bTheta">45°</div>
+              <div>φ (rad)</div><div id="bThetaRad">π/4</div>
+              <div>cos φ</div><div id="bCos">0.707</div>
+              <div>sin φ</div><div id="bSin">0.707</div>
+              <div>tan φ</div><div id="bTan">1</div>
+              <div>Quadrant</div><div id="bQuad">QI</div>
+              <div>Point</div><div id="bPoint">(0.707, 0.707)</div>
+            </div>
+          </div>
+        </div>
+        <div class="angle-diff" id="angleDiff">
+          <h4>Angle Difference</h4>
+          <div class="kv">
+            <div>|θ - φ|</div><div id="diffAngle">45°</div>
+            <div>Radians</div><div id="diffRad">π/4</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer">
+        <strong>Tips:</strong> Switch between 2D circle and 3D hemisphere views. Drag in 3D to rotate. Use arrow keys or drag the dots to change angles.
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  window.addEventListener('load', function() {
+    'use strict';
+    
+    if (typeof THREE === 'undefined') {
+      console.error('Three.js failed to load');
+      return;
+    }
+
+    const SVG_SIZE = 600;
+    const CENTER_X = 300;
+    const CENTER_Y = 300;
+    const RADIUS = 220;
+    const EPSILON = 1e-6;
+    const ANGLE_SNAP_THRESHOLD = 0.6;
+    const COFUNCTION_THRESHOLD = 2;
+
+    const SPECIAL_ANGLES = [
+      0, Math.PI/6, Math.PI/4, Math.PI/3, Math.PI/2, 
+      2*Math.PI/3, 3*Math.PI/4, 5*Math.PI/6, Math.PI,
+      7*Math.PI/6, 5*Math.PI/4, 4*Math.PI/3, 3*Math.PI/2,
+      5*Math.PI/3, 7*Math.PI/4, 11*Math.PI/6
+    ];
+
+    const SPECIAL_DEGREES = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+
+    const MODE_PRESETS = {
+      explore: {
+        showSecond: true,
+        showSector: true,
+        showReference: false,
+        showPythagorean: false,
+        showCofunction: false,
+        showTriangle: false,
+        showTangent: false,
+        showClassicalTan: false,
+        showGrid3D: true
+      },
+      learning: {
+        showSecond: true,
+        showSector: true,
+        showReference: true,
+        showPythagorean: true,
+        showCofunction: true,
+        showTriangle: false,
+        showTangent: false,
+        showClassicalTan: false,
+        showGrid3D: true
+      },
+      advanced: {
+        showSecond: true,
+        showSector: true,
+        showReference: true,
+        showPythagorean: true,
+        showCofunction: true,
+        showTriangle: true,
+        showTangent: true,
+        showClassicalTan: true,
+        showGrid3D: true
+      }
+    };
+
+    const MODE_GROUPS = {
+      explore: {
+        visible: ['displayGroup'],
+        collapsed: []
+      },
+      learning: {
+        visible: ['displayGroup', 'learningGroup'],
+        collapsed: ['displayGroup']
+      },
+      advanced: {
+        visible: ['displayGroup', 'learningGroup', 'advancedGroup'],
+        collapsed: []
+      }
+    };
+
+    // DOM elements
+    const svg = document.getElementById('svg');
+    const stage2d = document.getElementById('stage2d');
+    const stage3d = document.getElementById('stage3d');
+    const canvas3d = document.getElementById('canvas3d');
+    const handle = document.getElementById('handle');
+    const handle2 = document.getElementById('handle2');
+    const ray = document.getElementById('ray');
+    const ray2 = document.getElementById('ray2');
+    const rayReference = document.getElementById('rayReference');
+    const refLabel = document.getElementById('refLabel');
+    const projX = document.getElementById('projX');
+    const projY = document.getElementById('projY');
+    const projX2 = document.getElementById('projX2');
+    const projY2 = document.getElementById('projY2');
+    const tanLine = document.getElementById('tanLine');
+    const classicalTanLine = document.getElementById('classicalTanLine');
+    const tanExtension = document.getElementById('tanExtension');
+    const tanPoint = document.getElementById('tanPoint');
+    const sector = document.getElementById('sector');
+    const hypLabel = document.getElementById('hypLabel');
+    const adjLabel = document.getElementById('adjLabel');
+    const oppLabel = document.getElementById('oppLabel');
+    const quadLbl = document.getElementById('quadLbl');
+    const identityBox = document.getElementById('identityBox');
+    const identityFormula = document.getElementById('identityFormula');
+    const cofunctionHint = document.getElementById('cofunctionHint');
+    const vizContainer = document.getElementById('vizContainer');
+
+    const elements = {
+      aTheta: document.getElementById('aTheta'),
+      aThetaRad: document.getElementById('aThetaRad'),
+      aCos: document.getElementById('aCos'),
+      aSin: document.getElementById('aSin'),
+      aTan: document.getElementById('aTan'),
+      aQuad: document.getElementById('aQuad'),
+      aPoint: document.getElementById('aPoint'),
+      bTheta: document.getElementById('bTheta'),
+      bThetaRad: document.getElementById('bThetaRad'),
+      bCos: document.getElementById('bCos'),
+      bSin: document.getElementById('bSin'),
+      bTan: document.getElementById('bTan'),
+      bQuad: document.getElementById('bQuad'),
+      bPoint: document.getElementById('bPoint'),
+      diffAngle: document.getElementById('diffAngle'),
+      diffRad: document.getElementById('diffRad'),
+      angleDiff: document.getElementById('angleDiff')
+    };
+
+    const controls = {
+      modeSelect: document.getElementById('modeSelect'),
+      degToggle: document.getElementById('degToggle'),
+      showSecond: document.getElementById('showSecond'),
+      showTangent: document.getElementById('showTangent'),
+      showClassicalTan: document.getElementById('showClassicalTan'),
+      showSector: document.getElementById('showSector'),
+      showTriangle: document.getElementById('showTriangle'),
+      showReference: document.getElementById('showReference'),
+      showPythagorean: document.getElementById('showPythagorean'),
+      showCofunction: document.getElementById('showCofunction'),
+      showGrid3D: document.getElementById('showGrid3D'),
+      cycleAngles: document.getElementById('cycleAngles'),
+      cycleLabelMode: document.getElementById('cycleLabelMode')
+    };
+
+    // State
+    let theta = 0;
+    let phi = Math.PI / 4;
+    let labelMode = 'degrees';
+    let currentAngleIndex = 0;
+    let tickLabels = [];
+    let viewMode = '2d'; // '2d', '3d', 'both'
+
+    // Three.js scene setup
+    let scene, camera, renderer;
+    let hemisphere, circle3d, axes3d, gridHelper;
+    let point1Mesh, point2Mesh;
+    let proj1X, proj1Y, proj1Z, proj2X, proj2Y, proj2Z;
+    let ray1Line, ray2Line;
+    let mouse3D = { x: 0, y: 0 };
+    let isDragging3D = false;
+    let cameraRotation = { theta: Math.PI / 6, phi: Math.PI / 4 };
+
+    function init3DScene() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b1220);
+
+      camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+      camera.position.set(3, 2, 3);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      updateRendererSize();
+
+      // Hemisphere
+      const hemisphereGeom = new THREE.SphereGeometry(1, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      const hemisphereMat = new THREE.MeshPhongMaterial({
+        color: 0x3b82f6,
+        transparent: true,
+        opacity: 0.4,
+        side: THREE.DoubleSide
+      });
+      hemisphere = new THREE.Mesh(hemisphereGeom, hemisphereMat);
+      scene.add(hemisphere);
+
+      // Wireframe for hemisphere
+      const wireframeGeom = new THREE.EdgesGeometry(hemisphereGeom);
+      const wireframeMat = new THREE.LineBasicMaterial({ color: 0x6366f1, linewidth: 1 });
+      const wireframe = new THREE.LineSegments(wireframeGeom, wireframeMat);
+      hemisphere.add(wireframe);
+
+      // Circle at equator
+      const circleGeom = new THREE.BufferGeometry();
+      const circlePoints = [];
+      for (let i = 0; i <= 64; i++) {
+        const angle = (i / 64) * Math.PI * 2;
+        circlePoints.push(new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle)));
+      }
+      circleGeom.setFromPoints(circlePoints);
+      circle3d = new THREE.Line(circleGeom, new THREE.LineBasicMaterial({ color: 0x22d3ee, linewidth: 2 }));
+      scene.add(circle3d);
+
+      // Axes
+      axes3d = new THREE.Group();
+      const axisLength = 1.5;
+      const axesMaterial = [
+        new THREE.LineBasicMaterial({ color: 0xff4444 }), // X - red
+        new THREE.LineBasicMaterial({ color: 0x44ff44 }), // Y - green
+        new THREE.LineBasicMaterial({ color: 0x4444ff })  // Z - blue
+      ];
+      
+      [[axisLength, 0, 0], [0, axisLength, 0], [0, 0, axisLength]].forEach((end, i) => {
+        const geom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(...end)
+        ]);
+        axes3d.add(new THREE.Line(geom, axesMaterial[i]));
+      });
+      scene.add(axes3d);
+
+      // Grid
+      gridHelper = new THREE.GridHelper(3, 12, 0x374151, 0x1f2937);
+      gridHelper.rotation.x = Math.PI / 2;
+      scene.add(gridHelper);
+
+      // Point markers
+      const pointGeom = new THREE.SphereGeometry(0.08, 16, 16);
+      point1Mesh = new THREE.Mesh(pointGeom, new THREE.MeshBasicMaterial({ color: 0x22d3ee }));
+      point2Mesh = new THREE.Mesh(pointGeom, new THREE.MeshBasicMaterial({ color: 0xf472b6 }));
+      scene.add(point1Mesh);
+      scene.add(point2Mesh);
+
+      // Projection lines
+      const projMat = new THREE.LineDashedMaterial({ color: 0x64748b, dashSize: 0.05, gapSize: 0.03 });
+      
+      const createProjectionLine = () => {
+        const geom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, 0, 0)
+        ]);
+        const line = new THREE.Line(geom, projMat.clone());
+        line.computeLineDistances();
+        scene.add(line);
+        return line;
+      };
+
+      proj1X = createProjectionLine();
+      proj1Y = createProjectionLine();
+      proj1Z = createProjectionLine();
+      proj2X = createProjectionLine();
+      proj2Y = createProjectionLine();
+      proj2Z = createProjectionLine();
+
+      // Ray lines
+      const rayMat1 = new THREE.LineBasicMaterial({ color: 0x22d3ee, linewidth: 2 });
+      const rayMat2 = new THREE.LineBasicMaterial({ color: 0xf472b6, linewidth: 2 });
+      
+      ray1Line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(1, 0, 0)
+        ]),
+        rayMat1
+      );
+      
+      ray2Line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(1, 0, 0)
+        ]),
+        rayMat2
+      );
+      
+      scene.add(ray1Line);
+      scene.add(ray2Line);
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      directionalLight.position.set(5, 5, 5);
+      scene.add(directionalLight);
+      
+      const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+      directionalLight2.position.set(-5, 3, -5);
+      scene.add(directionalLight2);
+
+      // Mouse controls for 3D
+      canvas3d.addEventListener('mousedown', on3DMouseDown);
+      canvas3d.addEventListener('touchstart', on3DMouseDown, { passive: false });
+      window.addEventListener('mousemove', on3DMouseMove);
+      window.addEventListener('touchmove', on3DMouseMove, { passive: false });
+      window.addEventListener('mouseup', on3DMouseUp);
+      window.addEventListener('touchend', on3DMouseUp);
+    }
+
+    function updateRendererSize() {
+      const rect = canvas3d.getBoundingClientRect();
+      const width = rect.width || 600;
+      const height = rect.height || 600;
+      renderer.setSize(width, height);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+
+    function on3DMouseDown(e) {
+      isDragging3D = true;
+      const evt = e.touches ? e.touches[0] : e;
+      mouse3D.x = evt.clientX;
+      mouse3D.y = evt.clientY;
+      e.preventDefault();
+    }
+
+    function on3DMouseMove(e) {
+      if (!isDragging3D) return;
+      
+      const evt = e.touches ? e.touches[0] : e;
+      const deltaX = evt.clientX - mouse3D.x;
+      const deltaY = evt.clientY - mouse3D.y;
+      
+      cameraRotation.theta += deltaX * 0.005;
+      cameraRotation.phi = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, cameraRotation.phi - deltaY * 0.005));
+      
+      updateCameraPosition();
+      
+      mouse3D.x = evt.clientX;
+      mouse3D.y = evt.clientY;
+      e.preventDefault();
+    }
+
+    function on3DMouseUp() {
+      isDragging3D = false;
+    }
+
+    function updateCameraPosition() {
+      const radius = 4;
+      camera.position.x = radius * Math.sin(cameraRotation.phi) * Math.cos(cameraRotation.theta);
+      camera.position.y = radius * Math.cos(cameraRotation.phi);
+      camera.position.z = radius * Math.sin(cameraRotation.phi) * Math.sin(cameraRotation.theta);
+      camera.lookAt(0, 0, 0);
+    }
+
+    function update3DScene() {
+      if (viewMode === '2d' || !scene) return;
+
+      // Map angles to hemisphere points
+      // Point on equator of hemisphere
+      const x1 = Math.cos(theta);
+      const z1 = Math.sin(theta);
+      const y1 = 0;
+
+      const x2 = Math.cos(phi);
+      const z2 = Math.sin(phi);
+      const y2 = 0;
+
+      // Update point positions
+      point1Mesh.position.set(x1, y1, z1);
+      point2Mesh.position.set(x2, y2, z2);
+      point2Mesh.visible = controls.showSecond.checked;
+
+      // Update rays
+      ray1Line.geometry.setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(x1, y1, z1)
+      ]);
+      
+      ray2Line.geometry.setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(x2, y2, z2)
+      ]);
+      ray2Line.visible = controls.showSecond.checked;
+
+      // Update projections
+      const updateProjection = (line, start, end) => {
+        line.geometry.setFromPoints([start, end]);
+        line.computeLineDistances();
+      };
+
+      updateProjection(proj1X, new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x1, 0, z1));
+      updateProjection(proj1Y, new THREE.Vector3(x1, 0, z1), new THREE.Vector3(0, 0, z1));
+      updateProjection(proj1Z, new THREE.Vector3(0, 0, z1), new THREE.Vector3(0, 0, 0));
+
+      updateProjection(proj2X, new THREE.Vector3(x2, y2, z2), new THREE.Vector3(x2, 0, z2));
+      updateProjection(proj2Y, new THREE.Vector3(x2, 0, z2), new THREE.Vector3(0, 0, z2));
+      updateProjection(proj2Z, new THREE.Vector3(0, 0, z2), new THREE.Vector3(0, 0, 0));
+
+      proj2X.visible = controls.showSecond.checked;
+      proj2Y.visible = controls.showSecond.checked;
+      proj2Z.visible = controls.showSecond.checked;
+
+      gridHelper.visible = controls.showGrid3D.checked;
+    }
+
+    // View mode controls
+    document.querySelectorAll('.view-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        viewMode = btn.dataset.view;
+        
+        if (viewMode === '2d') {
+          stage2d.style.display = 'block';
+          stage3d.style.display = 'none';
+          vizContainer.classList.remove('split');
+        } else if (viewMode === '3d') {
+          stage2d.style.display = 'none';
+          stage3d.style.display = 'block';
+          vizContainer.classList.remove('split');
+          setTimeout(() => {
+            updateRendererSize();
+            update();
+          }, 100);
+        } else { // both
+          stage2d.style.display = 'block';
+          stage3d.style.display = 'block';
+          vizContainer.classList.add('split');
+          setTimeout(() => {
+            updateRendererSize();
+            update();
+          }, 100);
+        }
+      });
+    });
+
+    // Utility functions (keeping existing ones)
+    function clampAngle(a) {
+      a = a % (2 * Math.PI);
+      return a < 0 ? a + 2 * Math.PI : a;
+    }
+
+    function wrapDeg(d) {
+      d %= 360;
+      return d < 0 ? d + 360 : d;
+    }
+
+    function near(a, b, eps = ANGLE_SNAP_THRESHOLD) {
+      const diff = Math.abs(wrapDeg(a - b));
+      return Math.min(diff, 360 - diff) < eps;
+    }
+
+    function fmt(x) {
+      if (!isFinite(x)) return 'undefined';
+      let s = Math.abs(x) < EPSILON ? '0' : x.toFixed(3);
+      return s.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+    }
+
+    function quadrant(a) {
+      const d = wrapDeg(a * 180 / Math.PI);
+      if ([0, 90, 180, 270].some(x => near(d, x))) return 'Axis';
+      if (d < 90) return 'QI';
+      if (d < 180) return 'QII';
+      if (d < 270) return 'QIII';
+      return 'QIV';
+    }
+
+    function getReferenceAngle(a) {
+      const d = wrapDeg(a * 180 / Math.PI);
+      if (d <= 90) return null;
+      if (d <= 180) return (180 - d) * Math.PI / 180;
+      if (d <= 270) return (d - 180) * Math.PI / 180;
+      return (360 - d) * Math.PI / 180;
+    }
+
+    function angleToNicePi(a) {
+      const fractions = [
+        { value: 0, display: '0' }, { value: Math.PI/6, display: 'π/6' },
+        { value: Math.PI/4, display: 'π/4' }, { value: Math.PI/3, display: 'π/3' },
+        { value: Math.PI/2, display: 'π/2' }, { value: 2*Math.PI/3, display: '2π/3' },
+        { value: 3*Math.PI/4, display: '3π/4' }, { value: 5*Math.PI/6, display: '5π/6' },
+        { value: Math.PI, display: 'π' }, { value: 7*Math.PI/6, display: '7π/6' },
+        { value: 5*Math.PI/4, display: '5π/4' }, { value: 4*Math.PI/3, display: '4π/3' },
+        { value: 3*Math.PI/2, display: '3π/2' }, { value: 5*Math.PI/3, display: '5π/3' },
+        { value: 7*Math.PI/4, display: '7π/4' }, { value: 11*Math.PI/6, display: '11π/6' }
+      ];
+
+      let closest = fractions[0], minDiff = Math.abs(a - closest.value);
+      for (let frac of fractions) {
+        const diff = Math.abs(a - frac.value);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = frac;
+        }
+      }
+      return minDiff < 0.015 ? closest.display : `${fmt(a)} rad`;
+    }
+
+    function areCofunctions(a1, a2) {
+      const diff = Math.abs(a1 - a2) * 180 / Math.PI;
+      const adjustedDiff = Math.min(diff, 360 - diff);
+      return Math.abs(adjustedDiff - 90) < COFUNCTION_THRESHOLD;
+    }
+
+    function applyMode(mode) {
+      const preset = MODE_PRESETS[mode];
+      if (!preset) return;
+      
+      Object.keys(preset).forEach(key => {
+        if (controls[key]) {
+          controls[key].checked = preset[key];
+        }
+      });
+      
+      const modeConfig = MODE_GROUPS[mode] || { visible: [], collapsed: [] };
+      ['displayGroup', 'learningGroup', 'advancedGroup'].forEach(groupId => {
+        const group = document.getElementById(groupId);
+        if (group) {
+          if (modeConfig.visible.includes(groupId)) {
+            group.classList.add('visible');
+            if (modeConfig.collapsed.includes(groupId)) {
+              group.classList.add('collapsed');
+            } else {
+              group.classList.remove('collapsed');
+            }
+          } else {
+            group.classList.remove('visible');
+          }
+        }
+      });
+      
+      update();
+    }
+
+    function toggleAccordion(groupId) {
+      const group = document.getElementById(groupId);
+      if (group) {
+        group.classList.toggle('collapsed');
+      }
+    }
+
+    function initializeSpecialTicks() {
+      const g = document.getElementById('specialTicks');
+      g.innerHTML = '';
+      tickLabels = [];
+      
+      SPECIAL_ANGLES.forEach(a => {
+        const x = CENTER_X + RADIUS * Math.cos(a);
+        const y = CENTER_Y - RADIUS * Math.sin(a);
+        const x2 = CENTER_X + (RADIUS + 8) * Math.cos(a);
+        const y2 = CENTER_Y - (RADIUS + 8) * Math.sin(a);
+        
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', y);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('class', 'tick');
+        g.appendChild(line);
+
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', CENTER_X + (RADIUS + 20) * Math.cos(a));
+        t.setAttribute('y', CENTER_Y - (RADIUS + 20) * Math.sin(a));
+        t.setAttribute('class', 'special');
+        t.textContent = `${Math.round(a * 180 / Math.PI)}°`;
+        g.appendChild(t);
+        
+        tickLabels.push({ element: t, angle: a });
+      });
+    }
+
+    function getSectorPath() {
+      const t = clampAngle(theta);
+      const p = clampAngle(phi);
+      
+      let startAngle = t;
+      let endAngle = p;
+      
+      if (endAngle < startAngle) {
+        endAngle += 2 * Math.PI;
+      }
+      
+      const x1 = CENTER_X + RADIUS * Math.cos(startAngle);
+      const y1 = CENTER_Y - RADIUS * Math.sin(startAngle);
+      const x2 = CENTER_X + RADIUS * Math.cos(endAngle);
+      const y2 = CENTER_Y - RADIUS * Math.sin(endAngle);
+      
+      const largeArcFlag = (endAngle - startAngle) > Math.PI ? 1 : 0;
+      
+      return `M ${CENTER_X} ${CENTER_Y} L ${x1} ${y1} A ${RADIUS} ${RADIUS} 0 ${largeArcFlag} 0 ${x2} ${y2} Z`;
+    }
+
+    function setHandleFromAngle(el, a) {
+      const x = CENTER_X + RADIUS * Math.cos(a);
+      const y = CENTER_Y - RADIUS * Math.sin(a);
+      el.setAttribute('cx', x);
+      el.setAttribute('cy', y);
+    }
+
+    function update() {
+      try {
+        const t = clampAngle(theta);
+        const p = clampAngle(phi);
+
+        // 2D Updates
+        setHandleFromAngle(handle, t);
+        const hx = +handle.getAttribute('cx');
+        const hy = +handle.getAttribute('cy');
+        ray.setAttribute('x2', hx);
+        ray.setAttribute('y2', hy);
+
+        if (controls.showReference.checked) {
+          const refAngle = getReferenceAngle(t);
+          if (refAngle !== null) {
+            rayReference.setAttribute('visibility', 'visible');
+            const refX = CENTER_X + RADIUS * Math.cos(refAngle);
+            const refY = CENTER_Y - RADIUS * Math.sin(refAngle);
+            rayReference.setAttribute('x2', refX);
+            rayReference.setAttribute('y2', refY);
+            
+            refLabel.setAttribute('visibility', 'visible');
+            refLabel.setAttribute('x', CENTER_X + (RADIUS + 35) * Math.cos(refAngle));
+            refLabel.setAttribute('y', CENTER_Y - (RADIUS + 35) * Math.sin(refAngle));
+            const refDeg = Math.round(refAngle * 180 / Math.PI);
+            refLabel.textContent = `ref: ${refDeg}°`;
+          } else {
+            rayReference.setAttribute('visibility', 'hidden');
+            refLabel.setAttribute('visibility', 'hidden');
+          }
+        } else {
+          rayReference.setAttribute('visibility', 'hidden');
+          refLabel.setAttribute('visibility', 'hidden');
+        }
+
+        if (controls.showPythagorean.checked) {
+          const cosT = Math.cos(t);
+          const sinT = Math.sin(t);
+          const sum = cosT * cosT + sinT * sinT;
+          identityFormula.textContent = `x² + y² = ${sum.toFixed(3)}`;
+          identityBox.classList.add('visible');
+        } else {
+          identityBox.classList.remove('visible');
+        }
+
+        projX.setAttribute('x1', hx);
+        projX.setAttribute('y1', hy);
+        projX.setAttribute('x2', hx);
+        projX.setAttribute('y2', CENTER_Y);
+        projY.setAttribute('x1', hx);
+        projY.setAttribute('y1', CENTER_Y);
+        projY.setAttribute('x2', CENTER_X);
+        projY.setAttribute('y2', CENTER_Y);
+
+        if (controls.showTriangle.checked) {
+          projX.setAttribute('class', 'proj-highlight');
+          projY.setAttribute('class', 'proj-highlight');
+          ray.setAttribute('class', 'ray ray-highlight');
+          
+          hypLabel.setAttribute('visibility', 'visible');
+          hypLabel.setAttribute('x', CENTER_X + (hx - CENTER_X) * 0.55);
+          hypLabel.setAttribute('y', CENTER_Y + (hy - CENTER_Y) * 0.55);
+          
+          adjLabel.setAttribute('visibility', 'visible');
+          adjLabel.setAttribute('x', CENTER_X + (hx - CENTER_X) * 0.5);
+          adjLabel.setAttribute('y', CENTER_Y + 15);
+          
+          oppLabel.setAttribute('visibility', 'visible');
+          oppLabel.setAttribute('x', hx + 15);
+          oppLabel.setAttribute('y', CENTER_Y + (hy - CENTER_Y) * 0.5);
+        } else {
+          projX.setAttribute('class', 'proj');
+          projY.setAttribute('class', 'proj');
+          ray.setAttribute('class', 'ray');
+          hypLabel.setAttribute('visibility', 'hidden');
+          adjLabel.setAttribute('visibility', 'hidden');
+          oppLabel.setAttribute('visibility', 'hidden');
+        }
+
+        if (controls.showSecond.checked) {
+          handle2.setAttribute('visibility', 'visible');
+          ray2.setAttribute('visibility', 'visible');
+          setHandleFromAngle(handle2, p);
+          const hx2 = +handle2.getAttribute('cx');
+          const hy2 = +handle2.getAttribute('cy');
+          ray2.setAttribute('x2', hx2);
+          ray2.setAttribute('y2', hy2);
+          
+          projX2.setAttribute('visibility', 'visible');
+          projY2.setAttribute('visibility', 'visible');
+          projX2.setAttribute('x1', hx2);
+          projX2.setAttribute('y1', hy2);
+          projX2.setAttribute('x2', hx2);
+          projX2.setAttribute('y2', CENTER_Y);
+          projY2.setAttribute('x1', hx2);
+          projY2.setAttribute('y1', CENTER_Y);
+          projY2.setAttribute('x2', CENTER_X);
+          projY2.setAttribute('y2', CENTER_Y);
+          
+          elements.angleDiff.style.display = 'block';
+        } else {
+          handle2.setAttribute('visibility', 'hidden');
+          ray2.setAttribute('visibility', 'hidden');
+          projX2.setAttribute('visibility', 'hidden');
+          projY2.setAttribute('visibility', 'hidden');
+          elements.angleDiff.style.display = 'none';
+        }
+
+        if (controls.showSecond.checked && controls.showSector.checked) {
+          sector.setAttribute('visibility', 'visible');
+          sector.setAttribute('d', getSectorPath());
+        } else {
+          sector.setAttribute('visibility', 'hidden');
+        }
+
+        if (controls.showTangent.checked) {
+          tanLine.setAttribute('visibility', 'visible');
+          const xTan = CENTER_X + RADIUS * Math.cos(t);
+          tanLine.setAttribute('x1', xTan);
+          tanLine.setAttribute('x2', xTan);
+          tanLine.setAttribute('y1', CENTER_Y - RADIUS - 40);
+          tanLine.setAttribute('y2', CENTER_Y + RADIUS + 40);
+        } else {
+          tanLine.setAttribute('visibility', 'hidden');
+        }
+
+        if (controls.showClassicalTan.checked) {
+          const cosT = Math.cos(t);
+          const sinT = Math.sin(t);
+          const tanT = sinT / cosT;
+          
+          const xTanFixed = CENTER_X + RADIUS;
+          
+          classicalTanLine.setAttribute('x1', xTanFixed);
+          classicalTanLine.setAttribute('x2', xTanFixed);
+          classicalTanLine.setAttribute('y1', CENTER_Y - RADIUS - 40);
+          classicalTanLine.setAttribute('y2', CENTER_Y + RADIUS + 40);
+          
+          if (Math.abs(cosT) > EPSILON) {
+            classicalTanLine.setAttribute('visibility', 'visible');
+            tanExtension.setAttribute('visibility', 'visible');
+            tanPoint.setAttribute('visibility', 'visible');
+            
+            const yTan = CENTER_Y - RADIUS * tanT;
+            
+            tanExtension.setAttribute('x1', hx);
+            tanExtension.setAttribute('y1', hy);
+            tanExtension.setAttribute('x2', xTanFixed);
+            tanExtension.setAttribute('y2', yTan);
+            
+            tanPoint.setAttribute('cx', xTanFixed);
+            tanPoint.setAttribute('cy', yTan);
+          } else {
+            classicalTanLine.setAttribute('visibility', 'visible');
+            tanExtension.setAttribute('visibility', 'hidden');
+            tanPoint.setAttribute('visibility', 'hidden');
+          }
+        } else {
+          classicalTanLine.setAttribute('visibility', 'hidden');
+          tanExtension.setAttribute('visibility', 'hidden');
+          tanPoint.setAttribute('visibility', 'hidden');
+        }
+
+        const cosT = Math.cos(t), sinT = Math.sin(t), tanT = sinT / cosT;
+        const cosP = Math.cos(p), sinP = Math.sin(p), tanP = sinP / cosP;
+
+        let isCofunctionPair = false;
+        if (controls.showSecond.checked && controls.showCofunction.checked) {
+          isCofunctionPair = areCofunctions(t, p);
+          if (isCofunctionPair) {
+            const tDeg = Math.round(t * 180 / Math.PI);
+            const pDeg = Math.round(p * 180 / Math.PI);
+            cofunctionHint.innerHTML = `<strong>Cofunctions detected!</strong> sin(${tDeg}°) = ${fmt(sinT)} = cos(${pDeg}°) and cos(${tDeg}°) = ${fmt(cosT)} = sin(${pDeg}°)`;
+            cofunctionHint.classList.add('visible');
+          } else {
+            cofunctionHint.classList.remove('visible');
+          }
+        } else {
+          cofunctionHint.classList.remove('visible');
+        }
+
+        elements.aTheta.textContent = controls.degToggle.checked ? `${fmt(t * 180 / Math.PI)}°` : `${fmt(t)} rad`;
+        elements.aThetaRad.textContent = angleToNicePi(t);
+        
+        const aCosTxt = `${fmt(cosT)} ${cosT > 0 ? '<span class="good">(+)</span>' : '<span class="bad">(−)</span>'}`;
+        const aSinTxt = `${fmt(sinT)} ${sinT > 0 ? '<span class="good">(+)</span>' : '<span class="bad">(−)</span>'}`;
+        
+        if (isCofunctionPair && Math.abs(sinT - cosP) < 0.01) {
+          elements.aCos.innerHTML = aCosTxt.replace(fmt(cosT), `<span class="highlight-match">${fmt(cosT)}</span>`);
+          elements.aSin.innerHTML = aSinTxt.replace(fmt(sinT), `<span class="highlight-match">${fmt(sinT)}</span>`);
+        } else {
+          elements.aCos.innerHTML = aCosTxt;
+          elements.aSin.innerHTML = aSinTxt;
+        }
+        
+        elements.aTan.textContent = Math.abs(cosT) < EPSILON ? 'undefined' : fmt(tanT);
+        elements.aQuad.textContent = quadrant(t);
+        elements.aPoint.textContent = `(${fmt(cosT)}, ${fmt(sinT)})`;
+        
+        quadLbl.textContent = quadrant(t);
+        handle.setAttribute('aria-valuenow', Math.round(t * 180 / Math.PI));
+
+        if (controls.showSecond.checked) {
+          elements.bTheta.textContent = controls.degToggle.checked ? `${fmt(p * 180 / Math.PI)}°` : `${fmt(p)} rad`;
+          elements.bThetaRad.textContent = angleToNicePi(p);
+          
+          const bCosTxt = `${fmt(cosP)} ${cosP > 0 ? '<span class="good">(+)</span>' : '<span class="bad">(−)</span>'}`;
+          const bSinTxt = `${fmt(sinP)} ${sinP > 0 ? '<span class="good">(+)</span>' : '<span class="bad">(−)</span>'}`;
+          
+          if (isCofunctionPair && Math.abs(cosP - sinT) < 0.01) {
+            elements.bCos.innerHTML = bCosTxt.replace(fmt(cosP), `<span class="highlight-match">${fmt(cosP)}</span>`);
+            elements.bSin.innerHTML = bSinTxt.replace(fmt(sinP), `<span class="highlight-match">${fmt(sinP)}</span>`);
+          } else {
+            elements.bCos.innerHTML = bCosTxt;
+            elements.bSin.innerHTML = bSinTxt;
+          }
+          
+          elements.bTan.textContent = Math.abs(cosP) < EPSILON ? 'undefined' : fmt(tanP);
+          elements.bQuad.textContent = quadrant(p);
+          elements.bPoint.textContent = `(${fmt(cosP)}, ${fmt(sinP)})`;
+          
+          handle2.setAttribute('aria-valuenow', Math.round(p * 180 / Math.PI));
+          
+          const diff = Math.abs(p - t);
+          const adjustedDiff = Math.min(diff, 2 * Math.PI - diff);
+          elements.diffAngle.textContent = controls.degToggle.checked ? 
+            `${fmt(adjustedDiff * 180 / Math.PI)}°` : `${fmt(adjustedDiff)} rad`;
+          elements.diffRad.textContent = angleToNicePi(adjustedDiff);
+        }
+
+        // Update 3D scene
+        update3DScene();
+      } catch (error) {
+        console.error('Error during update:', error);
+      }
+    }
+
+    function clientToSvg(evt) {
+      const pt = svg.createSVGPoint();
+      pt.x = evt.touches ? evt.touches[0].clientX : evt.clientX;
+      pt.y = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function angleFromPoint(x, y) {
+      const dx = x - CENTER_X;
+      const dy = CENTER_Y - y;
+      return Math.atan2(dy, dx);
+    }
+
+    function startDrag(which, e) {
+      e.preventDefault();
+      
+      const move = (ev) => {
+        ev.preventDefault();
+        const p = clientToSvg(ev);
+        const a = angleFromPoint(p.x, p.y);
+        if (which === 1) theta = a;
+        else phi = a;
+        update();
+      };
+      
+      const end = () => {
+        window.removeEventListener('mousemove', move);
+        window.removeEventListener('touchmove', move);
+        window.removeEventListener('mouseup', end);
+        window.removeEventListener('touchend', end);
+      };
+      
+      window.addEventListener('mousemove', move, { passive: false });
+      window.addEventListener('touchmove', move, { passive: false });
+      window.addEventListener('mouseup', end);
+      window.addEventListener('touchend', end);
+    }
+
+    handle.addEventListener('mousedown', (e) => startDrag(1, e));
+    handle.addEventListener('touchstart', (e) => startDrag(1, e), { passive: false });
+    handle2.addEventListener('mousedown', (e) => startDrag(2, e));
+    handle2.addEventListener('touchstart', (e) => startDrag(2, e), { passive: false });
+
+    handle.addEventListener('keydown', (e) => {
+      const step = e.shiftKey ? Math.PI / 12 : Math.PI / 180;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        theta += step;
+        update();
+        e.preventDefault();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        theta -= step;
+        update();
+        e.preventDefault();
+      }
+    });
+
+    handle2.addEventListener('keydown', (e) => {
+      const step = e.shiftKey ? Math.PI / 12 : Math.PI / 180;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        phi += step;
+        update();
+        e.preventDefault();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        phi -= step;
+        update();
+        e.preventDefault();
+      }
+    });
+
+    controls.modeSelect.addEventListener('change', (e) => {
+      applyMode(e.target.value);
+    });
+
+    ['displayGroup', 'learningGroup', 'advancedGroup'].forEach(groupId => {
+      const header = document.querySelector(`#${groupId} .feature-group-header`);
+      if (header) {
+        header.addEventListener('click', () => toggleAccordion(groupId));
+      }
+    });
+
+    Object.values(controls).forEach(control => {
+      if (control && control.type === 'checkbox') {
+        control.addEventListener('change', update);
+      }
+    });
+
+    controls.cycleAngles.addEventListener('click', () => {
+      const cur = clampAngle(theta);
+      let idx = 0, best = Infinity;
+      SPECIAL_ANGLES.forEach((a, i) => {
+        const d = Math.abs(cur - a);
+        const wrap = Math.min(d, 2 * Math.PI - d);
+        if (wrap < best) {
+          best = wrap;
+          idx = i;
+        }
+      });
+      theta = SPECIAL_ANGLES[(idx + 1) % SPECIAL_ANGLES.length];
+      update();
+    });
+
+    controls.cycleLabelMode.addEventListener('click', () => {
+      const modes = { degrees: 'coords', coords: 'pi', pi: 'degrees' };
+      const labels = { degrees: 'Coords', coords: 'π', pi: 'Degrees' };
+      labelMode = modes[labelMode];
+      controls.cycleLabelMode.textContent = `Labels: ${labels[labelMode]}`;
+      update();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target === handle || e.target === handle2) return;
+      
+      const step = e.shiftKey ? Math.PI / 12 : Math.PI / 180;
+      let handled = false;
+      
+      if (e.key === 'ArrowRight') {
+        theta += step;
+        handled = true;
+      } else if (e.key === 'ArrowLeft') {
+        theta -= step;
+        handled = true;
+      } else if (e.key === 'ArrowUp' && controls.showSecond.checked) {
+        phi += step;
+        handled = true;
+      } else if (e.key === 'ArrowDown' && controls.showSecond.checked) {
+        phi -= step;
+        handled = true;
+      }
+      
+      if (handled) {
+        update();
+        e.preventDefault();
+      }
+    });
+
+    try {
+      initializeSpecialTicks();
+      init3DScene();
+      applyMode('learning');
+      
+      // Initial 3D update
+      update3DScene();
+      
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        if (viewMode !== '2d') {
+          updateRendererSize();
+        }
+      });
+      
+      // Animation loop for 3D
+      function animate() {
+        requestAnimationFrame(animate);
+        if (viewMode !== '2d' && renderer && scene && camera) {
+          renderer.render(scene, camera);
+        }
+      }
+      animate();
+    } catch (error) {
+      console.error('Initialization error:', error);
+    }
+  });
+  </script>
+</body>
+</html>

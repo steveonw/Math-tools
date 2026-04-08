@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Unit Circle Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #dbeafe 0%, #ffffff 50%, #fae8ff 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #6b7280;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+        }
+
+        .canvas-container {
+            margin-top: 1rem;
+        }
+
+        canvas {
+            width: 100%;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .angle-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+
+        .quadrant {
+            color: #6b7280;
+            margin-left: 1rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .reset-btn {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .reset-btn:hover {
+            background: #d1d5db;
+        }
+
+        .coord-display {
+            padding: 1rem;
+            background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%);
+            border: 2px solid #c7d2fe;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .coord-display p:first-child {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .coord-display p:last-child {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .special-hint {
+            font-size: 0.75rem;
+            color: #4f46e5;
+            margin-top: 0.25rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            outline: none;
+            margin: 0.5rem 0;
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .legend {
+            padding: 0.75rem;
+            background: #fef3c7;
+            border: 2px solid #fde047;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .legend p:first-child {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 0.25rem;
+        }
+
+        .legend p:last-child {
+            font-size: 0.75rem;
+            color: #78350f;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .signs-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        .sign-box {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .sign-box p:first-child {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .sign-box p:last-child {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .func-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .func-row span:first-child {
+            font-weight: 600;
+        }
+
+        .func-row span:last-child {
+            font-family: 'Courier New', monospace;
+            font-size: 1.125rem;
+            font-weight: bold;
+        }
+
+        .angle-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .angle-btn {
+            padding: 0.5rem 0.75rem;
+            background: #e0e7ff;
+            color: #3730a3;
+            font-weight: 600;
+        }
+
+        .angle-btn:hover {
+            background: #c7d2fe;
+        }
+
+        .angle-btn.active {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .quadrants-ref {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .quadrants-ref {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .quad-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid #e5e7eb;
+        }
+
+        .quad-box.active {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        .quad-box h4 {
+            font-weight: bold;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .quad-box p {
+            font-size: 0.875rem;
+            margin: 0.25rem 0;
+        }
+
+        .quad-note {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Interactive Unit Circle Explorer</h1>
+            <p>Drag the point or use the slider to explore all trig functions!</p>
+        </div>
+
+        <div class="grid">
+            <!-- Canvas Section -->
+            <div class="card">
+                <div class="controls">
+                    <div>
+                        <span class="angle-display" id="angleDisplay">45°</span>
+                        <span class="quadrant" id="quadrantDisplay">Quadrant 1</span>
+                    </div>
+                    <button class="reset-btn" onclick="resetAngle()">Reset</button>
+                </div>
+
+                <div class="coord-display">
+                    <p>Coordinates (x, y) = (cos, sin)</p>
+                    <p id="coordDisplay">(√2/2, √2/2)</p>
+                    <p class="special-hint" id="specialHint">✨ Special angle - exact value!</p>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="unitCircle" width="400" height="400"></canvas>
+                </div>
+
+                <input type="range" id="angleSlider" min="0" max="360" value="45">
+                <div class="range-labels">
+                    <span>0°</span>
+                    <span>90°</span>
+                    <span>180°</span>
+                    <span>270°</span>
+                    <span>360°</span>
+                </div>
+
+                <div class="legend">
+                    <p>✨ 45° Mirror Lines</p>
+                    <p>The diagonal dashed lines show where sin = cos (or their negatives)</p>
+                </div>
+            </div>
+
+            <!-- Values Section -->
+            <div>
+                <!-- Quadrant Signs -->
+                <div class="card" style="margin-bottom: 1rem;">
+                    <h3>Quadrant <span id="quadNum">1</span> Signs</h3>
+                    <div class="signs-grid">
+                        <div class="sign-box" style="background: #dbeafe;">
+                            <p>sin</p>
+                            <p style="color: #1e40af;" id="sinSign">+</p>
+                        </div>
+                        <div class="sign-box" style="background: #d1fae5;">
+                            <p>cos</p>
+                            <p style="color: #065f46;" id="cosSign">+</p>
+                        </div>
+                        <div class="sign-box" style="background: #e9d5ff;">
+                            <p>tan</p>
+                            <p style="color: #6b21a8;" id="tanSign">+</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Primary Functions -->
+                <div class="card" style="margin-bottom: 1rem;">
+                    <h3>Primary Functions</h3>
+                    <div class="func-row" style="background: #dbeafe;">
+                        <span style="color: #1e40af;">sin(<span class="angle-val">45</span>°)</span>
+                        <span style="color: #1e3a8a;" id="sinValue">√2/2</span>
+                    </div>
+                    <div class="func-row" style="background: #d1fae5;">
+                        <span style="color: #065f46;">cos(<span class="angle-val">45</span>°)</span>
+                        <span style="color: #064e3b;" id="cosValue">√2/2</span>
+                    </div>
+                    <div class="func-row" style="background: #e9d5ff;">
+                        <span style="color: #6b21a8;">tan(<span class="angle-val">45</span>°)</span>
+                        <span style="color: #581c87;" id="tanValue">1</span>
+                    </div>
+                </div>
+
+                <!-- Reciprocal Functions -->
+                <div class="card" style="margin-bottom: 1rem;">
+                    <h3>Reciprocal Functions</h3>
+                    <div class="func-row" style="background: #cffafe;">
+                        <span style="color: #155e75;">csc(<span class="angle-val">45</span>°) = 1/sin</span>
+                        <span style="color: #164e63;" id="cscValue">√2</span>
+                    </div>
+                    <div class="func-row" style="background: #d1fae5;">
+                        <span style="color: #047857;">sec(<span class="angle-val">45</span>°) = 1/cos</span>
+                        <span style="color: #065f46;" id="secValue">√2</span>
+                    </div>
+                    <div class="func-row" style="background: #fce7f3;">
+                        <span style="color: #be185d;">cot(<span class="angle-val">45</span>°) = 1/tan</span>
+                        <span style="color: #9f1239;" id="cotValue">1</span>
+                    </div>
+                </div>
+
+                <!-- Special Angles -->
+                <div class="card">
+                    <h3>Quick Jump to Special Angles</h3>
+                    <div class="angle-buttons" id="angleButtons"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Quadrants Reference -->
+        <div class="card">
+            <h3>All Quadrants Reference</h3>
+            <div class="quadrants-ref">
+                <div class="quad-box" id="quad1">
+                    <h4>Quadrant 1</h4>
+                    <p>sin: <strong>+</strong></p>
+                    <p>cos: <strong>+</strong></p>
+                    <p>tan: <strong>+</strong></p>
+                    <p class="quad-note">csc, sec, cot have the same signs as their reciprocals</p>
+                </div>
+                <div class="quad-box" id="quad2">
+                    <h4>Quadrant 2</h4>
+                    <p>sin: <strong>+</strong></p>
+                    <p>cos: <strong>-</strong></p>
+                    <p>tan: <strong>-</strong></p>
+                    <p class="quad-note">csc, sec, cot have the same signs as their reciprocals</p>
+                </div>
+                <div class="quad-box" id="quad3">
+                    <h4>Quadrant 3</h4>
+                    <p>sin: <strong>-</strong></p>
+                    <p>cos: <strong>-</strong></p>
+                    <p>tan: <strong>+</strong></p>
+                    <p class="quad-note">csc, sec, cot have the same signs as their reciprocals</p>
+                </div>
+                <div class="quad-box" id="quad4">
+                    <h4>Quadrant 4</h4>
+                    <p>sin: <strong>-</strong></p>
+                    <p>cos: <strong>+</strong></p>
+                    <p>tan: <strong>-</strong></p>
+                    <p class="quad-note">csc, sec, cot have the same signs as their reciprocals</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let angle = 45;
+        let isDragging = false;
+        const specialAngles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
+
+        const exactValues = {
+            0: { sin: '0', cos: '1', tan: '0', cot: 'undefined', sec: '1', csc: 'undefined' },
+            30: { sin: '1/2', cos: '√3/2', tan: '√3/3', cot: '√3', sec: '2√3/3', csc: '2' },
+            45: { sin: '√2/2', cos: '√2/2', tan: '1', cot: '1', sec: '√2', csc: '√2' },
+            60: { sin: '√3/2', cos: '1/2', tan: '√3', cot: '√3/3', sec: '2', csc: '2√3/3' },
+            90: { sin: '1', cos: '0', tan: 'undefined', cot: '0', sec: 'undefined', csc: '1' },
+            120: { sin: '√3/2', cos: '-1/2', tan: '-√3', cot: '-√3/3', sec: '-2', csc: '2√3/3' },
+            135: { sin: '√2/2', cos: '-√2/2', tan: '-1', cot: '-1', sec: '-√2', csc: '√2' },
+            150: { sin: '1/2', cos: '-√3/2', tan: '-√3/3', cot: '-√3', sec: '-2√3/3', csc: '2' },
+            180: { sin: '0', cos: '-1', tan: '0', cot: 'undefined', sec: '-1', csc: 'undefined' },
+            210: { sin: '-1/2', cos: '-√3/2', tan: '√3/3', cot: '√3', sec: '-2√3/3', csc: '-2' },
+            225: { sin: '-√2/2', cos: '-√2/2', tan: '1', cot: '1', sec: '-√2', csc: '-√2' },
+            240: { sin: '-√3/2', cos: '-1/2', tan: '√3', cot: '√3/3', sec: '-2', csc: '-2√3/3' },
+            270: { sin: '-1', cos: '0', tan: 'undefined', cot: '0', sec: 'undefined', csc: '-1' },
+            300: { sin: '-√3/2', cos: '1/2', tan: '-√3', cot: '-√3/3', sec: '2', csc: '-2√3/3' },
+            315: { sin: '-√2/2', cos: '√2/2', tan: '-1', cot: '-1', sec: '√2', csc: '-√2' },
+            330: { sin: '-1/2', cos: '√3/2', tan: '-√3/3', cot: '-√3', sec: '2√3/3', csc: '-2' }
+        };
+
+        function init() {
+            createAngleButtons();
+            setupEventListeners();
+            updateAll();
+        }
+
+        function createAngleButtons() {
+            const container = document.getElementById('angleButtons');
+            specialAngles.forEach(deg => {
+                const btn = document.createElement('button');
+                btn.className = 'angle-btn';
+                btn.textContent = deg + '°';
+                btn.onclick = () => setAngle(deg);
+                container.appendChild(btn);
+            });
+        }
+
+        function setupEventListeners() {
+            const slider = document.getElementById('angleSlider');
+            const canvas = document.getElementById('unitCircle');
+
+            slider.addEventListener('input', (e) => {
+                setAngle(parseInt(e.target.value));
+            });
+
+            canvas.addEventListener('mousedown', handleMouseDown);
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        function handleMouseDown(e) {
+            isDragging = true;
+            updateAngleFromMouse(e);
+        }
+
+        function handleMouseMove(e) {
+            if (isDragging) {
+                updateAngleFromMouse(e);
+            }
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+        }
+
+        function updateAngleFromMouse(e) {
+            const canvas = document.getElementById('unitCircle');
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - canvas.width / 2;
+            const y = -(e.clientY - rect.top - canvas.height / 2);
+            
+            let rad = Math.atan2(y, x);
+            let deg = rad * 180 / Math.PI;
+            
+            if (deg < 0) deg += 360;
+            
+            setAngle(Math.round(deg));
+        }
+
+        function setAngle(newAngle) {
+            angle = newAngle;
+            document.getElementById('angleSlider').value = angle;
+            updateAll();
+        }
+
+        function resetAngle() {
+            setAngle(45);
+        }
+
+        function getQuadrant(deg) {
+            const normalized = ((deg % 360) + 360) % 360;
+            if (normalized >= 0 && normalized < 90) return 1;
+            if (normalized >= 90 && normalized < 180) return 2;
+            if (normalized >= 180 && normalized < 270) return 3;
+            return 4;
+        }
+
+        function updateAll() {
+            const rad = angle * Math.PI / 180;
+            const sinVal = Math.sin(rad);
+            const cosVal = Math.cos(rad);
+            const tanVal = Math.tan(rad);
+            const cotVal = 1 / tanVal;
+            const secVal = 1 / cosVal;
+            const cscVal = 1 / sinVal;
+
+            const quadrant = getQuadrant(angle);
+
+            // Update displays
+            document.getElementById('angleDisplay').textContent = angle + '°';
+            document.getElementById('quadrantDisplay').textContent = 'Quadrant ' + quadrant;
+            document.getElementById('quadNum').textContent = quadrant;
+
+            // Update angle values in function labels
+            document.querySelectorAll('.angle-val').forEach(el => {
+                el.textContent = angle;
+            });
+
+            // Update coordinates
+            const cosDisplay = getDisplayValue(cosVal, 'cos');
+            const sinDisplay = getDisplayValue(sinVal, 'sin');
+            document.getElementById('coordDisplay').textContent = `(${cosDisplay}, ${sinDisplay})`;
+            
+            const specialHint = document.getElementById('specialHint');
+            if (specialAngles.includes(angle)) {
+                specialHint.style.display = 'block';
+            } else {
+                specialHint.style.display = 'none';
+            }
+
+            // Update signs
+            const signs = {
+                1: { sin: '+', cos: '+', tan: '+' },
+                2: { sin: '+', cos: '-', tan: '-' },
+                3: { sin: '-', cos: '-', tan: '+' },
+                4: { sin: '-', cos: '+', tan: '-' }
+            };
+
+            document.getElementById('sinSign').textContent = signs[quadrant].sin;
+            document.getElementById('cosSign').textContent = signs[quadrant].cos;
+            document.getElementById('tanSign').textContent = signs[quadrant].tan;
+
+            // Update values
+            document.getElementById('sinValue').textContent = getDisplayValue(sinVal, 'sin');
+            document.getElementById('cosValue').textContent = getDisplayValue(cosVal, 'cos');
+            document.getElementById('tanValue').textContent = getDisplayValue(tanVal, 'tan');
+            document.getElementById('cscValue').textContent = getDisplayValue(cscVal, 'csc');
+            document.getElementById('secValue').textContent = getDisplayValue(secVal, 'sec');
+            document.getElementById('cotValue').textContent = getDisplayValue(cotVal, 'cot');
+
+            // Update angle buttons
+            document.querySelectorAll('.angle-btn').forEach((btn, idx) => {
+                if (specialAngles[idx] === angle) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Update quadrant boxes
+            for (let i = 1; i <= 4; i++) {
+                const box = document.getElementById('quad' + i);
+                if (i === quadrant) {
+                    box.classList.add('active');
+                } else {
+                    box.classList.remove('active');
+                }
+            }
+
+            drawCircle(rad, cosVal, sinVal);
+        }
+
+        function getDisplayValue(val, func) {
+            if (exactValues[angle] && exactValues[angle][func]) {
+                return exactValues[angle][func];
+            }
+            if (!isFinite(val)) return 'undefined';
+            return val.toFixed(4);
+        }
+
+        function drawCircle(rad, cosVal, sinVal) {
+            const canvas = document.getElementById('unitCircle');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 150;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw quadrant backgrounds
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.05)';
+            ctx.fillRect(centerX, 0, centerX, centerY);
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.05)';
+            ctx.fillRect(0, 0, centerX, centerY);
+            ctx.fillStyle = 'rgba(251, 146, 60, 0.05)';
+            ctx.fillRect(0, centerY, centerX, centerY);
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.05)';
+            ctx.fillRect(centerX, centerY, centerX, centerY);
+
+            // Draw 45° diagonals
+            ctx.strokeStyle = 'rgba(234, 179, 8, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            [45, 135, 225, 315].forEach(deg => {
+                const r = deg * Math.PI / 180;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + radius * Math.cos(r), centerY - radius * Math.sin(r));
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+
+            // Draw axes
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+
+            // Draw unit circle
+            ctx.strokeStyle = '#4B5563';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // Draw special angle markers
+            ctx.fillStyle = '#9CA3AF';
+            ctx.font = '11px sans-serif';
+            specialAngles.forEach(deg => {
+                const r = deg * Math.PI / 180;
+                const x = centerX + radius * Math.cos(r);
+                const y = centerY - radius * Math.sin(r);
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                const labelX = centerX + (radius + 20) * Math.cos(r);
+                const labelY = centerY - (radius + 20) * Math.sin(r);
+                ctx.fillText(deg + '°', labelX - 10, labelY + 5);
+            });
+
+            // Current angle
+            const endX = centerX + radius * Math.cos(rad);
+            const endY = centerY - radius * Math.sin(rad);
+
+            // Draw angle arc
+            ctx.strokeStyle = '#6366F1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 40, 0, -rad, true);
+            ctx.stroke();
+
+            // Draw radius line
+            ctx.strokeStyle = '#EF4444';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Draw point
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.arc(endX, endY, 8, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Draw cos and sin lines
+            ctx.strokeStyle = '#10B981';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(endX, centerY);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#3B82F6';
+            ctx.beginPath();
+            ctx.moveTo(endX, centerY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Labels
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('cos', centerX + (endX - centerX) / 2 - 15, centerY - 10);
+            ctx.fillText('sin', endX + 10, centerY + (endY - centerY) / 2);
+        }
+
+        init();
+    </script>
+</body>
+</html>
